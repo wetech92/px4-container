@@ -22,7 +22,7 @@ ENV GAZEBO_MASTER_URI http://localhost:11345
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apt-get update && apt-get install --quiet -y \
-		ros-$ROS_DISTRO-desktop \
+		ros-$ROS_DISTRO-gazebo* \
 	&& apt-get -y autoremove \
 	&& apt-get clean autoclean \
 	&& rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
@@ -41,7 +41,7 @@ RUN apt-get -y --quiet --no-install-recommends install \
 		gstreamer1.0-plugins-good \
 		gstreamer1.0-plugins-ugly \
 		libeigen3-dev \
-		libgazebo11-dev \
+		#libgazebo11-dev \
 		libgstreamer-plugins-base1.0-dev \
 		libimage-exiftool-perl \
 		libopencv-dev \
