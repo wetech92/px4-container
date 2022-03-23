@@ -14,9 +14,10 @@ ENV QT_X11_NO_MITSHM 1
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility,compute,display
 
-#ENV HEADLESS 1
 ENV SITL_MODEL iris
 ENV SITL_ENV baylands
+ENV GAZEBO_MASTER_URI http://localhost:11345
+# http://$(hostname -I | cut -f1 -d' '):11345
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
