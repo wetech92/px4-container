@@ -35,13 +35,11 @@ RUN apt-get -y --quiet --no-install-recommends install \
 		binutils \
 		bc \
 		dirmngr \
-		#gazebo11 \
 		gstreamer1.0-plugins-bad \
 		gstreamer1.0-plugins-base \
 		gstreamer1.0-plugins-good \
 		gstreamer1.0-plugins-ugly \
 		libeigen3-dev \
-		#libgazebo11-dev \
 		libgstreamer-plugins-base1.0-dev \
 		libimage-exiftool-perl \
 		libopencv-dev \
