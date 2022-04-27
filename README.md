@@ -24,6 +24,8 @@ $ sudo apt install nvidia-driver-470
 docker build -t <image_name>:<tag> -f ./<target_folder>/Dockerfile .
 ```
 
+- `gazebo` 태그 이미지에 추가적으로 덧붙는 `novnc`의 경우 해당 경로의 `README.md 참고`
+
 ## 컨테이너 생성
 
 - 컨테이너 생성 전, 다음 명령어를 호스트에서 실행
