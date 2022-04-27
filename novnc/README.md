@@ -36,7 +36,7 @@ docker run --privileged -d \
 
 - 예시
   - 외부 접속 포트를 `10000`으로 설정하고 GPU를 사용할 때
-  - 사용 이지미가 `acsldocker/px4:gazebo-novnc-0.0.1`일 때
+  - 사용 이미지가 `acsldocker/px4:gazebo-novnc-0.0.1`일 때
 
 ```shell
 docker run --privileged -d --gpus all \
