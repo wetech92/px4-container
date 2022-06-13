@@ -33,6 +33,6 @@ if [ ${HEADLESS} -eq 1]; then
 		HEADLESS=${HEADLESS} make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${SITL_MODEL}__${SITL_ENV}
 else
 	echo "HEADLESS is ${HEADLESS}: Not 1, Running Gazebo SITL in normal mode"
-	nohup su -c /home/user/QGroundControl.AppImage user & \
+	nohup su -c "/home/user/QGroundControl.AppImage --appimage-extract-and-run" user & \
 		make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${SITL_MODEL}__${SITL_ENV}
 fi
