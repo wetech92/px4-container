@@ -27,5 +27,5 @@ else
 fi
 
 # Run QGC & Gazebo SITL
-nohup su -c /home/user/QGroundControl.AppImage user & \
+nohup su -c "/home/user/QGroundControl.AppImage --appimage-extract-and-run" user & \
 	make -C /root/PX4-Autopilot px4_sitl_rtps none_${SITL_MODEL}
