@@ -30,6 +30,9 @@ RUN colcon build \
 		--packages-select g_camera_lidar_sp \
 	&& source ~/ROS2-node/install/setup.bash
 
+RUN pip install msgpack-rpc-python \
+	&& pip install airsim
+
 WORKDIR /root
 
 COPY QGroundControl.org /home/user/.config/QGroundControl.org
