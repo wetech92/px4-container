@@ -15,9 +15,19 @@ ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility,compute,display
 
 ENV SITL_MODEL iris
-ENV PX4_SIM_HOST_ADDR 172.19.0.6
+ENV PX4_SIM_HOST_ADDR localhsot
  
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN apt-get update && apt-get install --quiet -y \
+		llvm* \
+	&& apt-get -y autoremove \
+	&& apt-get clean autoclean \
+	&& rm -rf /var/lib/apt/lists /tmp/* /var/tmp/*
+
+RUN git clone https://github.com/microsoft/AirSim.git /root/AirSim \
+	&& ./setup.sh \
+	&& ./build.sh
 
 RUN make -C /root/PX4-Autopilot px4_sitl_rtps none_${SITL_MODEL} &
 
