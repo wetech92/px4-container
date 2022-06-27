@@ -25,9 +25,9 @@ RUN apt-get update && apt-get install --quiet -y \
 	&& apt-get clean autoclean \
 	&& rm -rf /var/lib/apt/lists /tmp/* /var/tmp/*
 
-RUN git clone https://github.com/microsoft/AirSim.git /root/AirSim \
-	&& ./setup.sh \
-	&& ./build.sh
+RUN git clone https://github.com/microsoft/AirSim.git -b v1.8.0-linux \
+	&& ./AirSim/setup.sh \
+	&& ./AirSim/build.sh
 
 RUN make -C /root/PX4-Autopilot px4_sitl_rtps none_${SITL_MODEL} &
 
