@@ -9,11 +9,11 @@ if [[ -x "$(command -v Xvfb)" && "$DISPLAY" == ":99" ]]; then
 	Xvfb :99 -screen 0 1600x1200x24+32 &
 fi
 
-# Check if the ROS_DISTRO is passed and use it
-# to source the ROS environment
-if [ -n "${ROS_DISTRO}" ]; then
-	source "/opt/ros/$ROS_DISTRO/setup.bash"
-fi
+# # Check if the ROS_DISTRO is passed and use it
+# # to source the ROS environment
+# if [ -n "${ROS_DISTRO}" ]; then
+# 	source "/opt/ros/$ROS_DISTRO/setup.bash"
+# fi
 
 # Use the LOCAL_USER_ID if passed in at runtime
 if [ -n "${LOCAL_USER_ID}" ]; then
@@ -24,6 +24,14 @@ if [ -n "${LOCAL_USER_ID}" ]; then
 	exec gosu user "$@"
 else
 	exec "$@"
+fi
+
+if ${REBUILD}; then
+	colcon build \
+		--build-base /root/ROS2-node/build \
+        --install-base /root/ROS2-node/install \
+        --base-paths /root/ROS2-node/src \
+	&& source /root/ROS2-node/install/setup.bash
 fi
 
 # Run ROS2 Nodes
