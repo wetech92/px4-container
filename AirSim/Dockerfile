@@ -10,7 +10,7 @@ ENV \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
 
-COPY /scripts/sources.list /etc/apt/sources.list
+# COPY /scripts/sources.list /etc/apt/sources.list
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
 	&& echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
@@ -100,6 +100,7 @@ ENV \
 	NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute,display \
 	SITL_MODEL=iris \
 	PX4_SIM_HOST_ADDR=localhsot \
+	rebuild=false \
 	PATH=/root/.local/bin:$PATH
 
 COPY --from=stage_airsim /root/AirSim/AirLib /root/AirSim/AirLib
