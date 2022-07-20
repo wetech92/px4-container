@@ -1,4 +1,4 @@
-# A4-VAI 통합 시뮬레이터 환경 PX4 컨테이너 이미지
+# A4-VAI Integrated Learning Environment PX4 Container Image
 
 - **주의! 이미지 빌드 방법이 많이 변경되어 README를 업데이트 중입니다!**
 - ***이미지 업데이트가 완료되면 본 문장은 사라집니다.**
@@ -8,7 +8,7 @@
 ### 1.1 What is this repository for?
 
 - This is a repository containing files to build `kestr3l/px4` images
-- Those images were built to implement Integrated Learning Environment Simulator
+- Those images were built to implement simulator system for Integrated Learning Environment (ILE)
 <br/>
 
 ### 1.2 Image Tags
@@ -22,7 +22,7 @@
 
 - Minor tags of image are as following:
    - `gpu`: Image for Machine Learning, Reinforced Learning and etc.
-      - Based on `nvidia/cuda:11.2.2-cudnn8-devel-ubuntu20.04`
+      - Based on `nvidia/cuda:11.3.1-cudnn8-devel-ubuntu20.04`
    - `cpu`: Image withut GPU support. Intended to be used on device with no GPU
       - Based on `ubuntu:20.04`
 <br/>
@@ -39,7 +39,7 @@
    - `dev`: Unstable branch under development. Won't be merged to `main` unless it's finished.
 
 - You can build images using this repository and `README.md`
-   - You can also downlaod prebuilt images from Docker Hub
+   - You can also downlaod prebuilt images from [Docker Hub](https://hub.docker.com/r/kestr3l/px4)
 - All images do not use ENTRYPOINT options for ease of development
    - You can override any startup script when running a container
 <br/>
@@ -50,7 +50,7 @@
 
 - Host must have [docker](https://docs.docker.com/engine/install/ubuntu/)installed (>=19.03)
 - For GPU support, following conditions must be met.
-   - Host must have Nvidia GPU with CUDA 11.2 support
+   - Host must have Nvidia GPU with CUDA 11.3 support
    - Host must have Nvidia GPU Driver installed (=>418.71.07, >=Kepler)
    - Host must have [nvidia-docker-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed
       - Use `nvidia-docker2`
@@ -106,9 +106,46 @@ $ DOCKER_BUILDKIT=1 docker build --no-cache --build-arg <ARG>=<VAR> -t <IMAGE_NA
       - Value other than them will provoke a build error.
 <br/>
 
-#### 2.2.3 Build Steps and Example
+### 2.3 Build Steps and Example
 
-- `gazebo` 태그 이미지에 추가적으로 덧붙는 `novnc`의 경우 해당 경로의 `README.md 참고`
+- Case-specific build example commands are available on each `README.md` in major tag folders
+- Block diagrams of multi-stage build process are also available in there as an image and draw.io file
+<br/>
+
+## 3. Running Container
+
+### 3.1 Basic Format
+
+- Common command to create a container from an image is as following:
+   - Based on settings you intend, command can vary but basic scheme will remain
+
+```shell
+docker run -it --rm \
+   -e DISPLAY=$DISPLAY \
+   -e QT_NO_MITSHM=1 \
+   -e XDG_RUNTIME_DIR=/tmp \
+   -v /tmp/.X11-unix:/tmp/.X11-unix \
+   --net host \
+   --privileged \
+   <IMAGE_NAME>:<TAG> <COMMAND>
+```
+
+- Brief explanation about available options are as following:
+   - For more specific info, please check [Docker run reference](https://docs.docker.com/engine/reference/run/)
+
+|OPTION|DESCRIPTION|
+|:-|:-|
+|`-e`|Set environment variable|
+|`-v`|Volume mapping|
+|`--net`|Network adapter|
+|`--privileged`|Run as privileged permission|
+<br/>
+
+### 3.2 Environment Variables
+
+- List of major environment variables used in container are as following:
+
+### 3.3 Advanced Settings
 
 ## 컨테이너 생성
 
