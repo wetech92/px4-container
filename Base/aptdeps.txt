@@ -51,5 +51,6 @@ ros-galactic-ros-base
 ros-galactic-eigen3-cmake-module
 ros-galactic-ros2bag
 ros-galactic-rmw-fastrtps-cpp
+ros-galactic-rmw-cyclonedds-cpp
 ros-galactic-rosidl-generator-dds-idl
 python3-colcon-common-extensions
