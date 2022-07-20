@@ -1,6 +1,5 @@
 ARG BASEIMAGE=nvidia/cuda
 ARG BASETAG=11.2.2-cudnn8-devel-ubuntu20.04
-ARG PROCVER="gpu"
 
 FROM ${BASEIMAGE}:${BASETAG} as stage_apt
 
@@ -98,7 +97,7 @@ FROM stage_deps as stage_python
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-ARG PROCVER=gpu
+ARG PROCVER
 
 ENV \
     NVIDIA_VISIBLE_DEVICES=all \
