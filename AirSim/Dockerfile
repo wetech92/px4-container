@@ -1,5 +1,5 @@
 ARG BASEIMAGE=kestr3l/px4
-ARG BASETAG=base-gpu-0.0.2
+ARG BASETAG
 
 FROM ${BASEIMAGE}:${BASETAG} as stage_apt
 
