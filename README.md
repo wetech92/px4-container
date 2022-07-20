@@ -3,29 +3,110 @@
 - **주의! 이미지 빌드 방법이 많이 변경되어 README를 업데이트 중입니다!**
 - ***이미지 업데이트가 완료되면 본 문장은 사라집니다.**
 
-## 사전 요구사항
+## 1. Introduction
 
+### 1.1 What is this repository for?
 
-- Host PC에 nvidia 드라이버가 설치되어 있을 것 (>=418.81.07, Kepler 아키텍처 이상)
+- This is a repository containing files to build `kestr3l/px4` images
+- Those images were built to implement Integrated Learning Environment Simulator
+<br/>
 
-``` bash
-# nvidia 드라이버 버전을 지정해 설치 (작성 시점 기준 470)
-$ sudo apt install nvidia-driver-470
-```
+### 1.2 Image Tags
 
-- Host PC에 [docker](https://docs.docker.com/engine/install/ubuntu/)가 설치되어 있을 것 (>=19.03)
-- Host PC에 [nvidia-docker-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)이 설치되어 있을 것
+- There are three matjor types of images:
+   - `kestr3l/px4:base`: Base image including dependcies to run PX4-Autopilot and ROS2-Galactic
+      -Base image of `airsim` and `gazebo` image
+   - `kestr3l/px4:airsim`: Image to run PX4 AirSim SITL
+   - `kestr3l/px4:gazebo`: Image to run PX4 Gazebo SITL
+<br/>
 
-## 수동 빌드
+- Minor tags of image are as following:
+   - `gpu`: Image for Machine Learning, Reinforced Learning and etc.
+      - Based on `nvidia/cuda:11.2.2-cudnn8-devel-ubuntu20.04`
+   - `cpu`: Image withut GPU support. Intended to be used on device with no GPU
+      - Based on `ubuntu:20.04`
+<br/>
 
-- base, gazebo, airsim에 해당하는 빌드 명령어는 아래와 같다
-  - 저장소 최상단에서 대상 폴더를 고려해 빌드를 수행한다
-  - gazebo 및 airsim 폴더에 대한 이미지 빌드 시 base 계열 태그의 이미지가 필요하다
-  - 태그명의 경우 gazebo-1.0.0과 같은 식으로 식별 가능하게 지을 것을 권장한다
+- Naming rule of image is as `kestr3l/px4:\<MAJOR\>-\<MINOR\>-\<VERSION\>`
+   - Example: `kestr3l/px4:airsim-gpu-0.0.2`
+   - Image for AirSim SITL with GPU support, version 0.0.2
+<br/>
+
+### 1.3 Branches and Miscellaneous
+
+- Currently, we have two branches in this repository
+   - `main`: Main, stable branch. Check tag and `CHANGELOG.md `for verision info 
+   - `dev`: Unstable branch under development. Won't be merged to `main` unless it's finished.
+
+- You can build images using this repository and `README.md`
+   - You can also downlaod prebuilt images from Docker Hub
+- All images do not use ENTRYPOINT options for ease of development
+   - You can override any startup script when running a container
+<br/>
+
+## 2. Build Image
+
+### 2.1 Prequisites
+
+- Host must have [docker](https://docs.docker.com/engine/install/ubuntu/)installed (>=19.03)
+- For GPU support, following conditions must be met.
+   - Host must have Nvidia GPU with CUDA 11.2 support
+   - Host must have Nvidia GPU Driver installed (=>418.71.07, >=Kepler)
+   - Host must have [nvidia-docker-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed
+      - Use `nvidia-docker2`
+<br/>
+
+- Install Nvidia GPU Driver 470 by following command:
+   - You don't need to do this on WSL2.
+   - For WSL, install Nvidia Drivers on Windows instead
 
 ```shell
-docker build -t <image_name>:<tag> -f ./<target_folder>/Dockerfile .
+$ sudo apt install nvidia-driver-470
 ```
+<br/>
+
+- Host must have at least 20 GB of smpty storage (Recommended)
+- Host must be X86 device
+<br/>
+
+### 2.2 Build Command
+
+#### 2.2.1 Build Command Basics
+
+- This repository uses Docker Buildkit for faster, efficient build
+   - Attempt to build image without `DOCKER_BUILDKIT` will result in error
+- Basic form of command for building an image is as following:
+
+```shell
+$ DOCKER_BUILDKIT=1 docker build --no-cache --build-arg <ARG>=<VAR> -t <IMAGE_NAME>:<TAG> -f <TARGET_DOCKERFILE> .
+```
+
+- Suggested options have following definition:
+   - `--no-cache`: Do not cache during build to save storage and suppress dangling images
+   - `--build-arg <ARG>=<VAR>`: Designate ARG values for image build
+      - Ex. `--build-arg BASEIMAGE=ubuntu --build-arg PROCVER=gpu`
+      - As you can see, `--build-arg` can be stated multiple times
+   - `-t <IMAGE_NAME>:<TAG>`: Designate image tag
+      - Ex. `-t kestr3l/px4:base-cpu-0.0.2`
+   - `-f`: Designate target dockerfile to build image
+      - Ex. `-f /Base/Dockerfile`
+   - `.`: Directory to start build. Which is, where to read files from
+<br/>
+
+#### 2.2.2 Setting `ARG` values
+
+- Three following `ARG` values must be set to start build process:
+   - `BASEIMAGE`: Base image to build an image
+      - For `base` tag, recommend to use `ubuntu:20.04` or `nvidia/cuda`
+      - For case of `airsim` or `gazebo` tag, use prebuilt base image name
+   - `BASETAG`: Base image's tag to build an image
+      - Depends on type and image you want to build
+   - `PROCVER`: Whether a image is GPU version of CPU version
+      - Must be one from `gpu` or `cpu`
+      - Value other than them will provoke a build error.
+<br/>
+
+#### 2.2.3 Build Steps and Example
 
 - `gazebo` 태그 이미지에 추가적으로 덧붙는 `novnc`의 경우 해당 경로의 `README.md 참고`
 
