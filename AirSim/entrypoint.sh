@@ -26,6 +26,10 @@ else
 	exec "$@"
 fi
 
+# Run ROS2 Nodes
+source /root/AirSim/ros2/install/setup.bash
+ros2 launch airsim_ros_pkgs airsim_node.launch.py host:=$simhost
+
 # Run QGC & Gazebo SITL
 nohup su -c "/home/user/QGroundControl.AppImage --appimage-extract-and-run" user & \
 	make -C /root/PX4-Autopilot px4_sitl_rtps none_${SITL_MODEL}
