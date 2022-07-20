@@ -1,5 +1,5 @@
-ARG BASEIMAGE=nvidia/cuda
-ARG BASETAG=11.2.2-cudnn8-devel-ubuntu20.04
+ARG BASEIMAGE
+ARG BASETAG
 
 FROM ${BASEIMAGE}:${BASETAG} as stage_apt
 
@@ -10,7 +10,7 @@ ENV \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
 
-COPY /scripts/sources.list /etc/apt/sources.list
+# COPY /scripts/sources.list /etc/apt/sources.list
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
 	&& echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
@@ -31,7 +31,7 @@ FROM ${BASEIMAGE}:${BASETAG} as stage_deps
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-COPY /scripts/sources.list /etc/apt/sources.list
+# COPY /scripts/sources.list /etc/apt/sources.list
 
 ENV \
     DEBIAN_FRONTEND=noninteractive \
