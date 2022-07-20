@@ -1,0 +1,8 @@
+libyaml-cpp-dev
+llvm*
+python3-yaml
+ros-galactic-image-transport
+ros-galactic-mavros*
+ros-galactic-tf2-sensor-msgs
+ros-galactic-tf2-geometry-msgs
+ros-galactic-vision-opencv
