@@ -46,6 +46,7 @@ libglvnd0
 libgl1
 libglx0
 libegl1
+libpulse-dev
 libxext6
 libx11-6
 ros-galactic-ros-base
