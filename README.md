@@ -48,7 +48,7 @@
 
 ### 2.1 Prequisites
 
-- Host must have [docker](https://docs.docker.com/engine/install/ubuntu/)installed (>=19.03)
+- Host must have [docker](https://docs.docker.com/engine/install/ubuntu/) installed (>=19.03)
 - For GPU support, following conditions must be met.
    - Host must have Nvidia GPU with CUDA 11.3 support
    - Host must have Nvidia GPU Driver installed (=>418.71.07, >=Kepler)
@@ -78,7 +78,10 @@ $ sudo apt install nvidia-driver-470
 - Basic form of command for building an image is as following:
 
 ```shell
-$ DOCKER_BUILDKIT=1 docker build --no-cache --build-arg <ARG>=<VAR> -t <IMAGE_NAME>:<TAG> -f <TARGET_DOCKERFILE> .
+$ DOCKER_BUILDKIT=1 docker build --no-cache \
+--build-arg <ARG>=<VAR> \
+-t <IMAGE_NAME>:<TAG> \
+-f <TARGET_DOCKERFILE> .
 ```
 
 - Suggested options have following definition:
