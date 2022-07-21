@@ -37,6 +37,7 @@ shellcheck
 tzdata
 unzip
 valgrind
+vim
 wget
 xsltproc
 zip
