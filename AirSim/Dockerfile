@@ -40,6 +40,7 @@ RUN \
 	apt-get install --no-install-recommends -y $(cat /tmp/aptdeps.txt) \
     && rm -rf /tmp/*
 
+
 FROM stage_deps as stage_airsim
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
@@ -99,7 +100,7 @@ ENV \
 	NVIDIA_VISIBLE_DEVICES=all \
 	NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute,display \
 	SITL_MODEL=iris \
-	PX4_SIM_HOST_ADDR=localhsot \
+	PX4_SIM_HOST_ADDR=localhost \
 	rebuild=false \
 	PATH=/root/.local/bin:$PATH
 
