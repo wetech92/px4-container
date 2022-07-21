@@ -1,76 +1,99 @@
-FROM acsldocker/px4:base-0.0.1
+ARG BASEIMAGE=kestr3l/px4
+ARG BASETAG
 
-COPY /scripts/docker-clean /etc/apt/apt.conf.d/docker-clean
-COPY /scripts/sources.list /etc/apt/sources.list
+FROM ${BASEIMAGE}:${BASETAG} as stage_apt
 
-# ---------- SET BASIC SETTINGS ----------
-ENV DEBIAN_FRONTEND noninteractive
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
+# COPY /scripts/sources.list /etc/apt/sources.list
 
-ENV ROS_DISTRO foxy
-ENV QT_X11_NO_MITSHM 1
+ENV \
+    DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
 
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility,compute,display
+RUN rm -f /etc/apt/apt.conf.d/docker-clean \
+	&& echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
+	&& apt-get update
 
-ENV SITL_MODEL iris
-ENV SITL_ENV baylands
-ENV GAZEBO_MASTER_URI http://localhost:11345
-# http://$(hostname -I | cut -f1 -d' '):11345
-
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-RUN apt-get update && apt-get install --quiet -y \
-		ros-$ROS_DISTRO-gazebo* \
-	&& apt-get -y autoremove \
-	&& apt-get clean autoclean \
-	&& rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
+RUN \
+    apt install -y software-properties-common \
+    && add-apt-repository universe \
+    && apt update \
+    && apt install -y curl gnupg lsb-release \
+    && curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu \
+        $(source /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null \
+    && apt-get update
 
 
-COPY models /root/.gazebo/models
+FROM ${BASEIMAGE}:${BASETAG} as stage_deps
 
-RUN apt-get -y --quiet --no-install-recommends install \
-		ant \
-		binutils \
-		bc \
-		dirmngr \
-		gstreamer1.0-plugins-bad \
-		gstreamer1.0-plugins-base \
-		gstreamer1.0-plugins-good \
-		gstreamer1.0-plugins-ugly \
-		libeigen3-dev \
-		libgstreamer-plugins-base1.0-dev \
-		libimage-exiftool-perl \
-		libopencv-dev \
-		libxml2-utils \
-		mesa-utils \
-		protobuf-compiler \
-		x-window-system \
-		ignition-edifice \
-	&& apt-get -y autoremove \
-	&& apt-get clean autoclean \
-	&& rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
+SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
+
+# COPY /scripts/sources.list /etc/apt/sources.list
+COPY Gazebo/aptdeps.txt /tmp/aptdeps.txt
+
+RUN \
+    --mount=type=cache,target=/var/cache/apt,from=stage_apt,source=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt,from=stage_apt,source=/var/lib/apt \
+    --mount=type=cache,target=/etc/apt/sources.list.d,from=stage_apt,source=/etc/apt/sources.list.d \
+	apt-get install --no-install-recommends -y $(cat /tmp/aptdeps.txt) \
+    && rm -rf /tmp/*
 
 
-COPY PX4-Autopilot/Tools/sitl_gazebo/models /tmp/models
+# FROM stage_deps as stage_rnode
 
-RUN HEADLESS=1 make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${SITL_MODEL}__${SITL_ENV} \
-    && cp -r /tmp/models ~/PX4-Autopilot/Tools/sitl_gazebo \
-	&& rm -rf /tmp/*
+# SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# COPY ROS2-node /root/ROS2-node
+
+# RUN colcon build \
+# 		--build-base ~/ROS2-node/build \
+# 		--install-base ~/ROS2-node/install \
+# 		--base-paths ~/ROS2-node/src \
+# 		--packages-select g_camera_lidar_sp
 
 
-COPY ROS2-node /root/ROS2-node
+FROM stage_deps as stage_px4sitl
 
-RUN colcon build \
-		--build-base ~/ROS2-node/build \
-		--install-base ~/ROS2-node/install \
-		--base-paths ~/ROS2-node/src \
-		--packages-select g_camera_lidar_sp \
-	&& source ~/ROS2-node/install/setup.bash
+SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
+
+COPY Gazebo/tmp/PX4-Autopilot /root/PX4-Autopilot
+
+RUN \
+	make -C /root/PX4-Autopilot px4_sitl_rtps
+
+
+FROM stage_deps as stage_final
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
+
+ENV \
+	DEBIAN_FRONTEND=noninteractive \
+	LANG=C.UTF-8 \
+	LC_ALL=C.UTF-8 \
+	ROS_DISTRO=galactic \
+	QT_X11_NO_MITSHM=1 \
+	NVIDIA_VISIBLE_DEVICES=all \
+	NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute,display \
+	PX4_SIM_HOST_ADDR=localhost \
+	SITL_MODEL=iris \
+	SITL_ENV=baylands \
+	GAZEBO_MASTER_URI=http://localhost:11345 \
+	rebuild=false \
+	PATH=/root/.local/bin:$PATH
+	# http://$(hostname -I | cut -f1 -d' '):11345
+
+# COPY --from=stage_rnode /root/ROS2-node /root/ROS2-node
+
+COPY --from=stage_px4sitl /root/PX4-Autopilot /root/PX4-Autopilot
+
+COPY Gazebo/tmp /root
+COPY Gazebo/tmp/PX4-Autopilot/Tools/sitl_gazebo/models /root/.gazebo/models
 
 WORKDIR /root
 
 COPY QGroundControl.org /home/user/.config/QGroundControl.org
+COPY scripts/initRepo.sh /root/tools/initRepo.sh
+
 COPY Gazebo/entrypoint.sh /usr/local/bin/entrypoint.sh
 CMD ["/usr/local/bin/entrypoint.sh"]

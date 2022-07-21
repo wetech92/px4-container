@@ -26,10 +26,20 @@ else
 	exec "$@"
 fi
 
+
+if ${REBUILD}; then
+	colcon build \
+		--build-base /root/ROS2-node/build \
+        --install-base /root/ROS2-node/install \
+        --base-paths /root/ROS2-node/src \
+	&& source /root/ROS2-node/install/setup.bash
+fi
+
+
 # Run QGC & Gazebo SITL
 if [ ${HEADLESS} -eq 1]; then
 	echo "HEADLESS is ${HEADLESS}: 1, Running Gazebo SITL in HEADLESS mode"
-	nohup su -c /home/user/QGroundControl.AppImage user & \
+	nohup su -c "/home/user/QGroundControl.AppImage --appimage-extract-and-run" user & \
 		HEADLESS=${HEADLESS} make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${SITL_MODEL}__${SITL_ENV}
 else
 	echo "HEADLESS is ${HEADLESS}: Not 1, Running Gazebo SITL in normal mode"
