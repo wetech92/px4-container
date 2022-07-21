@@ -3,8 +3,6 @@ ARG BASETAG
 
 FROM ${BASEIMAGE}:${BASETAG} as stage_apt
 
-# COPY /scripts/sources.list /etc/apt/sources.list
-
 ENV \
     DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
@@ -29,7 +27,6 @@ FROM ${BASEIMAGE}:${BASETAG} as stage_deps
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
 
-# COPY /scripts/sources.list /etc/apt/sources.list
 COPY Gazebo/aptdeps.txt /tmp/aptdeps.txt
 
 RUN \
@@ -40,18 +37,25 @@ RUN \
     && rm -rf /tmp/*
 
 
-# FROM stage_deps as stage_rnode
+FROM stage_deps as stage_rnode
 
-# SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# COPY ROS2-node /root/ROS2-node
+COPY Gazebo/tmp/gazebo_ros /root/gazebo_ros
+COPY Gazebo/tmp/ros_ws /root/ros_ws
 
-# RUN colcon build \
-# 		--build-base ~/ROS2-node/build \
-# 		--install-base ~/ROS2-node/install \
-# 		--base-paths ~/ROS2-node/src \
-# 		--packages-select g_camera_lidar_sp
 
+RUN \
+	source "/opt/ros/galactic/setup.bash" \
+	colcon build \
+		--build-base ~/ros_ws/build \
+		--install-base ~/ros_ws/install \
+		--base-paths ~/ros_ws/src \
+	&& colcon build \
+		--build-base ~/gazebo_ros/build \
+		--install-base ~/gazebo_ros/install \
+		--base-paths ~/gazebo_ros/src
+		
 
 FROM stage_deps as stage_px4sitl
 
@@ -83,12 +87,14 @@ ENV \
 	PATH=/root/.local/bin:$PATH
 	# http://$(hostname -I | cut -f1 -d' '):11345
 
-# COPY --from=stage_rnode /root/ROS2-node /root/ROS2-node
-
+COPY --from=stage_rnode /root/gazebo_ros /root/gazebo_rose
+COPY --from=stage_rnode /root/ros_ws /root/ros_ws
 COPY --from=stage_px4sitl /root/PX4-Autopilot /root/PX4-Autopilot
 
-COPY Gazebo/tmp /root
 COPY Gazebo/tmp/PX4-Autopilot/Tools/sitl_gazebo/models /root/.gazebo/models
+
+RUN \
+	chown -R user:user /home/user
 
 WORKDIR /root
 
