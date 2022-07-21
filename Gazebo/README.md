@@ -61,3 +61,22 @@ docker run -it --rm \
    --privileged \
    <IMAGE_NAME>:<TAG> bash
 ```
+
+### 2.4 With WSLg GPU Acceleration Support
+
+```shell
+docker run -it --rm \
+   -e DISPLAY=$DISPLAY \
+   -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+   -e QT_NO_MITSHM=1 \
+   -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+   -e LD_LIBRARY_PATH=/usr/lib/wsl/lib \
+   -v /tmp/.X11-unix:/tmp/.X11-unix \
+   -v /mnt/wslg:/mnt/wslg \
+   -v /usr/lib/wsl:/usr/lib/wsl \
+   --device=/dev/dxg \
+   --net host \
+   --gpus all \
+   --privileged \
+   <IMAGE_NAME>:<TAG> bash
+```
