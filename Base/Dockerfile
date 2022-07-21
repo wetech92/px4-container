@@ -175,13 +175,9 @@ FROM stage_mid as stage_px4git
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-COPY PX4-Autopilot /tmp/PX4-Autopilot
-
-RUN git clone -b v1.13.0 https://github.com/PX4/PX4-Autopilot.git ~/PX4-Autopilot \
-	&& cp -r /tmp/PX4-Autopilot/msg ~/PX4-Autopilot \    
+RUN git clone -b v1.13.0 https://github.com/PX4/PX4-Autopilot.git ~/PX4-Autopilot \ 
 	&& cd ~/PX4-Autopilot \
-	&& git submodule update --init --recursive \
-	&& rm -rf /tmp/*
+	&& git submodule update --init --recursive
 
 
 FROM stage_mid as stage_final
