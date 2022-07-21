@@ -137,7 +137,7 @@ COPY --from=stage_python /root/.local /root/.local
 ENV PATH=/root/.local/bin:$PATH
 
 RUN \
-    echo source "/opt/ros/$ROS_DISTRO/setup.bash" >> /root/.bashrc \
+    echo source "/opt/ros/galactic/setup.bash" >> /root/.bashrc \
     && echo "source /usr/share/colcon_cd/function/colcon_cd.sh" >> /root/.bashrc \
     && echo "export _colcon_cd_root=~/ros2_install" >> /root/.bashrc
 
@@ -149,13 +149,14 @@ RUN colcon mixin add default \
 		https://raw.githubusercontent.com/colcon/colcon-metadata-repository/master/index.yaml \
 	&& colcon metadata update
 
-# INSTALL px4_ros_com
-COPY px4_ros_com_ros2 /tmp/px4_ros_com_ros2
+# INSTALL px4_ros
+COPY px4_ros /tmp/px4_ros
 
-RUN git clone https://github.com/PX4/px4_ros_com.git ~/px4_ros_com_ros2/src/px4_ros_com \
-	&& git clone https://github.com/PX4/px4_msgs.git ~/px4_ros_com_ros2/src/px4_msgs \
-	&& cp -r /tmp/px4_ros_com_ros2/src/px4_msgs/msg ~/px4_ros_com_ros2/src/px4_msgs \
-    && cp -r /tmp/px4_ros_com_ros2/src/rtps_command ~/px4_ros_com_ros2/src
+RUN git clone https://github.com/PX4/px4_ros_com.git ~/px4_ros/src/px4_ros_com \
+	&& git clone https://github.com/PX4/px4_msgs.git ~/px4_ros/src/px4_msgs \
+	&& cp -r /tmp/px4_ros/src/px4_msgs/msg ~/px4_ros/src/px4_msgs \
+    && cp -r /tmp/px4_ros/src/rtps_command ~/px4_ros/src \
+    && rm -rf /tmp/*
 
 
 FROM stage_mid as stage_colcon
@@ -164,9 +165,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN \
     source /opt/ros/galactic/setup.bash \
-        && colcon build --build-base ~/px4_ros_com_ros2/build \
-        --install-base ~/px4_ros_com_ros2/install \
-        --base-paths ~/px4_ros_com_ros2/src \
+        && colcon build --build-base ~/px4_ros/build \
+        --install-base ~/px4_ros/install \
+        --base-paths ~/px4_ros/src \
         --symlink-install \
         --event-handlers console_direct+
 
@@ -185,7 +186,7 @@ FROM stage_mid as stage_final
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 COPY --from=stage_px4git /root/PX4-Autopilot /root/PX4-Autopilot
-COPY --from=stage_colcon /root/px4_ros_com_ros2 /root/px4_ros_com_ros2
+COPY --from=stage_colcon /root/px4_ros /root/px4_ros
 COPY Base/QGroundControl.AppImage /home/user/QGroundControl.AppImage
 
 RUN chmod +x /home/user/QGroundControl.AppImage
@@ -210,8 +211,5 @@ ENV \
 
 EXPOSE 14556/udp
 EXPOSE 14557/udp
-
-# COPY Base/entrypoint.sh /usr/local/bin/entrypoint.sh
-# # # ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 CMD ["/bin/bash"]
