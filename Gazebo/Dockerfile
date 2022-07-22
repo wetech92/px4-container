@@ -78,16 +78,16 @@ ENV \
 	ROS_DISTRO=galactic \
 	QT_X11_NO_MITSHM=1 \
 	NVIDIA_VISIBLE_DEVICES=all \
-	NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute,display \
-	PX4_SIM_HOST_ADDR=localhost \
-	SITL_MODEL=iris \
-	SITL_ENV=baylands \
-	GAZEBO_MASTER_URI=http://localhost:11345 \
-	rebuild=false \
-	PATH=/root/.local/bin:$PATH
+	NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute,display
+	# PX4_SIM_HOST_ADDR=localhost \
+	# SITL_MODEL=iris \
+	# SITL_ENV=baylands \
+	# GAZEBO_MASTER_URI=http://localhost:11345 \
+	# rebuild=false \
+	# PATH=/root/.local/bin:$PATH
 	# http://$(hostname -I | cut -f1 -d' '):11345
 
-COPY --from=stage_rnode /root/gazebo_ros /root/gazebo_rose
+COPY --from=stage_rnode /root/gazebo_ros /root/gazebo_ros
 COPY --from=stage_rnode /root/ros_ws /root/ros_ws
 COPY --from=stage_px4sitl /root/PX4-Autopilot /root/PX4-Autopilot
 
