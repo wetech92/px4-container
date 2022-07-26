@@ -1,0 +1,54 @@
+
+    <?xml version="1.0" ?>
+<sdf version="1.7">
+  <model name='QTR_inha'>
+    <include>
+      <uri>model://QTR</uri>
+    </include>
+    <include>
+      <uri>model://realsense_d455</uri>
+      <pose>0.95 -0.015 0.18 0 0 0</pose>
+    </include>
+    <joint name="realsenese_d455_joint" type="revolute">
+      <child>realsense_d455::link</child>
+      <parent>QTR::base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <upper>0</upper>
+          <lower>0</lower>
+        </limit>
+      </axis>
+    </joint>
+    <include>
+      <uri>model://rplidar_a3</uri>
+      <pose>0.736 -0.012 0.096 0 3.141592 3.141592</pose>
+    </include>
+    <joint name="rplidar_a3" type="revolute">
+      <child>rplidar_a3::link</child>
+      <parent>QTR::base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <upper>0</upper>
+          <lower>0</lower>
+        </limit>
+      </axis>
+    </joint>
+    <include>
+      <uri>model://gps</uri>
+      <pose>0.1 0 0.8 0 0 0</pose>
+    </include>
+    <joint name='gps_joint' type='fixed'>
+      <child>gps::link</child>
+      <parent>QTR::base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <upper>0</upper>
+          <lower>0</lower>
+        </limit>
+      </axis>
+    </joint>
+  </model>
+</sdf>
