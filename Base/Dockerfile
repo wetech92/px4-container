@@ -10,7 +10,7 @@ ENV \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
 
-# COPY /scripts/sources.list /etc/apt/sources.list
+COPY /scripts/sources.list /etc/apt/sources.list
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
 	&& echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
@@ -31,7 +31,7 @@ FROM ${BASEIMAGE}:${BASETAG} as stage_deps
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# COPY /scripts/sources.list /etc/apt/sources.list
+COPY /scripts/sources.list /etc/apt/sources.list
 
 ENV \
     DEBIAN_FRONTEND=noninteractive \
@@ -139,7 +139,7 @@ ENV PATH=/root/.local/bin:$PATH
 RUN \
     echo source "/opt/ros/galactic/setup.bash" >> /root/.bashrc \
     && echo "source /usr/share/colcon_cd/function/colcon_cd.sh" >> /root/.bashrc \
-    && echo "export _colcon_cd_root=~/ros2_install" >> /root/.bashrc
+    && echo "export _colcon_cd_root=~/ros2_install" >> /root/.bashrcec
 
 # setup colcon mixin and metadata
 RUN colcon mixin add default \
@@ -149,19 +149,32 @@ RUN colcon mixin add default \
 		https://raw.githubusercontent.com/colcon/colcon-metadata-repository/master/index.yaml \
 	&& colcon metadata update
 
-# INSTALL px4_ros
-COPY px4_ros /tmp/px4_ros
 
-RUN git clone https://github.com/PX4/px4_ros_com.git ~/px4_ros/src/px4_ros_com \
-	&& git clone https://github.com/PX4/px4_msgs.git ~/px4_ros/src/px4_msgs \
-	&& cp -r /tmp/px4_ros/src/px4_msgs/msg ~/px4_ros/src/px4_msgs \
-    && cp -r /tmp/px4_ros/src/rtps_command ~/px4_ros/src \
-    && rm -rf /tmp/*
-
-
-FROM stage_mid as stage_colcon
+FROM stage_mid as stage_px4
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN git clone -b v1.13.0 https://github.com/PX4/PX4-Autopilot.git ~/PX4-Autopilot \ 
+	&& cd ~/PX4-Autopilot \
+	&& git submodule update --init --recursive
+
+COPY PX4-Autopilot/msg /root/PX4-Autopilot/msg
+COPY px4_ros /tmp/px4_ros
+
+RUN \
+    git clone https://github.com/PX4/px4_ros_com.git ~/px4_ros/src/px4_ros_com \
+    && git clone https://github.com/PX4/px4_msgs.git ~/px4_ros/src/px4_msgs \
+    && cp -r /tmp/px4_ros/src/* ~/px4_ros/src \
+    && rm -rf /root/px4_ros/src/px4_msgs/msg/* \
+        /root/px4_ros/src/px4_ros_com/src/examples \
+        /root/px4_ros/src/px4_ros_com/launch \
+    && python3 /root/PX4-Autopilot/msg/tools/uorb_to_ros_urtps_topics.py \
+        -i /root/PX4-Autopilot/msg/tools/urtps_bridge_topics.yaml \
+        -o /root/px4_ros/src/px4_ros_com/templates/urtps_bridge_topics.yaml \
+    && python3 /root/PX4-Autopilot/msg/tools/uorb_to_ros_msgs.py \
+        /root/PX4-Autopilot/msg/ \
+        /root/px4_ros/src/px4_msgs/msg/ \
+    && rm -rf /tmp/*
 
 RUN \
     source /opt/ros/galactic/setup.bash \
@@ -172,21 +185,12 @@ RUN \
         --event-handlers console_direct+
 
 
-FROM stage_mid as stage_px4git
-
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-RUN git clone -b v1.13.0 https://github.com/PX4/PX4-Autopilot.git ~/PX4-Autopilot \ 
-	&& cd ~/PX4-Autopilot \
-	&& git submodule update --init --recursive
-
-
 FROM stage_mid as stage_final
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-COPY --from=stage_px4git /root/PX4-Autopilot /root/PX4-Autopilot
-COPY --from=stage_colcon /root/px4_ros /root/px4_ros
+COPY --from=stage_px4 /root/PX4-Autopilot /root/PX4-Autopilot
+COPY --from=stage_px4 /root/px4_ros /root/px4_ros
 COPY Base/QGroundControl.AppImage /home/user/QGroundControl.AppImage
 
 RUN chmod +x /home/user/QGroundControl.AppImage
