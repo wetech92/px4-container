@@ -10,8 +10,6 @@ ENV \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
 
-# COPY /scripts/sources.list /etc/apt/sources.list
-
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
 	&& echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
 	&& apt-get update
@@ -53,9 +51,11 @@ RUN \
 	&& python3 -m pip install --user \
 		$(sed '$!d' /tmp/pydeps.txt)
 
-RUN git clone https://github.com/microsoft/AirSim.git -b v1.8.0-linux /root/AirSim \
+RUN git clone https://github.com/microsoft/AirSim.git -b v1.8.1 /root/AirSim \
 	&& /root/AirSim/setup.sh \
 	&& /root/AirSim/build.sh
+
+COPY AirSim/ros2/airsim_ros_wrapper.cpp /root/AirSim/ros2/src/airsim_ros_pkgs/src/airsim_ros_wrapper.cpp
 
 WORKDIR /root/AirSim/ros2
 
@@ -72,10 +72,10 @@ FROM stage_deps as stage_rnode
 SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
 
 RUN colcon build \
-		--build-base ~/ROS2-node/build \
-		--install-base ~/ROS2-node/install \
-		--base-paths ~/ROS2-node/src \
-		--packages-select g_camera_lidar_sp
+		--build-base ~/ros_ws/build \
+		--install-base ~/ros_ws/install \
+		--base-paths ~/ros_ws/src \
+		--symlink-install
 
 
 FROM stage_deps as stage_px4sitl
@@ -84,7 +84,6 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN \
 	make -C /root/PX4-Autopilot px4_sitl_rtps
-
 
 
 FROM stage_deps as stage_final
@@ -99,9 +98,6 @@ ENV \
 	QT_X11_NO_MITSHM=1 \
 	NVIDIA_VISIBLE_DEVICES=all \
 	NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute,display \
-	SITL_MODEL=iris \
-	PX4_SIM_HOST_ADDR=localhost \
-	rebuild=false \
 	PATH=/root/.local/bin:$PATH
 
 COPY --from=stage_airsim /root/AirSim/AirLib /root/AirSim/AirLib
@@ -111,11 +107,14 @@ COPY --from=stage_airsim /root/AirSim/external /root/AirSim/external
 COPY --from=stage_airsim /root/AirSim/ros2 /root/AirSim/ros2
 COPY --from=stage_airsim /root/.local /root/.local
 
-COPY --from=stage_rnode /root/ROS2-node /root/ROS2-node
+COPY --from=stage_rnode /root/ros_ws /root/ros_ws
 
 COPY --from=stage_px4sitl /root/PX4-Autopilot /root/PX4-Autopilot
 
 WORKDIR /root
+
+RUN \
+	chown -R user:user /home/user
 
 COPY QGroundControl.org /home/user/.config/QGroundControl.org
 COPY scripts/initRepo.sh /root/tools/initRepo.sh
