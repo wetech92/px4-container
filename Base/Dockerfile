@@ -158,7 +158,7 @@ RUN git clone -b v1.13.0 https://github.com/PX4/PX4-Autopilot.git ~/PX4-Autopilo
 	&& cd ~/PX4-Autopilot \
 	&& git submodule update --init --recursive
 
-COPY PX4-Autopilot/msg /root/PX4-Autopilot/msg
+COPY PX4-Autopilot /root/PX4-Autopilot
 COPY px4_ros /tmp/px4_ros
 
 RUN \
