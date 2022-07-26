@@ -134,12 +134,6 @@ install(TARGETS micrortps_agent
         INCLUDES DESTINATION include
 )
 
-# Install launch files
-install(DIRECTORY
-  launch
-  DESTINATION share/${PROJECT_NAME}
-)
-
 ############
 # Testing ##
 ############
