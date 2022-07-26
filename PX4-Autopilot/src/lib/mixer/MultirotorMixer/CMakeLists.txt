@@ -54,7 +54,7 @@ set(geometry_files
 	quad_y.toml
 	tri_y.toml
 	twin_engine.toml
-	hexa_qtr.toml
+	hex_qtr.toml
 )
 
 set(geometries_list)
