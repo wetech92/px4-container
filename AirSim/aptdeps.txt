@@ -1,4 +1,10 @@
+gstreamer1.0-plugins-bad
+gstreamer1.0-libav
+gstreamer1.0-gl
 libyaml-cpp-dev
+libsdl2-dev
+libqt5gui5
+libudev-dev
 llvm*
 python3-yaml
 ros-galactic-image-transport
@@ -6,3 +12,6 @@ ros-galactic-mavros*
 ros-galactic-tf2-sensor-msgs
 ros-galactic-tf2-geometry-msgs
 ros-galactic-vision-opencv
+speech-dispatcher
+patchelf
+x-window-system
