@@ -41,8 +41,8 @@ FROM stage_deps as stage_rnode
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-COPY Gazebo/tmp/gazebo_ros /root/gazebo_ros
-COPY Gazebo/tmp/ros_ws /root/ros_ws
+COPY Gazebo/gazebo_ros /root/gazebo_ros
+COPY Gazebo/ros_ws /root/ros_ws
 
 
 RUN \
@@ -61,7 +61,8 @@ FROM stage_deps as stage_px4sitl
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
 
-COPY Gazebo/tmp/PX4-Autopilot /root/PX4-Autopilot
+COPY Gazebo/models /root/PX4-Autopilot/Tools/sitl_gazebo/models
+COPY Gazebo/worlds /root/PX4-Autopilot/Tools/sitl_gazebo/worlds
 
 RUN \
 	make -C /root/PX4-Autopilot px4_sitl_rtps
@@ -78,20 +79,15 @@ ENV \
 	ROS_DISTRO=galactic \
 	QT_X11_NO_MITSHM=1 \
 	NVIDIA_VISIBLE_DEVICES=all \
-	NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute,display
-	# PX4_SIM_HOST_ADDR=localhost \
-	# SITL_MODEL=iris \
-	# SITL_ENV=baylands \
-	# GAZEBO_MASTER_URI=http://localhost:11345 \
-	# rebuild=false \
-	# PATH=/root/.local/bin:$PATH
-	# http://$(hostname -I | cut -f1 -d' '):11345
+	NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute,display \
+	REBUILD=false \
+	PATH=/root/.local/bin:$PATH
 
 COPY --from=stage_rnode /root/gazebo_ros /root/gazebo_ros
 COPY --from=stage_rnode /root/ros_ws /root/ros_ws
 COPY --from=stage_px4sitl /root/PX4-Autopilot /root/PX4-Autopilot
 
-COPY Gazebo/tmp/PX4-Autopilot/Tools/sitl_gazebo/models /root/.gazebo/models
+COPY Gazebo/models /root/.gazebo/models
 
 RUN \
 	chown -R user:user /home/user
