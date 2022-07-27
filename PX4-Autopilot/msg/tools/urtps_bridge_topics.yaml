@@ -74,3 +74,11 @@ rtps:
     receive: true
   - msg:     reinforce_flag
     receive: true
+  - msg:     vehicle_local_position
+    send: true
+  - msg:     vehicle_attitude
+    send: true
+  - msg:     hover_thrust_estimate
+    send: true
+  - msg:     takeoff_status
+    send: true
