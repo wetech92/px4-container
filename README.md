@@ -9,7 +9,6 @@
 
 - This is a repository containing files to build `kestr3l/px4` images
 - Those images were built to implement simulator system for Integrated Learning Environment (ILE)
-<br/>
 
 ### 1.2 Image Tags
 
@@ -18,19 +17,16 @@
       -Base image of `airsim` and `gazebo` image
    - `kestr3l/px4:airsim`: Image to run PX4 AirSim SITL
    - `kestr3l/px4:gazebo`: Image to run PX4 Gazebo SITL
-<br/>
 
 - Minor tags of image are as following:
    - `gpu`: Image for Machine Learning, Reinforced Learning and etc.
       - Based on `nvidia/cuda:11.3.1-cudnn8-devel-ubuntu20.04`
    - `cpu`: Image withut GPU support. Intended to be used on device with no GPU
       - Based on `ubuntu:20.04`
-<br/>
 
 - Naming rule of image is as `kestr3l/px4:\<MAJOR\>-\<MINOR\>-\<VERSION\>`
    - Example: `kestr3l/px4:airsim-gpu-0.0.2`
    - Image for AirSim SITL with GPU support, version 0.0.2
-<br/>
 
 ### 1.3 Branches and Miscellaneous
 
@@ -42,7 +38,6 @@
    - You can also downlaod prebuilt images from [Docker Hub](https://hub.docker.com/r/kestr3l/px4)
 - All images do not use ENTRYPOINT options for ease of development
    - You can override any startup script when running a container
-<br/>
 
 ## 2. Build Image
 
@@ -54,7 +49,6 @@
    - Host must have Nvidia GPU Driver installed (=>418.71.07, >=Kepler)
    - Host must have [nvidia-docker-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed
       - Use `nvidia-docker2`
-<br/>
 
 - Install Nvidia GPU Driver 470 by following command:
    - You don't need to do this on WSL2.
@@ -63,11 +57,9 @@
 ```shell
 $ sudo apt install nvidia-driver-470
 ```
-<br/>
 
 - Host must have at least 20 GB of smpty storage (Recommended)
 - Host must be X86 device
-<br/>
 
 ### 2.2 Build Command
 
@@ -94,7 +86,6 @@ $ DOCKER_BUILDKIT=1 docker build --no-cache \
    - `-f`: Designate target dockerfile to build image
       - Ex. `-f /Base/Dockerfile`
    - `.`: Directory to start build. Which is, where to read files from
-<br/>
 
 #### 2.2.2 Setting `ARG` values
 
@@ -107,13 +98,11 @@ $ DOCKER_BUILDKIT=1 docker build --no-cache \
    - `PROCVER`: Whether a image is GPU version of CPU version
       - Must be one from `gpu` or `cpu`
       - Value other than them will provoke a build error.
-<br/>
 
 ### 2.3 Build Steps and Example
 
 - Case-specific build example commands are available on each `README.md` in major tag folders
 - Block diagrams of multi-stage build process are also available in there as an image and draw.io file
-<br/>
 
 ## 3. Running Container
 
