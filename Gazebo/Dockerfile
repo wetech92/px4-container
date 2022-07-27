@@ -87,10 +87,9 @@ COPY --from=stage_rnode /root/gazebo_ros /root/gazebo_ros
 COPY --from=stage_rnode /root/ros_ws /root/ros_ws
 COPY --from=stage_px4sitl /root/PX4-Autopilot /root/PX4-Autopilot
 
-COPY Gazebo/models /root/.gazebo/models
-
 RUN \
-	chown -R user:user /home/user
+	ln -s /root/PX4-Autopilot/Tools/sitl_gazebo/models/ models \
+	&& chown -R user:user /home/user
 
 WORKDIR /root
 
