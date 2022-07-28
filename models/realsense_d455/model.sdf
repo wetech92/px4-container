@@ -1,0 +1,108 @@
+<?xml version="1.0"?>
+<sdf version="1.7">
+  <model name="realsense_d455">
+    <pose>0 0 0.035 0 0 3.14159265359</pose>
+    <static>true</static>
+    <link name="link">
+      <inertial>
+        <pose>0.1 0.025 0.025 0 0 0</pose>
+        <mass>0.001</mass>
+        <inertia>
+          <ixx>0.003881243</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.000498940</iyy>
+          <iyz>0</iyz>
+          <izz>0.003879257</izz>
+        </inertia>
+      </inertial>
+     <visual name="visual">
+      <pose>-0.01 0 0 1.57079632679 0 1.57079632679</pose>
+        <geometry>
+          <mesh>
+            <uri>model://realsense_d455/mesh/realsense_d455.obj</uri>
+            <scale>0.001 0.001 0.001 </scale>
+          </mesh>
+          <material>
+            <script>
+              <name>Gazebo/White</name>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+          </material>
+        </geometry>
+      </visual>
+      <sensor type="camera" name="realsense_d455_RGB">
+          <update_rate>60</update_rate>
+          <visualize>true</visualize>
+          <camera name="realsense_d455_RGB">
+            <horizontal_fov>1.57</horizontal_fov>
+            <image>
+              <width>1920</width>
+              <height>1080</height>
+              <format>R8G8B8</format>
+            </image>
+            <distortion>
+              <k1>0.0</k1>
+              <k2>0.0</k2>
+              <k3>0.0</k3>
+              <p1>0.0</p1>
+              <p2>0.0</p2>
+              <center>0.5 0.5</center>
+            </distortion>
+            <noise>
+              <type>gaussian</type>
+              <mean>0.001</mean>
+              <stddev>0.007</stddev>
+            </noise>
+          </camera>
+          <plugin name="ros_RGB_camera_plugin" filename="libgazebo_ros_camera.so">
+            <ros>
+              <namespace>realsense_d455_RGB</namespace>
+              <remapping>realsense_d455_RGB/image_raw:=image</remapping>
+              <remapping>realsense_d455_RGB/camera_info:=camera_info</remapping>
+            </ros>
+            <camera_name>realsense_d455_RGB</camera_name>
+            <hack_baseline>0.07</hack_baseline>
+          </plugin>
+        </sensor>
+      <!-- TEST
+      <sensor type="depth" name="realsense_d455_depth">
+          <update_rate>30</update_rate>
+          <visualize>false</visualize>
+          <camera name="realsense_d455_depth">
+            <horizontal_fov>1.57</horizontal_fov>
+            <image>
+              <width>1280</width>
+              <height>720</height>
+              <format>R8G8B8</format>
+            </image>
+            <distortion>
+              <k1>0.1</k1>
+              <k2>0.2</k2>
+              <k3>0.3</k3>
+              <p1>0.4</p1>
+              <p2>0.5</p2>
+              <center>0.5 0.5</center>
+            </distortion>
+            <noise>
+              <type>gaussian</type>
+              <mean>0.001</mean>
+              <stddev>0.007</stddev>
+            </noise>
+          </camera>
+          <plugin name="ros_RGB_camera_plugin" filename="libgazebo_ros_camera.so">
+            <ros>
+              <namespace>realsense_d455_depth</namespace>
+              <remapping>realsense_d455_depth/image_depth:=realsense_d455_depth_image_depth</remapping>
+              <remapping>realsense_d455_depth/camera_info_depth:=realsense_d455_depth_info</remapping>
+              <remapping>realsense_d455_depth/points:=realsense_d455_depth_points</remapping>
+            </ros>
+            <camera_name>realsense_d455_depth</camera_name>
+            <hack_baseline>0.07</hack_baseline>
+            <min_depth>0.4</min_depth>
+          </plugin>
+        </sensor>
+        -->
+    </link>
+  </model>
+</sdf>
