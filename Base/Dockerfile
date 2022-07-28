@@ -12,7 +12,8 @@ ENV \
 
 COPY /scripts/sources.list /etc/apt/sources.list
 
-RUN rm -f /etc/apt/apt.conf.d/docker-clean \
+RUN \
+    rm -f /etc/apt/apt.conf.d/docker-clean \
 	&& echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
 	&& apt-get update
 
@@ -31,14 +32,13 @@ FROM ${BASEIMAGE}:${BASETAG} as stage_deps
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-COPY /scripts/sources.list /etc/apt/sources.list
-
 ENV \
     DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     ROS_DISTRO=galactic
 
+COPY /scripts/sources.list /etc/apt/sources.list
 COPY Base/aptdeps.txt /tmp/aptdeps.txt
 
 RUN \
@@ -88,7 +88,8 @@ FROM stage_deps as stage_fastrtps
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN git clone --recursive https://github.com/eProsima/Fast-DDS-Gen.git -b v1.0.4 /tmp/Fast-RTPS-Gen-1.0.4 \
+RUN \
+    git clone --recursive https://github.com/eProsima/Fast-DDS-Gen.git -b v1.0.4 /tmp/Fast-RTPS-Gen-1.0.4 \
 	&& cd /tmp/Fast-RTPS-Gen-1.0.4 \
 	&& gradle assemble
 
@@ -142,7 +143,8 @@ RUN \
     && echo "export _colcon_cd_root=~/ros2_install" >> /root/.bashrcec
 
 # setup colcon mixin and metadata
-RUN colcon mixin add default \
+RUN \
+    colcon mixin add default \
 		https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml \
 	&& colcon mixin update \
 	&& colcon metadata add default \
@@ -202,7 +204,8 @@ RUN \
 RUN \
     mkdir /tmp/.X11-unix && \
 	chmod 1777 /tmp/.X11-unix && \
-	chown -R root:root /tmp/.X11-unix
+	chown -R root:root /tmp/.X11-unix \
+  && git config --global --add safe.directory "*"
 
 ENV DISPLAY :99
 
