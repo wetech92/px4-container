@@ -7,7 +7,7 @@
       <pose>0 0 0 0 0 2.8</pose>
       <inertial>
         <pose>0 0 0 0 0 0</pose>
-        <mass>0.01</mass>
+        <mass>0.001</mass>
         <inertia>
           <ixx>4.15e-6</ixx>
           <ixy>0</ixy>
@@ -54,7 +54,7 @@
           <plugin name="ros_lidar_plugin" filename="libgazebo_ros_ray_sensor.so">
             <ros>
               <namespace>/rplidar_a3</namespace>
-              <argument>--ros-args --remap ~/out:=laserscan</argument>
+              <remapping>~/out:=laserscan</remapping>
             </ros>
             <output_type>sensor_msgs/LaserScan</output_type>
           </plugin>
@@ -62,3 +62,5 @@
     </link>
   </model>
 </sdf>
+
+<!-- vim: set et fenc= ff=unix sts=0 sw=2 ts=2 : -->
