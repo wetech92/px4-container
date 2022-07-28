@@ -175,6 +175,7 @@ set(models
 	tiltrotor
 	typhoon_h480
 	typhoon_h480_ctrlalloc
+	typhoon_inha
 	uuv_bluerov2_heavy
 	uuv_hippocampus
 	QTR_inha
@@ -191,6 +192,7 @@ set(worlds
 	windy
 	yosemite
 	grass
+	grass_dryden
 )
 
 set(all_posix_vmd_make_targets)
