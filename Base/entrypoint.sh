@@ -25,6 +25,3 @@ if [ -n "${LOCAL_USER_ID}" ]; then
 else
 	exec "$@"
 fi
-
-# Run QGC
-su -c /home/user/QGroundControl.AppImage user &

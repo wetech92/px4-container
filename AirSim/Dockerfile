@@ -113,10 +113,6 @@ COPY --from=stage_px4sitl /root/PX4-Autopilot /root/PX4-Autopilot
 
 WORKDIR /root
 
-RUN \
-	chown -R user:user /home/user
-
-COPY QGroundControl.org /home/user/.config/QGroundControl.org
 COPY scripts/initRepo.sh /root/tools/initRepo.sh
 
 COPY AirSim/entrypoint.sh /usr/local/bin/entrypoint.sh

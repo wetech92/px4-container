@@ -88,12 +88,10 @@ COPY --from=stage_rnode /root/ros_ws /root/ros_ws
 COPY --from=stage_px4sitl /root/PX4-Autopilot /root/PX4-Autopilot
 
 RUN \
-	ln -s /root/PX4-Autopilot/Tools/sitl_gazebo/models/ models \
-	&& chown -R user:user /home/user
+	ln -s /root/PX4-Autopilot/Tools/sitl_gazebo/models/ models
 
 WORKDIR /root
 
-COPY QGroundControl.org /home/user/.config/QGroundControl.org
 COPY scripts/initRepo.sh /root/tools/initRepo.sh
 
 COPY Gazebo/entrypoint.sh /usr/local/bin/entrypoint.sh

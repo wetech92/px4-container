@@ -193,9 +193,6 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 COPY --from=stage_px4 /root/PX4-Autopilot /root/PX4-Autopilot
 COPY --from=stage_px4 /root/px4_ros /root/px4_ros
-COPY Base/QGroundControl.AppImage /home/user/QGroundControl.AppImage
-
-RUN chmod +x /home/user/QGroundControl.AppImage
 
 RUN \
   useradd --shell /bin/bash -u 1001 -c "" -m user \

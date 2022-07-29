@@ -36,13 +36,11 @@ if ${REBUILD}; then
 fi
 
 
-# Run QGC & Gazebo SITL
+# Run Gazebo SITL
 if [ ${HEADLESS} -eq 1]; then
 	echo "HEADLESS is ${HEADLESS}: 1, Running Gazebo SITL in HEADLESS mode"
-	nohup su -c "/home/user/QGroundControl.AppImage --appimage-extract-and-run" user & \
-		HEADLESS=${HEADLESS} make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${SITL_MODEL}__${SITL_ENV}
+	HEADLESS=${HEADLESS} make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${SITL_MODEL}__${SITL_ENV}
 else
 	echo "HEADLESS is ${HEADLESS}: Not 1, Running Gazebo SITL in normal mode"
-	nohup su -c "/home/user/QGroundControl.AppImage --appimage-extract-and-run" user & \
-		make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${SITL_MODEL}__${SITL_ENV}
+	make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${SITL_MODEL}__${SITL_ENV}
 fi
