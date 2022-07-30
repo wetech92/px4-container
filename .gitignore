@@ -41,3 +41,5 @@ $RECYCLE.BIN/
 *.msp
 # Windows shortcuts
 *.lnk
+# Python
+__pycache__
