@@ -1,0 +1,41 @@
+{
+    "LocalHostIP": "AIRSIM_IP",
+    "SettingsVersion": 1.2,
+    "SimMode": "Multirotor",
+    "ClockType": "SteppableClock",
+    "Vehicles": {
+        "PX4": {
+            "LocalHostIp": "AIRSIM_IP",
+            "LogViewerHostIp": "PX4_IP",
+            "QgcHostIp": "QGC_IP",
+            "SitlIP": "PX4_IP",
+            "UdpIp": "PX4_IP",           
+            "VehicleType": "PX4Multirotor",
+            "UseSerial": false,
+            "LockStep": true,
+            "UseTcp": true,
+            "TcpPort": 4560,
+            "ControlPortLocal": 14540,
+            "ControlPortRemote": 14580,
+            "Sensors":{
+                "Barometer":{
+                    "SensorType": 1,
+                    "Enabled": true,
+                    "PressureFactorSigma": 0.0001825
+                }
+            },
+            "Parameters": {
+                "NAV_RCL_ACT": 0,
+                "NAV_DLL_ACT": 0,
+                "COM_OBL_ACT": 1,
+                "LPE_LAT": 37.384215,
+                "LPE_LON": 126.656648
+            }
+        }
+    },
+    "OriginGeopoint": {
+        "Latitude": 37.384215,
+        "Longitude": 126.656648,
+        "Altitude": 0
+    }
+}

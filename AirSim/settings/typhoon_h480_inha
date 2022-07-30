@@ -1,0 +1,156 @@
+{
+    "SeeDocsAt": "https://github.com/Microsoft/AirSim/blob/master/docs/settings_json.md",
+    "SettingsVersion": 1.2,
+	"ClockType": "SteppableClock",
+    "SimMode": "Multirotor",
+    "Vehicles": {
+        "TyphoonH480": {
+			"LocalHostIp": "AIRSIM_IP",
+            "LogViewerHostIp": "PX4_IP",
+            "QgcHostIp": "QGC_IP",
+            "SitlIP": "PX4_IP",
+            "UdpIp": "PX4_IP",
+            "VehicleType": "PX4Multirotor",
+			"UseSerial": false,
+            "LockStep": true,
+            "UseTcp": true,
+            "TcpPort": 4560,
+            "ControlPortLocal": 14540,
+            "ControlPortRemote": 14580,
+            "AutoCreate": true,
+			"Parameters": {
+                "NAV_RCL_ACT": 0,
+                "NAV_DLL_ACT": 0,
+                "COM_OBL_ACT": 1,
+                "LPE_LAT": 37.384215,
+                "LPE_LON": 126.656648
+            },
+            "Sensors": {
+                "RPLIDAR_A3": {
+                    "SensorType": 6,
+                    "Enabled" : true,
+                    "NumberOfChannels": 1,
+                    "RotationsPerSecond": 10,
+                    "Range":4,
+                    "PointsPerSecond": 10000,
+					
+                    "X": 0, "Y": 0, "Z": -1,
+                    "Roll": 0, "Pitch": 90, "Yaw" : 0,
+					
+                    "VerticalFOVUpper": 0,
+                    "VerticalFOVLower": 0,
+                    "HorizontalFOVStart": 0,
+                    "HorizontalFOVEnd": 0,
+					
+                    "DrawDebugPoints": true,
+                    "DataFrame": "SensorLocalFrame"
+                }	
+			},
+			"Cameras": {
+				"OptCamera": {
+					"CaptureSettings": [
+						{
+						"ImageType": 0,
+						"Width": 1280,
+						"Height":720,
+						"FOV_Degrees": 90,
+						
+						"AutoExposureSpeed": 100,
+						"AutoExposureBias": 0,
+						"AutoExposureMaxBrightness": 0.64,
+						"AutoExposureMinBrightness": 0.03,
+						
+						"MotionBlurAmount": 0,
+						"TargetGamma": 1.0
+						}
+					],
+					"NoiseSettings": [
+						{
+						"Enabled": true,
+						"ImageType": 0,
+
+						"RandContrib": 0.2,
+						"RandSpeed": 100000.0,
+						"RandSize": 500.0,
+						"RandDensity": 2,
+
+						"HorzWaveContrib":0.03,
+						"HorzWaveStrength": 0.08,
+						"HorzWaveVertSize": 1.0,
+						"HorzWaveScreenSize": 1.0,
+
+						"HorzNoiseLinesContrib": 1.0,
+						"HorzNoiseLinesDensityY": 0.01,
+						"HorzNoiseLinesDensityXY": 0.5,
+
+						"HorzDistortionContrib": 1.0,
+						"HorzDistortionStrength": 0.002
+						}
+					],
+					"Gimbal": {
+					  "Stabilization": 1,
+					  "Pitch": 0, "Roll": 0
+					},
+					"X": 0, "Y": 0.0, "Z": 0.1,
+					"Pitch": 0, "Roll": 0, "Yaw": 0
+				},
+                "DptCamera": {
+					"CaptureSettings": [
+						{
+						"ImageType": 2,
+						"Width": 1280,
+						"Height":720,
+						"FOV_Degrees": 87,
+						
+						"AutoExposureSpeed": 100,
+						"AutoExposureBias": 0,
+						"AutoExposureMaxBrightness": 0.64,
+						"AutoExposureMinBrightness": 0.03,
+						
+						"MotionBlurAmount": 0,
+						"TargetGamma": 1.0
+						}
+					],
+					"NoiseSettings": [
+						{
+						"Enabled": true,
+						"ImageType": 0,
+
+						"RandContrib": 0.2,
+						"RandSpeed": 100000.0,
+						"RandSize": 500.0,
+						"RandDensity": 2,
+
+						"HorzWaveContrib":0.03,
+						"HorzWaveStrength": 0.08,
+						"HorzWaveVertSize": 1.0,
+						"HorzWaveScreenSize": 1.0,
+
+						"HorzNoiseLinesContrib": 1.0,
+						"HorzNoiseLinesDensityY": 0.01,
+						"HorzNoiseLinesDensityXY": 0.5,
+
+						"HorzDistortionContrib": 1.0,
+						"HorzDistortionStrength": 0.002
+						}
+					],
+					"Gimbal": {
+					  "Stabilization": 1,
+					  "Pitch": 0, "Roll": 0
+					},
+					"X": 0, "Y": 0.0, "Z": 0.1,
+					"Pitch": 0, "Roll": 0, "Yaw": 0
+				}
+			}
+		}
+	},
+	"OriginGeopoint": {
+    "Latitude": 37.384215,
+    "Longitude": 126.656648,
+    "Altitude": 0
+    },
+	"SubWindows": [
+		{"WindowID": 0, "ImageType": 0, "CameraName": "OptCamera", "Visible": true},
+        {"WindowID": 2, "ImageType": 2, "CameraName": "DptCamera", "Visible": true}
+	]
+}
