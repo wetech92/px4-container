@@ -1,0 +1,13 @@
+{
+    "SeeDocsAt": "https://github.com/Microsoft/AirSim/blob/master/docs/settings_json.md",
+    "SettingsVersion": 1.2,
+	"PawnPaths": {
+		"Typhoon": {"PawnBP": "Class'/AirSim/BluePrints/BP_TyphoonH480.BP_TyphoonH480_C'"}
+	},
+	"Vehicles": {
+		"Drone1": {
+            "VehicleType": "SimpleFlight",
+			"PawnPath": "Typhoon"
+		}
+	}
+}
