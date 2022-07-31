@@ -17,7 +17,7 @@
             "TcpPort": 4560,
             "ControlPortLocal": 14540,
             "ControlPortRemote": 14580,
-			"LocalHostIp": "WINHOST_IP",
+			"LocalHostIp": "WINHOST",
             "AutoCreate": true,
 			"Parameters": {
                 "NAV_RCL_ACT": 0,
@@ -34,10 +34,8 @@
                     "RotationsPerSecond": 15,
                     "Range":20,
                     "PointsPerSecond": 10000,
-					
-                    "X": 0, "Y": 0, "Z": -1,
-                    "Roll": 0, "Pitch": 90, "Yaw" : 0,
-					
+                    "X": 0.025, "Y": 0, "Z": 0.0943,
+                    "Roll": 180, "Pitch": 0, "Yaw" : 0,
                     "VerticalFOVUpper": 0,
                     "VerticalFOVLower": 0,
                     "HorizontalFOVStart": 0,
@@ -52,9 +50,55 @@
 					"CaptureSettings": [
 						{
 						"ImageType": 0,
-						"Width": 1920,
-						"Height":1080,
-						"FOV_Degrees": 115,
+						"Width": 1280,
+						"Height":720,
+						"FOV_Degrees": 90,
+						"ProjectionMode": "perspective",
+						"AutoExposureSpeed": 100,
+						"AutoExposureBias": 0,
+						"AutoExposureMaxBrightness": 0.64,
+						"AutoExposureMinBrightness": 0.03,
+						"MotionBlurAmount": 0,
+						"TargetGamma": 1.0
+						}
+					],
+					"NoiseSettings": [
+						{
+						"Enabled": true,
+						"ImageType": 0,
+
+						"RandContrib": 0.2,
+						"RandSpeed": 100000.0,
+						"RandSize": 500.0,
+						"RandDensity": 2,
+
+						"HorzWaveContrib":0.03,
+						"HorzWaveStrength": 0.08,
+						"HorzWaveVertSize": 1.0,
+						"HorzWaveScreenSize": 1.0,
+
+						"HorzNoiseLinesContrib": 1.0,
+						"HorzNoiseLinesDensityY": 0.01,
+						"HorzNoiseLinesDensityXY": 0.5,
+
+						"HorzDistortionContrib": 1.0,
+						"HorzDistortionStrength": 0.002
+						}
+					],
+					"Gimbal": {
+					  "Stabilization": 0,
+					  "Pitch": 0, "Roll": 0
+					},
+					"X": 0.076, "Y": 0.0115, "Z": 0.038,
+					"Pitch": 0, "Roll": 0, "Yaw": 0
+				},
+				"DptCamera": {
+					"CaptureSettings": [
+						{
+						"ImageType": 2,
+						"Width": 1280,
+						"Height":720,
+						"FOV_Degrees": 87,
 						
 						"AutoExposureSpeed": 100,
 						"AutoExposureBias": 0,
@@ -62,14 +106,13 @@
 						"AutoExposureMinBrightness": 0.03,
 						
 						"MotionBlurAmount": 0,
-						"TargetGamma": 1.0,
-						"ProjectionMode": ""
+						"TargetGamma": 1.0
 						}
 					],
 					"NoiseSettings": [
 						{
-						"Enabled": false,
-						"ImageType": 0,
+						"Enabled": true,
+						"ImageType": 2,
 
 						"RandContrib": 0.2,
 						"RandSpeed": 100000.0,
@@ -93,7 +136,7 @@
 					  "Stabilization": 1,
 					  "Pitch": 0, "Roll": 0
 					},
-					"X": 0, "Y": 0.0, "Z": 0.1,
+					"X": 0.076, "Y": -0.01, "Z": 0.038,
 					"Pitch": 0, "Roll": 0, "Yaw": 0
 				}
 			}
@@ -105,6 +148,7 @@
     "Altitude": 0
     },
 	"SubWindows": [
-		{"WindowID": 0, "ImageType": 0, "CameraName": "OptCamera", "Visible": true}
+		{"WindowID": 0, "ImageType": 0, "CameraName": "OptCamera", "Visible": true},
+		{"WindowID": 2, "ImageType": 3, "CameraName": "DptCamera", "Visible": true}
 	]
 }
