@@ -27,11 +27,7 @@ else
 fi
 
 if ${REBUILD}; then
-	colcon build \
-		--build-base /root/ROS2-node/build \
-        --install-base /root/ROS2-node/install \
-        --base-paths /root/ROS2-node/src \
-	&& source /root/ROS2-node/install/setup.bash
+	/root/tools/buildRos2Pkg.sh
 fi
 
 # Run ROS2 Nodes
@@ -39,14 +35,10 @@ source /root/AirSim/ros2/install/setup.bash
 source /root/px4_ros/install/setup.bash
 source /root/ros_ws/install/setup.bash
 
-ros2 launch airsim_ros_pkgs airsim_node.launch.py host:=$simhost &
+make -C /root/PX4-Autopilot px4_sitl_rtps none_${SITL_MODEL} &
 
-# Run QGC & Gazebo SITL
-nohup su -c /home/user/QGroundControl.AppImage user & \
-	make -C /root/PX4-Autopilot px4_sitl_rtps none_${SITL_MODEL} &
+sleep 5s
 
-sleep 3s
-
-micrortps_agent -t UDP
+micrortps_agent -t UDP &
 ros2 launch airsim_ros_pkgs airsim_node.launch.py host:=$simhost &
 ros2 run integration IntegrationTest
