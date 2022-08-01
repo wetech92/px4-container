@@ -24,7 +24,7 @@ class ModelSpawnClass(Node):
 
         # init Publisher
         self.FireSpawnPublihsher = self.create_publisher(Image, 'MakeFire', 20)
-        self.FireTimer = self.create_timer(15, self.FireSpawn)
+        self.FireTimer = self.create_timer(25, self.FireSpawn)
 
         # init Client
         self.MakeWorldDoneClient = self.create_client(MakeWorld, "/make_world")
@@ -67,7 +67,7 @@ class ModelSpawnClass(Node):
         self.GoalPosX = 5000
         self.GoalPosY = 5000
 
-        self.KnownObsNum = 500
+        self.KnownObsNum = 200
 
         self.KnownObsName = [""] * self.KnownObsNum
         self.KnownObsNamespace = [""] * self.KnownObsNum
@@ -75,7 +75,7 @@ class ModelSpawnClass(Node):
         self.KnownObsPosY = [0] * self.KnownObsNum
         self.KnownObsIndex = [0] * self.KnownObsNum
 
-        self.UnknownObsNum = 50
+        self.UnknownObsNum = 10
 
         self.UnknownObsName = [""] * self.UnknownObsNum
         self.UnknownObsNamespace = [""] * self.UnknownObsNum
@@ -83,7 +83,7 @@ class ModelSpawnClass(Node):
         self.UnknownPosY = [0.0] * self.UnknownObsNum
 
         self.WindVelX = 2.0
-        self.WindVelY = 1.0
+        self.WindVelY = -1.0
 
         self.FireIndex = 0
 
@@ -115,7 +115,7 @@ class ModelSpawnClass(Node):
     # Goal Spawn
     def MakeWorld(self):
         self.GoalSpawn()
-        #self.UnknownObsSpawn()
+        self.UnknownObsSpawn()
         self.KnownObsSpawn()
         self.RequestMakeWorldDone()
 
@@ -132,7 +132,7 @@ class ModelSpawnClass(Node):
             self.FirePosY += 10
             self.FireName = "Fire" + str(self.FireIndex)
             self.FireNamespace = "Fire" + str(self.FireIndex)
-            #self.SendRequestSpawnEntity(self.FireName, self.FireNamespace, self.FireSDF, self.FirePosX, self.FirePosY)
+            self.SendRequestSpawnEntity(self.FireName, self.FireNamespace, self.FireSDF, self.FirePosX, self.FirePosY)
 
     # In Obstacle Spawn
     def UnknownObsSpawn(self):
@@ -154,7 +154,7 @@ class ModelSpawnClass(Node):
             self.KnownObsPosY[i] = random.randint(self.MinBound / 10, self.MaxBound / 10) 
             self.KnownObsName[i] = "KnownObs" + str(i)
             self.KnownObsNamespace[i] = "KnownObs" + str(i)
-            #self.SendRequestSpawnEntity(self.KnownObsName[i], self.KnownObsNamespace[i], self.KnownObsSDF[index], self.KnownObsPosX[i], self.KnownObsPosY[i])
+            self.SendRequestSpawnEntity(self.KnownObsName[i], self.KnownObsNamespace[i], self.KnownObsSDF[index], self.KnownObsPosX[i], self.KnownObsPosY[i])
             #Center = (self.KnownObsPosX[i] * 10 , self.KnownObsPosY[i] * 10)
             Center = (int(self.KnownObsPosX[i] * 10) , int(self.KnownObsPosY[i] * 10))
             if index == 0:
@@ -164,7 +164,7 @@ class ModelSpawnClass(Node):
             elif index == 2:
                 Temp = 8
             #Radius = int(Temp / 2)
-            Radius = int(Temp / 2 * 10)
+            Radius = int(Temp / 2 * 30)
             cv2.circle(self.GridMap, Center, Radius, Color, -1)
 
         cv2.rotate(self.GridMap, cv2.ROTATE_180)
@@ -210,4 +210,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
