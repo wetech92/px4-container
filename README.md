@@ -1,4 +1,4 @@
-# A4-VAI Integrated Learning Environment PX4 Container Image
+# A4-VAI Integrated Training Environment PX4 Container Image
 
 - **주의! 이미지 빌드 방법이 많이 변경되어 README를 업데이트 중입니다!**
 - **저장소 업데이트가 완료되면 본 문장은 없어집니다**
@@ -8,7 +8,7 @@
 ### 1.1 What is this repository for?
 
 - This is a repository containing files to build `kestr3l/px4` images
-- Those images were built to implement simulator system for Integrated Learning Environment (ILE)
+- Those images were built to implement simulator system for Integrated Training Environment (ITE)
 
 ### 1.2 Image Tags
 
