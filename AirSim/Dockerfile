@@ -98,7 +98,8 @@ ENV \
 	QT_X11_NO_MITSHM=1 \
 	NVIDIA_VISIBLE_DEVICES=all \
 	NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute,display \
-	PATH=/root/.local/bin:$PATH
+	PATH=/root/.local/bin:$PATH \
+	SITL_MODEL=typhoon_inha
 
 COPY --from=stage_airsim /root/AirSim/AirLib /root/AirSim/AirLib
 COPY --from=stage_airsim /root/AirSim/MavLinkCom /root/AirSim/MavLinkCom
@@ -113,7 +114,7 @@ COPY --from=stage_px4sitl /root/PX4-Autopilot /root/PX4-Autopilot
 
 WORKDIR /root
 
-COPY scripts/initRepo.sh /root/tools/initRepo.sh
+COPY scripts /root/tools
 
 COPY AirSim/entrypoint.sh /usr/local/bin/entrypoint.sh
 CMD [ "/usr/local/bin/entrypoint.sh" ]
