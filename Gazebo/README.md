@@ -116,3 +116,67 @@ docker run -it --rm \
    --privileged \
    <IMAGE_NAME>:<TAG> bash
 ```
+
+## 3. Usage
+```shell
+Must sequantially execute below each Terminal Number and Terminal Commands
+Turn on each new 5 Terminals
+Execute below Commands
+```
+```shell
+docker exec -it Gzbash bash
+```
+
+### 3.1 Terminal-1 PX4-Autopilot
+
+```shell
+cd ~/PX4-Autopilot
+make px4_sitl_rtps gazebo_{vehilce_option}__{world_option}
+```
+
+```shell
+vehicle_option
+Quadrotor: iris
+Hexarotor: QTR_inha, typhoon_inha
+```
+
+```shell 
+world_option
+empty, grass, grass_dryden
+```
+### 3.2 Terminal-2 QGroundControl
+
+```shell
+cd 
+su -c "/home/user/QGroundControl.AppImage --appimage-extract-and-run" user
+```
+
+```shell
+Must Activate Check Application Settings/Virtual Joystick Checkbox
+```
+### 3.3 Terminal-3 FastRTPS-micrortps_agent
+
+```shell
+cd ~/px4_ros
+. install/setup.bash
+micrortps_agent -t UDP
+```
+
+
+### 3.4 Terminal-4 model_spawn package
+```shell
+cd ~/gazebo_ros
+colcon build
+. install/setup.bash
+ros2 run model_spawn ModelSpawn
+```
+
+### 3.5 Terminal-5 integration package
+```shell
+cd ~/ros_ws
+colcon build
+. install/setup.bash
+. ~/gazebo_ros/install/setup.bash
+. ~/px4_ros/install/setup.bash
+ros2 run integration IntegrationTest
+```
