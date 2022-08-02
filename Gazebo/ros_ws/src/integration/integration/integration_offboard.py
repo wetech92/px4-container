@@ -50,6 +50,8 @@ from .CollisionAvoidance.ArtificialPotentialField import ArtificialPotentialFiel
 #  RRT
 from .PathPlanning.RRT import RRT
 
+import time
+
 
 
 
@@ -101,7 +103,7 @@ class IntegrationNode(Node):
         
 
         # Offboard Period
-        OffboardPeriod = 0.001
+        OffboardPeriod = 0.01
         self.OffboardCounter = 1 / OffboardPeriod
         self.OffboardTimer = self.create_timer(OffboardPeriod, self.OffboardControl)
 
@@ -155,11 +157,7 @@ class IntegrationNode(Node):
 
         ## Path Planning Variables
         self.Target = [450.0, 450.0, -5.0]
-        self.RawImage = (cv2.imread("/root/ros_ws/src/integration/integration/PathPlanning/Map/test.png", cv2.IMREAD_GRAYSCALE))
-        self.Image = np.uint8((255 - self.RawImage)/ 255)
-        self.Image = cv2.flip(self.Image, 0)
-        
-        self.RawImage = cv2.flip(self.RawImage, 0)
+
 
 
         # TakeOff Variables
@@ -180,7 +178,7 @@ class IntegrationNode(Node):
         
         self.PlannnedIndex = 0
         
-        self.MaxPlannnedIndex = 0
+        self.MaxPlannnedIndex = 10
         self.PathPlanningTargetPosition = np.array([0.0, 0.0, 0.0])
     ######################################################################################################################################## 
     # Main Function
@@ -193,10 +191,9 @@ class IntegrationNode(Node):
             self.OffboardControlModeCallback()
 
             if self.InitialPositionFlag:
-                print("Sample")
                 ###########################################
                 # Sample PathPlanning Example
-                """
+                
                 if self.PlannnedIndex >= self.MaxPlannnedIndex:
                     self.LogFile.close()
                 else:
@@ -204,12 +201,12 @@ class IntegrationNode(Node):
                     self.SetPosition(self.PathPlanningTargetPosition)
                     #self.LogFile = open("/root/ros_ws/src/integration/integration/PathPlanning/Map/log.txt",'a')
                     WaypointACK = np.linalg.norm(np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex]]) - np.array([self.x, self.y]))
-                    if  WaypointACK < 1.0:
-                        LogData = "%d %f %f %f %f\n" %(self.PlannnedIndex, self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex],self.x, self.y)
+                    if  WaypointACK < 5.0:
+                        LogData = "%d %f %f %f %f\n" %(self.PlannnedIndex, self.PlannedY[self.PlannnedIndex], self.PlannedX[self.PlannnedIndex], self.y, self.x)
                         self.LogFile.write(LogData)
                         self.PlannnedIndex += 1
-                        #print(self.PlannnedIndex)
-                """
+                        print(self.PlannnedIndex)
+                
                 ###########################################
                 ##########################################
                 # Sample Collision Avoidance Example
@@ -239,9 +236,17 @@ class IntegrationNode(Node):
     # MakeWorld
     def MakeWorldCallback(self, request, response):
         if request.done == 1:
-            Planned = self.RRT.PathPlanning(self.Image, self.StartPoint, self.GoalPoint)
-            self.PlannedX = Planned[1] / 10
-            self.PlannedY = Planned[0] / 10
+            print("Requset")
+            RawImage = (cv2.imread("/root/ros_ws/src/integration/integration/PathPlanning/Map/test.png", cv2.IMREAD_GRAYSCALE))
+            Image = np.uint8(np.uint8((255 - RawImage)/ 255))
+            Image = cv2.flip(Image, 0)
+            Image = cv2.rotate(Image, cv2.ROTATE_90_CLOCKWISE)
+            
+            Planned = self.RRT.PathPlanning(Image, self.StartPoint, self.GoalPoint)
+            RawImage = cv2.flip(RawImage, 0)
+            cv2.imwrite('rawimage.png',RawImage)
+            self.PlannedX = Planned[0] / 10
+            self.PlannedY = Planned[1] / 10
             self.MaxPlannnedIndex = len(self.PlannedX) - 1
             print(len(self.PlannedX))
             response.ack = 1
@@ -278,7 +283,6 @@ class IntegrationNode(Node):
     # Takeoff
     def Takeoff(self):
         self.SetPosition(self.InitialPosition)
-        
         if abs(self.z - self.InitialPosition[2]) < 0.3:
             self.InitialPositionFlag = True
             
