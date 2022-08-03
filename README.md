@@ -39,5 +39,5 @@
 
 ## Guides For Using This Repository
 
-- For list of guides available, please proceed to [A4-VAI ITE User Guide Documents](docs/READNE.md)
+- For list of guides available, please proceed to [A4-VAI ITE User Guide Documents](docs/README.md)
 - Documents are located in `/docs` directory
