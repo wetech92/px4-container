@@ -119,13 +119,18 @@ DOCKER_BUILDKIT=1 docker build --no-cache \
     -f AirSim/Dockerfile .
 ```
 
+> **Using a GPU is stronly recommended for AirSim simulatitin**
+> UE4 simulation environment required a lot of graphical computing power to be run
+> Building with command above will be run without any problem. However, it's not practical to use this image due to reason described above
+
 - With GPU support
 
 ```shell
 DOCKER_BUILDKIT=1 docker build --no-cache \
-    --build-arg BASEIMAGE=<IMAGE_NAME> \
-    --build-arg BASETAG=base-gpu-<VERSION> \
-    -t <IMAGE_NAME>:airsim-gpu-<VERSION> \
+    --build-arg BASEIMAGE=kestr3l/px4 \
+    --build-arg BASETAG=base-gpu-0.0.2 \
+    --build-arg VULKAN_SDK_VERSION=`curl -sk https://vulkan.lunarg.com/sdk/latest/linux.txt` \
+    -t kestr3l/px4:airsim-gpu-0.0.2 \
     -f AirSim/Dockerfile .
 ```
 
