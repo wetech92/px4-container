@@ -161,6 +161,7 @@ COPY --chown=1001:1001 AirSim/ForestDeploy /home/user/ForestDeploy
 WORKDIR /root
 
 COPY scripts /root/tools
+COPY AirSim/python /root/python
 
 COPY AirSim/entrypoint.sh /usr/local/bin/entrypoint.sh
 CMD [ "/usr/local/bin/entrypoint.sh" ]
