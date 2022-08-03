@@ -86,9 +86,27 @@ RUN \
 	make -C /root/PX4-Autopilot px4_sitl_rtps
 
 
+# FROM stage_deps as stage_vulkan
+
+# SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
+
+# ARG VULKAN_SDK_VERSION
+
+# RUN \
+# 	wget -q --show-progress \
+#     	--progress=bar:force:noscroll \
+#     	https://sdk.lunarg.com/sdk/download/latest/linux/vulkan_sdk.tar.gz \
+#     	-O /tmp/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz \ 
+#     && echo "Installing Vulkan SDK ${VULKAN_SDK_VERSION}" \
+#     && mkdir -p /opt/vulkan \
+# 	&& tar -xf /tmp/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz -C /opt/vulkan
+
+
 FROM stage_deps as stage_final
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+ARG VULKAN_SDK_VERSION
 
 ENV \
 	DEBIAN_FRONTEND noninteractive \
@@ -97,7 +115,7 @@ ENV \
 	ROS_DISTRO=galactic \
 	QT_X11_NO_MITSHM=1 \
 	NVIDIA_VISIBLE_DEVICES=all \
-	NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute,display \
+	NVIDIA_DRIVER_CAPABILITIES=all \
 	PATH=/root/.local/bin:$PATH \
 	SITL_MODEL=typhoon_inha
 
@@ -111,6 +129,34 @@ COPY --from=stage_airsim /root/.local /root/.local
 COPY --from=stage_rnode /root/ros_ws /root/ros_ws
 
 COPY --from=stage_px4sitl /root/PX4-Autopilot /root/PX4-Autopilot
+
+# COPY --from=stage_vulkan /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/include /usr/local/include
+# COPY --from=stage_vulkan /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/lib /usr/local/lib
+# COPY --from=stage_vulkan /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/etc/vulkan/explicit_layer.d /usr/local/share/vulkan/explicit_layer.d
+# COPY --from=stage_vulkan /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/share/vulkan/registry /usr/local/share/vulkan/registry 
+# COPY --from=stage_vulkan /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/bin /usr/local/bin
+
+COPY --chown=1001:1001 AirSim/ForestDeploy /home/user/ForestDeploy
+
+# RUN \
+# 	wget -q --show-progress \
+#     --progress=bar:force:noscroll \
+#     	https://sdk.lunarg.com/sdk/download/latest/linux/vulkan_sdk.tar.gz \
+#     	-O /tmp/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz \ 
+#     && echo "Installing Vulkan SDK ${VULKAN_SDK_VERSION}" \
+#     && mkdir -p /opt/vulkan \
+#     && tar -xf /tmp/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz -C /opt/vulkan \
+#     && mkdir -p /usr/local/include/ && cp -ra /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/include/* /usr/local/include/ \
+#     && mkdir -p /usr/local/lib && cp -ra /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/lib/* /usr/local/lib/ \
+#     && cp -a /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/lib/libVkLayer_*.so /usr/local/lib \
+#     && mkdir -p /usr/local/share/vulkan/explicit_layer.d \
+#     && cp /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/etc/vulkan/explicit_layer.d/VkLayer_*.json /usr/local/share/vulkan/explicit_layer.d \
+#     && mkdir -p /usr/local/share/vulkan/registry \
+#     && cp -a /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/share/vulkan/registry/* /usr/local/share/vulkan/registry \
+#     && cp -a /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/bin/* /usr/local/bin \
+#     && ldconfig \
+#     && rm /tmp/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz && rm -rf /opt/vulkan
+
 
 WORKDIR /root
 
