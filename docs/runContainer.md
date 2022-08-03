@@ -1,8 +1,47 @@
 # Running Integrated Training Environment Containers
 
-## Docker Command Line Interface
+## Basics of docker container
 
-### AirSim
+### Concept of container and its characteristics
+
+![Docker Lifecycle](images/Docker_Lifecycle.png)
+
+- Docker container is a **non-persistent, isolated virtual environment**
+- Key point is that **files are volatile** unless saved in mapped volume or copied to local direcetory
+- Docker containers are created from docker images. If you have an image, you can create unlimited numbers of containers from it.
+  - Think of Linux `.iso` image. If you have it, you can install windows on any conputer you want.
+
+### Creating Container
+
+- There are two major ways to create desired docker container form an image:
+  - Docker Command-Line Interface (CLI, a.k.a. `docker run`)
+  - Container Orchestration
+<br/>
+
+- CLI is mainly used to create a sole, simple container. Its a startpoint of learning how to use a docker
+- Container Orchestration is used to control a complex network of containers in easy, simultaneous way
+- Kubernetes (k8s) is a 'de-facto' standard of container orchestration
+  - However, we don't need that kind of bleeding-edge tool for running a simulation environment
+- Therefore, we will use *docker-compose* as a mean of running multiple containers in designated relations
+
+## Docker CLI
+
+- Docker CLI is based on `docker run <target_image>` and many optional pararmeters:
+
+```shell
+$ docker run [OPTIONS] IMAGE[:TAG|@DIGEST] [COMMAND] [ARG...]
+```
+
+- Possible options include...
+  - **Container run state**: Detached? of foreground?
+  - **Container identification**: Name of a container
+  - **Environment variables passed/set**
+  - **Volume mapping**: Sharing volume of lib with host
+  - **Run constraints**: Kernel access, device access and more
+<br/>
+
+- Docker run statements are complex but example argument will help better undertanding docker CLI statements:
+- Following is an example of `docker run` command for running AirSim container and their explanations:
 
 ```shell
 docker run -it --rm \
@@ -23,6 +62,138 @@ docker run -it --rm \
    --name AirBash \
    kestr3l/px4:airsim-gpu-0.0.2 bash
 ```
+
+|Statement|Definition|Misc.|
+|:-|:-|:-|
+|`-it`|interactive terminal:<br/>`-i`: Keep STDIN open even if not attached<br/>`-t`: Allocate a pseudo-tty|Autonyms of `-d`|
+|`-e`|set environment variable||
+|`-v`|volume mapping with host||
+|`--device`|device attached to host|Not works in WSL. Need a [workaround](https://docs.microsoft.com/ko-kr/windows/wsl/connect-usb)|
+|`--net`|network settings|Set as `host` not to use a virtual network|
+|`--gpus`|select gpu devices|Nvidia only. Requires [Nvidia container toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)|
+|`--privileged`|give an extended kernel access permission||
+|`--name`|set container name|Cannot be duplicate of an existing name|
+|`kestr3l/px4:airsim-gpu-0.0.2`|Target image<br/>Name: kestr3l/px4<br/>Tag: airsim-gpu-0.0.2|all characters must be lowercase or dash|
+|`bash`|override command to be run after container generation (`CMD`)|Ignored if `ENTRYPOINT` is set|
+
+- All of A4-VAI ITE containers are `ENTRYPOINT`-free. That is, all default initialization scerips can be overriden by `CMD` statement
+- This is important for debugging purpose. If not, run container without overrriding `CMD`.
+
+### Gazebo
+
+- CPU only
+
+```shell
+docker run -it --rm \
+   -e DISPLAY=$DISPLAY \
+   -e QT_NO_MITSHM=1 \
+   -e XDG_RUNTIME_DIR=/tmp \
+   -v /tmp/.X11-unix:/tmp/.X11-unix \
+   --net host \
+   --device=/dev/dri:/dev/dri \
+   --privileged \
+   <IMAGE_NAME>:<TAG>
+```
+
+- With GPU support (Linux)
+
+```shell
+docker run -it --rm \
+   -e DISPLAY=$DISPLAY \
+   -e QT_NO_MITSHM=1 \
+   -e XDG_RUNTIME_DIR=/tmp \
+   -v /tmp/.X11-unix:/tmp/.X11-unix \
+   --net host \
+   --device=/dev/dri:/dev/dri \
+   --gpus all \
+   --privileged \
+   <IMAGE_NAME>:<TAG>
+```
+
+- With GPU support (WSL2)
+
+```shell
+docker run -it --rm \
+   -e DISPLAY=$DISPLAY \
+   -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+   -e QT_NO_MITSHM=1 \
+   -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+   -e LD_LIBRARY_PATH=/usr/lib/wsl/lib \
+   -v /tmp/.X11-unix:/tmp/.X11-unix \
+   -v /mnt/wslg:/mnt/wslg \
+   -v /usr/lib/wsl:/usr/lib/wsl \
+   --device=/dev/dxg \
+   --net host \
+   --gpus all \
+   --privileged \
+   <IMAGE_NAME>:<TAG>
+```
+
+> GPU H/W acceleration support on WSL (WSLg) is available starting from Windows 11
+> If your WSL2 environment is based on Windows 10, upgrade it to Windows 11 or use native Linux instead
+
+### Airsim
+
+- With GPU Support (Linux)
+
+```shell
+docker run -it --rm \
+   -e DISPLAY=$DISPLAY \
+   -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+   -e QT_NO_MITSHM=1 \
+   -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+   -e NVIDIA_DISABLE_REQUIRE=1 \
+   -e NVIDIA_DRIVER_CAPABILITIES=all \
+   -v /etc/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json \
+   -v /etc/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json \
+   -v /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json \
+   -v /tmp/.X11-unix:/tmp/.X11-unix \
+   --device=/dev/dxg \
+   --net host \
+   --gpus all \
+   --privileged \
+   kestr3l/px4:airsim-gpu-0.0.2
+   <IMAGE_NAME>:<TAG>
+```
+
+> 
+
+- With GPU Support (WSL)
+
+```shell
+docker run -it --rm \
+   -e DISPLAY=$DISPLAY \
+   -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+   -e QT_NO_MITSHM=1 \
+   -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+   -e LD_LIBRARY_PATH=/usr/lib/wsl/lib \
+   -e NVIDIA_DISABLE_REQUIRE=1 \
+   -e NVIDIA_DRIVER_CAPABILITIES=all \
+   -v /etc/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json \
+   -v /etc/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json \
+   -v /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json \
+   -v /tmp/.X11-unix:/tmp/.X11-unix \
+   -v /mnt/wslg:/mnt/wslg \
+   -v /usr/lib/wsl:/usr/lib/wsl \
+   -v /tmp/.X11-unix:/tmp/.X11-unix \
+   --device=/dev/dri:/dev/dri \
+   --net host \
+   --gpus all \
+   --privileged \
+   <IMAGE_NAME>:<TAG>
+```
+
+
+## Reference
+
+1. [Docker 기초 (4) - 컨테이너 라이프사이클, 명령어](https://velog.io/@ghdud0503/Docker-%EA%B8%B0%EC%B4%88-3-%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88-%EB%9D%BC%EC%9D%B4%ED%94%84%EC%82%AC%EC%9D%B4%ED%81%B4)
+2. [](https://docs.docker.com/engine/reference/run/)
+3. https://docs.microsoft.com/ko-kr/windows/wsl/connect-usb
+4. https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+
+### AirSim
+
+
 
 
 
