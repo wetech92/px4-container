@@ -10,10 +10,8 @@ ENV \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
 
-COPY /scripts/sources.list /etc/apt/sources.list
-
 RUN \
-    rm -f /etc/apt/apt.conf.d/docker-clean \
+    rm -rf /etc/apt/apt.conf.d/docker-clean \
 	&& echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
 	&& apt-get update
 
@@ -38,7 +36,6 @@ ENV \
     LC_ALL=C.UTF-8 \
     ROS_DISTRO=galactic
 
-COPY /scripts/sources.list /etc/apt/sources.list
 COPY Base/aptdeps.txt /tmp/aptdeps.txt
 
 RUN \
