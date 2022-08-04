@@ -35,8 +35,7 @@ RUN \
     --mount=type=cache,target=/var/cache/apt,from=stage_apt,source=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt,from=stage_apt,source=/var/lib/apt \
     --mount=type=cache,target=/etc/apt/sources.list.d,from=stage_apt,source=/etc/apt/sources.list.d \
-	apt-get install --no-install-recommends -y $(cat /tmp/aptdeps.txt) \
-    && rm -rf /tmp/*
+	apt-get install --no-install-recommends -y $(cat /tmp/aptdeps.txt)
 
 
 FROM stage_deps as stage_airsim
@@ -157,6 +156,16 @@ COPY --chown=1001:1001 AirSim/ForestDeploy /home/user/ForestDeploy
 #     && ldconfig \
 #     && rm /tmp/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz && rm -rf /opt/vulkan
 
+RUN \
+    --mount=type=cache,target=/var/cache/apt,from=stage_apt,source=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt,from=stage_apt,source=/var/lib/apt \
+    --mount=type=cache,target=/etc/apt/sources.list.d,from=stage_apt,source=/etc/apt/sources.list.d \
+	sh -c "$(wget -O - https://github.com/deluan/zsh-in-docker/releases/download/v1.1.2/zsh-in-docker.sh | sed "77d;s/export TERM=xterm/export TERM=xterm-256color/g")" -- \
+        -t agnoster \
+        -p git \
+        -p https://github.com/zsh-users/zsh-autosuggestions \
+        -p https://github.com/zsh-users/zsh-syntax-highlighting \
+	&& echo "alias cat='batcat --paging=never'" >> /root/.zshrc
 
 WORKDIR /root
 
