@@ -39,8 +39,13 @@ fi
 # Run Gazebo SITL
 if [ ${HEADLESS} -eq 1]; then
 	echo "HEADLESS is ${HEADLESS}: 1, Running Gazebo SITL in HEADLESS mode"
-	HEADLESS=${HEADLESS} make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${SITL_MODEL}__${SITL_ENV}
+	HEADLESS=${HEADLESS} make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_typhoon_inha__grass &
 else
 	echo "HEADLESS is ${HEADLESS}: Not 1, Running Gazebo SITL in normal mode"
-	make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${SITL_MODEL}__${SITL_ENV}
+	HEADLESS=${HEADLESS} make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_typhoon_inha__grass &
 fi
+
+sleep 120s
+
+micrortps_agent -t UDP &
+ros2 run model_spawn ModelSpawn

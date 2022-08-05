@@ -30,15 +30,16 @@ if ${REBUILD}; then
 	/root/tools/buildRos2Pkg.sh
 fi
 
-# Run ROS2 Nodes
-source /root/AirSim/ros2/install/setup.bash
-source /root/px4_ros/install/setup.bash
-source /root/ros_ws/install/setup.bash
+if ${WSL}; then
+	find /root/AirSim/python -type f -name "*.py" -print0 | xargs -0 sed -i "s/airsim.VehicleClient()/airsim.VehicleClient(ip = str(os.environ\['simhost']), port=41451)/g"
+	#find /root/AirSim/python -type f -name "*.py" -print0 | xargs -0 sed -i "s/ip = str(os.environ\['simhost']), port=41451//g" for reverse
+fi
 
-make -C /root/PX4-Autopilot px4_sitl_rtps none_${SITL_MODEL} &
-
-sleep 5s
+su -c "/home/user/ForestDeploy/ForestDeploy.sh -windowed" user &
+make -C /root/PX4-Autopilot px4_sitl_rtps none_typhoon_inha &
+sleep 3s
 
 micrortps_agent -t UDP &
-ros2 launch airsim_ros_pkgs airsim_node.launch.py host:=$simhost &
-ros2 run integration IntegrationTest
+ros2 launch airsim_ros_pkgs airsim_node.launch.py
+# ros2 launch airsim_ros_pkgs airsim_node.launch.py host:=$simhost &
+# ros2 run integration IntegrationTest
