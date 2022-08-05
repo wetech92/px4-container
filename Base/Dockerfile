@@ -137,7 +137,7 @@ ENV PATH=/root/.local/bin:$PATH
 RUN \
     echo source "/opt/ros/galactic/setup.bash" >> /root/.bashrc \
     && echo "source /usr/share/colcon_cd/function/colcon_cd.sh" >> /root/.bashrc \
-    && echo "export _colcon_cd_root=~/ros2_install" >> /root/.bashrcec
+    && echo "export _colcon_cd_root=~/ros2_install" >> /root/.bashrc
 
 # setup colcon mixin and metadata
 RUN \
