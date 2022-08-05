@@ -9,7 +9,7 @@ import threading
 def genObj(asset_name,region,low,high):
     objList = list()
     for i in range(low,high):
-        client = airsim.VehicleClient(ip = str(os.environ['simhost']), port=41451)
+        client = airsim.VehicleClient()
         desired_name = f"{asset_name}_airsim_{i}"
         scale = airsim.Vector3r(random.uniform(1.0,2.0), random.uniform(1.0,2.0), random.uniform(1.0,2.0))
         pose = airsim.Pose(position_val=airsim.Vector3r(random.randrange(-region[0],region[0]), random.randrange(-region[1],region[1]), 0.0))
@@ -58,7 +58,7 @@ def main():
     t4.join()
     t5.join()
 
-    client = airsim.VehicleClient(ip = str(os.environ['simhost']), port=41451)
+    client = airsim.VehicleClient()
     objNum = client.simListSceneObjects(name_regex=f"{args.asset_name}_airsim_.*")
     ellapsed = round(time.time() - startTime)
 

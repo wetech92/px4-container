@@ -17,7 +17,6 @@
             "TcpPort": 4560,
             "ControlPortLocal": 14540,
             "ControlPortRemote": 14580,
-			"LocalHostIp": "WINHOST",
             "AutoCreate": true,
 			"Parameters": {
                 "NAV_RCL_ACT": 0,

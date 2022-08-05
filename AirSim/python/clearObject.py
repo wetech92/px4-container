@@ -9,7 +9,7 @@ import threading
 asset_name = 'Birch_01'
 
 def rmObj(asset):
-    client = airsim.VehicleClient(ip = str(os.environ['simhost']), port=41451)
+    client = airsim.VehicleClient()
     residual = client.simListSceneObjects(name_regex=f"{asset}_airsim_.*")
     random.shuffle(residual)
 
@@ -29,7 +29,7 @@ def main():
 
     args = parser.parse_args()
 
-    client = airsim.VehicleClient(ip = str(os.environ['simhost']), port=41451)
+    client = airsim.VehicleClient()
     assetList = client.simListSceneObjects(name_regex=f"{args.asset}_airsim_.*")
 
     if not assetList:
