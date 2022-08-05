@@ -59,7 +59,6 @@ COPY AirSim/ros2/airsim_ros_wrapper.cpp /root/AirSim/ros2/src/airsim_ros_pkgs/sr
 WORKDIR /root/AirSim/ros2
 
 RUN source /opt/ros/galactic/setup.bash \
-	&& echo 'source /opt/ros/galactic/setup.bash' >> /root/.bashrc \
 	&& colcon build \
 		--cmake-args -DCMAKE_C_COMPILER=gcc-8 \
 		--cmake-args -DCMAKE_CXX_COMPILER=g++-8 \
@@ -69,6 +68,8 @@ RUN source /opt/ros/galactic/setup.bash \
 FROM stage_deps as stage_rnode
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
+
+COPY AirSim/ros_ws /root/ros_ws
 
 RUN colcon build \
 		--build-base ~/ros_ws/build \
@@ -83,22 +84,6 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN \
 	make -C /root/PX4-Autopilot px4_sitl_rtps
-
-
-# FROM stage_deps as stage_vulkan
-
-# SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
-
-# ARG VULKAN_SDK_VERSION
-
-# RUN \
-# 	wget -q --show-progress \
-#     	--progress=bar:force:noscroll \
-#     	https://sdk.lunarg.com/sdk/download/latest/linux/vulkan_sdk.tar.gz \
-#     	-O /tmp/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz \ 
-#     && echo "Installing Vulkan SDK ${VULKAN_SDK_VERSION}" \
-#     && mkdir -p /opt/vulkan \
-# 	&& tar -xf /tmp/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz -C /opt/vulkan
 
 
 FROM stage_deps as stage_final
@@ -129,32 +114,11 @@ COPY --from=stage_rnode /root/ros_ws /root/ros_ws
 
 COPY --from=stage_px4sitl /root/PX4-Autopilot /root/PX4-Autopilot
 
-# COPY --from=stage_vulkan /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/include /usr/local/include
-# COPY --from=stage_vulkan /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/lib /usr/local/lib
-# COPY --from=stage_vulkan /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/etc/vulkan/explicit_layer.d /usr/local/share/vulkan/explicit_layer.d
-# COPY --from=stage_vulkan /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/share/vulkan/registry /usr/local/share/vulkan/registry 
-# COPY --from=stage_vulkan /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/bin /usr/local/bin
+COPY AirSim/python /root/AirSim/python
+COPY scripts /root/tools
 
 COPY --chown=1001:1001 AirSim/ForestDeploy /home/user/ForestDeploy
-
-# RUN \
-# 	wget -q --show-progress \
-#     --progress=bar:force:noscroll \
-#     	https://sdk.lunarg.com/sdk/download/latest/linux/vulkan_sdk.tar.gz \
-#     	-O /tmp/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz \ 
-#     && echo "Installing Vulkan SDK ${VULKAN_SDK_VERSION}" \
-#     && mkdir -p /opt/vulkan \
-#     && tar -xf /tmp/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz -C /opt/vulkan \
-#     && mkdir -p /usr/local/include/ && cp -ra /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/include/* /usr/local/include/ \
-#     && mkdir -p /usr/local/lib && cp -ra /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/lib/* /usr/local/lib/ \
-#     && cp -a /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/lib/libVkLayer_*.so /usr/local/lib \
-#     && mkdir -p /usr/local/share/vulkan/explicit_layer.d \
-#     && cp /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/etc/vulkan/explicit_layer.d/VkLayer_*.json /usr/local/share/vulkan/explicit_layer.d \
-#     && mkdir -p /usr/local/share/vulkan/registry \
-#     && cp -a /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/share/vulkan/registry/* /usr/local/share/vulkan/registry \
-#     && cp -a /opt/vulkan/${VULKAN_SDK_VERSION}/x86_64/bin/* /usr/local/bin \
-#     && ldconfig \
-#     && rm /tmp/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz && rm -rf /opt/vulkan
+COPY --chown=1001:1001 AirSim/models/typhoon_h480/TyphoonH480.json /home/user/Documents/AirSim/settings.json
 
 RUN \
     --mount=type=cache,target=/var/cache/apt,from=stage_apt,source=/var/cache/apt \
@@ -165,12 +129,22 @@ RUN \
         -p git \
         -p https://github.com/zsh-users/zsh-autosuggestions \
         -p https://github.com/zsh-users/zsh-syntax-highlighting \
-	&& echo "alias cat='batcat --paging=never'" >> /root/.zshrc
+	&& echo "alias cat='batcat --paging=never'" >> /root/.zshrc \
+	&& sed -i "s/#Port 22/Port 1022/g" /etc/ssh/sshd_config \
+	&& sed -i "s/#PermitRootLogin prohibit-password/PermitRootLogin yes/g" /etc/ssh/sshd_config \
+	&& sed -i "s/#PasswordAuthentication yes/PasswordAuthentication yes/g" /etc/ssh/sshd_config
+
+RUN \
+	echo "source /root/AirSim/ros2/install/setup.bash" >> /root/.bashrc \
+	&& echo "source /root/px4_ros/install/setup.bash" >> /root/.bashrc \
+	&& echo "source /root/ros_ws/install/setup.bash" >> /root/.bashrc
+
+RUN \
+	echo "source /root/AirSim/ros2/install/setup.zsh" >> /root/.zshrc \
+	&& echo "source /root/px4_ros/install/setup.zsh" >> /root/.zshrc \
+	&& echo "source /root/ros_ws/install/setup.zsh" >> /root/.zshrc
 
 WORKDIR /root
-
-COPY scripts /root/tools
-COPY AirSim/python /root/python
 
 COPY AirSim/entrypoint.sh /usr/local/bin/entrypoint.sh
 CMD [ "/usr/local/bin/entrypoint.sh" ]

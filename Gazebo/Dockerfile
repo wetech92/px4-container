@@ -44,10 +44,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 COPY Gazebo/gazebo_ros /root/gazebo_ros
 COPY Gazebo/ros_ws /root/ros_ws
 
-
 RUN \
-	source "/opt/ros/galactic/setup.bash" \
-	colcon build \
+	source /opt/ros/galactic/setup.bash \
+	&& colcon build \
 		--build-base ~/ros_ws/build \
 		--install-base ~/ros_ws/install \
 		--base-paths ~/ros_ws/src \
@@ -96,7 +95,20 @@ RUN \
         -p git \                                                                                                                                     -p https://github.com/zsh-users/zsh-autosuggestions \
         -p https://github.com/zsh-users/zsh-syntax-highlighting \
         && echo "alias cat='batcat --paging=never'" >> /root/.zshrc \
+	&& sed -i "s/#Port 22/Port 1022/g" /etc/ssh/sshd_config \
+	&& sed -i "s/#PermitRootLogin prohibit-password/PermitRootLogin yes/g" /etc/ssh/sshd_config \
+	&& sed -i "s/#PasswordAuthentication yes/PasswordAuthentication yes/g" /etc/ssh/sshd_config \
 	&& ln -s /root/PX4-Autopilot/Tools/sitl_gazebo/models/ models
+
+RUN \
+	echo "source /root/px4_ros/install/setup.bash" >> /root/.bashrc \
+	&& echo "source /root/ros_ws/install/setup.bash" >> /root/.basrhc \
+    && echo "source /root/gazebo_ros/install/setup.bash" >> /root/.bashrc
+
+RUN \
+	echo "source /root/px4_ros/install/setup.zsh" >> /root/.zshrc \
+	&& echo "source /root/ros_ws/install/setup.zsh" >> /root/.zshrc \
+	&& echo "source /root/gazebo_ros/install/setup.zsh" >> /root/.zshrc
 
 WORKDIR /root
 
