@@ -12,6 +12,7 @@ libgstreamer-plugins-base1.0-dev
 libimage-exiftool-perl
 libopencv-dev
 libxml2-utils
+openssh-server
 mesa-utils
 ros-galactic-gazebo*
 protobuf-compiler

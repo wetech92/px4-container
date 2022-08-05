@@ -9,6 +9,7 @@ libxcb1-dev
 libqt5gui5
 libudev-dev
 llvm*
+openssh-server
 patchelf
 python3-yaml
 ros-galactic-image-transport
