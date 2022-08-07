@@ -51,8 +51,8 @@ docker run -it --rm \
    -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
    -e NVIDIA_DISABLE_REQUIRE=1 \
    -e NVIDIA_DRIVER_CAPABILITIES=all \
-   -v /etc/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json \
-   -v /etc/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json \
+   -v /usr/share/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json \
+   -v /usr/share/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json \
    -v /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json \
    -v /tmp/.X11-unix:/tmp/.X11-unix \
    --device=/dev/dri:/dev/dri \
@@ -60,7 +60,7 @@ docker run -it --rm \
    --gpus all \
    --privileged \
    --name AirBash \
-   kestr3l/px4:airsim-gpu-0.0.2 bash
+   kestr3l/px4:airsim-gpu-0.0.2 zsh
 ```
 
 |Statement|Definition|Misc.|
@@ -74,7 +74,7 @@ docker run -it --rm \
 |`--privileged`|give an extended kernel access permission||
 |`--name`|set container name|Cannot be duplicate of an existing name|
 |`kestr3l/px4:airsim-gpu-0.0.2`|Target image<br/>Name: kestr3l/px4<br/>Tag: airsim-gpu-0.0.2|all characters must be lowercase or dash|
-|`bash`|override command to be run after container generation (`CMD`)|Ignored if `ENTRYPOINT` is set|
+|`zsh`|override command to be run after container generation (`CMD`)|Ignored if `ENTRYPOINT` is set|
 
 - All of A4-VAI ITE containers are `ENTRYPOINT`-free. That is, all default initialization scerips can be overriden by `CMD` statement
 - This is important for debugging purpose. If not, run container without overrriding `CMD`.
@@ -148,7 +148,7 @@ docker run -it --rm \
    -v /usr/share/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json \
    -v /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json \
    -v /tmp/.X11-unix:/tmp/.X11-unix \
-   --device=/dev/dxg \
+   --device=/dev/dri:/dev/dri \
    --net host \
    --gpus all \
    --privileged \
