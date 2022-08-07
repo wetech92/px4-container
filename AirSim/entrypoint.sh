@@ -36,10 +36,4 @@ if ${WSL}; then
 fi
 
 su -c "/home/user/ForestDeploy/ForestDeploy.sh -windowed" user &
-make -C /root/PX4-Autopilot px4_sitl_rtps none_typhoon_inha &
-sleep 3s
-
-micrortps_agent -t UDP &
-ros2 launch airsim_ros_pkgs airsim_node.launch.py
-# ros2 launch airsim_ros_pkgs airsim_node.launch.py host:=$simhost &
-# ros2 run integration IntegrationTest
+python3 /root/AirSim/python/spawnObject.py -a "ST_SP_01" -r 250 250
