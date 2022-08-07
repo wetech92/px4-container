@@ -7,6 +7,7 @@ jinja2
 jsonschema
 kconfiglib
 matplotlib==3.0.*
+meson
 numpy nunavut>=1.1.0
 opencv-python
 packaging

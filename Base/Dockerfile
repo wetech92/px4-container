@@ -184,13 +184,26 @@ RUN \
         --event-handlers console_direct+
 
 
+FROM stage_mid as stage_mavr
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN git clone https://github.com/mavlink-router/mavlink-router.git \
+    && cd mavlink-router \
+    && git submodule update --init --recursive \
+    && meson setup build . \
+    && ninja -C build
+
+
 FROM stage_mid as stage_final
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 COPY --from=stage_px4 /root/PX4-Autopilot /root/PX4-Autopilot
 COPY --from=stage_px4 /root/px4_ros /root/px4_ros
-
+COPY --from=stage_mavr /root/mavlink-router/build/src/mavlink-routerd /usr/bin/mavlink-routerd
+COPY --from=stage_mavr /root/mavlink-router/build/mavlink-router.service /usr/lib/systemd/system/mavlink-router.service
+ 
 RUN \
   useradd --shell /bin/bash -u 1001 -c "" -m user \
 	&& usermod -a -G dialout user
