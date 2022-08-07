@@ -153,8 +153,8 @@ FROM stage_mid as stage_px4
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN git clone -b v1.13.0 https://github.com/PX4/PX4-Autopilot.git ~/PX4-Autopilot \ 
-	&& cd ~/PX4-Autopilot \
+RUN git clone -b v1.13.0 https://github.com/PX4/PX4-Autopilot.git /root/PX4-Autopilot \ 
+	&& cd /root/PX4-Autopilot \
 	&& git submodule update --init --recursive
 
 COPY PX4-Autopilot /root/PX4-Autopilot
@@ -188,8 +188,8 @@ FROM stage_mid as stage_mavr
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN git clone https://github.com/mavlink-router/mavlink-router.git \
-    && cd mavlink-router \
+RUN git clone https://github.com/mavlink-router/mavlink-router.git /root/mavlink-router \
+    && cd /root/mavlink-router \
     && git submodule update --init --recursive \
     && meson setup build . \
     && ninja -C build
