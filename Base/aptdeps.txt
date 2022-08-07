@@ -35,6 +35,7 @@ python3-rosdep
 python-setuptools
 rsync
 shellcheck
+systemd
 tzdata
 unzip
 valgrind
