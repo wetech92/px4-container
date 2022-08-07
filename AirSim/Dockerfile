@@ -116,6 +116,7 @@ COPY --from=stage_px4sitl /root/PX4-Autopilot /root/PX4-Autopilot
 
 COPY AirSim/python /root/AirSim/python
 COPY scripts /root/tools
+COPY AirSim/scripts /root/run
 
 COPY --chown=1001:1001 AirSim/ForestDeploy /home/user/ForestDeploy
 COPY --chown=1001:1001 AirSim/models/typhoon_h480/TyphoonH480.json /home/user/Documents/AirSim/settings.json
