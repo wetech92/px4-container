@@ -35,5 +35,20 @@ if ${WSL}; then
 	#find /root/AirSim/python -type f -name "*.py" -print0 | xargs -0 sed -i "s/ip = str(os.environ\['simhost']), port=41451//g" for reverse
 fi
 
-su -c "/home/user/ForestDeploy/ForestDeploy.sh -windowed" user &
-python3 /root/AirSim/python/spawnObject.py -a "ST_SP_01" -r 250 250
+$build_path/bin/px4 -d "$build_path/etc" -w $build_path -s $build_path/etc/init.d-posix/rcS &
+nohup mavlink-routerd -e 172.19.0.7:14550 127.0.0.1:14550 &
+
+sleep 5s
+source /opt/ros/galactic/setup.sh
+source /root/AirSim/ros2/install/setup.bash
+source /root/px4_ros/install/setup.bash
+source /root/ros_ws/install/setup.bash
+
+micrortps_agent -t UDP
+sleep 3S
+
+ros2 launch airsim_ros_pkgs airsim_node.launch.py host:=172.19.0.5
+sleep 3S
+
+ros2 run integration IntegrationTest
+sleep infinity
