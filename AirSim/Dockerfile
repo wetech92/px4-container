@@ -132,7 +132,8 @@ RUN \
 	&& echo "alias cat='batcat --paging=never'" >> /root/.zshrc \
 	&& sed -i "s/#Port 22/Port 1022/g" /etc/ssh/sshd_config \
 	&& sed -i "s/#PermitRootLogin prohibit-password/PermitRootLogin yes/g" /etc/ssh/sshd_config \
-	&& sed -i "s/#PasswordAuthentication yes/PasswordAuthentication yes/g" /etc/ssh/sshd_config
+	&& sed -i "s/#PasswordAuthentication yes/PasswordAuthentication yes/g" /etc/ssh/sshd_config \
+	&& chmod +x /home/user/ForestDeploy/ForestDeploy.sh
 
 RUN \
 	echo "source /root/AirSim/ros2/install/setup.bash" >> /root/.bashrc \
