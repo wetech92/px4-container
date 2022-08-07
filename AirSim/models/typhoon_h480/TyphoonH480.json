@@ -8,6 +8,12 @@
     "SimMode": "Multirotor",
     "Vehicles": {
         "Typhoon_1": {
+			"LocalHostIp": "172.19.0.5",
+            "LogViewerHostIp": "172.19.0.6",
+            "QgcHostIp": "172.19.0.7",
+			"QgcPort": 14550,
+            "SitlIP": "172.19.0.6",
+            "UdpIp": "172.19.0.6",           
             "VehicleType": "PX4Multirotor",
 			"Model": "Hexacopter",
 			"PawnPath": "Typhoon",
