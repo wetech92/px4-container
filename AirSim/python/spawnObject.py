@@ -11,7 +11,7 @@ def genObj(asset_name,region,low,high):
     for i in range(low,high):
         client = airsim.VehicleClient(ip = str(os.environ['simhost']), port=41451)
         desired_name = f"{asset_name}_airsim_{i}"
-        scale = airsim.Vector3r(random.uniform(0.5,2.0), random.uniform(0.5,2.0), random.uniform(0.5,2.0))
+        scale = airsim.Vector3r(random.uniform(1.0,2.0), random.uniform(1.0,2.0), random.uniform(1.0,2.0))
         pose = airsim.Pose(position_val=airsim.Vector3r(random.randrange(-region[0],region[0]), random.randrange(-region[1],region[1]), 0.0))
 
         obj_name = client.simSpawnObject(desired_name, asset_name, pose, scale, False)
@@ -39,11 +39,12 @@ def main():
     print(f"Start creating {args.asset_name}")
     startTime = time.time()
 
-    t1 = threading.Thread(target=genObj, args=(args.asset_name,args.region,1, 400))
-    t2 = threading.Thread(target=genObj, args=(args.asset_name,args.region,401, 800))
-    t3 = threading.Thread(target=genObj, args=(args.asset_name,args.region,801, 1200))
-    t4 = threading.Thread(target=genObj, args=(args.asset_name,args.region,1201, 1600))
-    t5 = threading.Thread(target=genObj, args=(args.asset_name,args.region,1601, 2000))
+    n = 120
+    t1 = threading.Thread(target=genObj, args=(args.asset_name,args.region,1, n))
+    t2 = threading.Thread(target=genObj, args=(args.asset_name,args.region,n+1, 2*n))
+    t3 = threading.Thread(target=genObj, args=(args.asset_name,args.region,2*n+1, 3*n))
+    t4 = threading.Thread(target=genObj, args=(args.asset_name,args.region,3*n+1, 4*n))
+    t5 = threading.Thread(target=genObj, args=(args.asset_name,args.region,4*n+1, 5*n))
 
     t1.start()
     t2.start()
