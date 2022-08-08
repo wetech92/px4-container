@@ -27,7 +27,7 @@ else
 fi
 
 if ${REBUILD}; then
-	/root/tools/buildRos2Pkg.sh
+	cd /root/ros_ws && colcon build
 fi
 
 if [ -n $PX4_SIM_HOST_ADDR ]; then
@@ -40,10 +40,22 @@ fi
 # 	#find /root/AirSim/python -type f -name "*.py" -print0 | xargs -0 sed -i "s/ip = str(os.environ\['simhost']), port=41451//g" for reverse
 # fi
 
-sleep 2s
-echo "Generating Objects"
-python3 /root/AirSim/python/spawnObject.py -a SM_SP_01 -r 240 240
+rm -rf /root/shared/*.png &
+rm -rf /root/shared/simOn &
 sleep 1s
+
+simFlag=$(find /root/shared -maxdepth 1 -type f -name 'simOn')
+
+while [ -z $simFlag ];
+do
+    simFlag=$(find /root/shared -maxdepth 1 -type f -name 'simOn')
+	echo "Waiting until simulator starts up..."
+	sleep 0.5s
+done
+
+echo "Simulator startup! Generating Objects"
+python3 /root/AirSim/python/spawnObject.py -a SM_SP_01 -r 240 240
+sleep 0.5s
 
 python3 /root/AirSim/python/moveUAV.py
 
@@ -68,9 +80,15 @@ mapImg=$(find /root/shared -maxdepth 1 -type f -name '*.png')
 while [ -z $mapImg ];
 do
     mapImg=$(find /root/shared -maxdepth 1 -type f -name '*.png')
+	echo "Finding generated map..."
+	sleep 1s
 done
 
-cp $mapImg /root/ros_ws_src/integration/PathPlanning/Map/map.png
+echo "Found generated map! Copying to RRT directory"
+sleep 1s
 
-# ros2 run integration IntegrationTest
+cp $mapImg /root/ros_ws/src/integration/integration/PathPlanning/Map/Map.png
+sleep 5s
+
+ros2 run integration IntegrationTest
 sleep infinity

@@ -31,37 +31,40 @@ import matplotlib.pyplot as plt
 
 # Numpy
 import numpy as np
+import matplotlib.pyplot as plt
 
-# ## Client
-# # Reset, Pause, Unpause  SRV
+## Client
+# Reset, Pause, Unpause  SRV
 # from std_srvs.srv import Empty
 
-# # MakeWorld SRV
+# MakeWorld SRV
 # from model_spawn_srvs.srv import MakeWorld
 
 # Math
 import math
 
-# ## Collision Avoidance Module
-# #  Artificial Potential Field
+## Collision Avoidance Module
+#  Artificial Potential Field
 # from .CollisionAvoidance.ArtificialPotentialField import ArtificialPotentialField
 
-# ## Path Planning Module
-# #  RRT
-# from .PathPlanning.RRT import RRT
+## Path Planning Module
+#  RRT
+from .PathPlanning.RRT import RRT
+
+import time
 
 
 class IntegrationNode(Node):
 
     def __init__(self):
         super().__init__('integration')
-        # # Init PathPlanning Module
-        # self.RRT = RRT.RRT()
+        # Init PathPlanning Module
+        self.RRT = RRT.RRT()
 
         # Init CVBridge
         self.CvBridge = CvBridge()
 
-        # # Init Aritificial Potential Field
+        # Init Aritificial Potential Field
         # self.APF = ArtificialPotentialField.ArtificialPotentialField(10, 10, 10, 10)
 
         # init PX4 MSG Publisher
@@ -72,7 +75,7 @@ class IntegrationNode(Node):
         self.VehicleRatesSetpointPublisher_ = self.create_publisher(VehicleRatesSetpoint, '/fmu/vehicle_rates_setpoint/in', 10)
 
         # init PX4 MSG Subscriber
-        self.TimesyncSubscriber_ = self.create_subscription(Timesync, '/fmu/timesync/out', self.TimesyncCallback, 10)
+        self.TimesyncSubscriber_ = self.create_subscription(Timesync, '/fmu/time_sync/out', self.TimesyncCallback, 10)
         self.EstimatorStatesSubscriber_ = self.create_subscription(EstimatorStates, '/fmu/estimator_states/out', self.EstimatorStatesCallback, 10)
         self.VehicleAngularVelocitySubscriber_ = self.create_subscription(VehicleAngularVelocity, '/fmu/vehicle_angular_velocity/out', self.VehicleAngularVelocityCallback, 10)
 
@@ -82,12 +85,12 @@ class IntegrationNode(Node):
         # Init Lidar Subscriber
         self.LidarSubscriber_ = self.create_subscription(LaserScan, '/airsim_node/Typhoon_1/lidar/RPLIDAR_A3', self.LidarCallback, 10)
 
+
         # # Init Client
         # self.ResetWorldClient = self.create_client(Empty, '/reset_world')
         # self.ResetWorldClientRequest = Empty.Request()
-
-        #while not self.ResetWorldClient.wait_for_service(timeout_sec=1.0):
-        #    self.get_logger().info('service not available, waiting again...')
+        # #while not self.ResetWorldClient.wait_for_service(timeout_sec=1.0):
+        # #    self.get_logger().info('service not available, waiting again...')
         
         # self.PauseClient = self.create_client(Empty, '/pause_physics')
         # self.PauseClientRequest = Empty.Request()
@@ -99,7 +102,7 @@ class IntegrationNode(Node):
         
 
         # Offboard Period
-        OffboardPeriod = 0.001
+        OffboardPeriod = 0.01
         self.OffboardCounter = 1 / OffboardPeriod
         self.OffboardTimer = self.create_timer(OffboardPeriod, self.OffboardControl)
 
@@ -118,9 +121,9 @@ class IntegrationNode(Node):
         self.VEHICLE_CMD_DO_SET_MODE = 176
 
         # Vehicle States Variables
-        self.x = 0.0
-        self.y = 0.0
-        self.z = 0.0
+        self.x = 10.0
+        self.y = 10.0
+        self.z = 10.0
 
         self.vx = 0.0
         self.vy = 0.0
@@ -144,42 +147,45 @@ class IntegrationNode(Node):
         self.TargetYawRate = 0.0
 
 
-        ## Collision Avoidance Variables
-        self.CollisionAvoidanceFlag = False
-        self.LidarSampling = 0
-        self.AvoidancePos = [0.0] * 2
-        self.CA = [0.0] * 2
-        self.ObsDist = 0.0
+        # ## Collision Avoidance Variables
+        # self.CollisionAvoidanceFlag = False
+        # self.LidarSampling = 0
+        # self.AvoidancePos = [0.0] * 2
+        # self.CA = [0.0] * 2
+        # self.ObsDist = 0.0
 
-        # ## Path Planning Variables
-        # self.Target = [450.0, 450.0, -5.0]
-        # self.RawImage = (cv2.imread("/root/ros_ws/src/integration/integration/PathPlanning/Map/test.png", cv2.IMREAD_GRAYSCALE))
-        # self.Image = np.uint8((255 - self.RawImage)/ 255)
-        # self.Image = cv2.flip(self.Image, 0)
-        
-        # self.RawImage = cv2.flip(self.RawImage, 0)
-
+        ## Path Planning Variables
+        self.Target = [ 480.0, 480.0, -5.0]
 
         # TakeOff Variables
-        self.InitialPosition = [0.0, 0.0, -5.0]
+        self.InitialPosition = [ 0.0, 0.0, -5.0]
         self.InitialPositionFlag = False
 
-        self.StartPoint = np.array([[0], [0]])
-        self.GoalPoint = np.array([[4999], [4999]])
+        self.StartPoint = np.array([[100], [100]])
+        self.GoalPoint = np.array([[4900], [4900]])
         
+        self.RawImage = (cv2.imread("/root/ros_ws/src/integration/integration/PathPlanning/Map/Map.png", cv2.IMREAD_GRAYSCALE))
+        self.Image = np.uint8(np.uint8((255 - self.RawImage)/ 255))
+        self.Image = cv2.flip(self.Image, 0)
+        self.Planned = self.RRT.PathPlanning(self.Image, self.StartPoint, self.GoalPoint)
+        self.PlannedX = self.Planned[0] / 10
+        self.PlannedY = self.Planned[1] / 10
+        self.MaxPlannnedIndex = len(self.PlannedX) - 1
+        print(len(self.PlannedX))
         self.PathPlanningInitialize = True
 
-        self.PlannedX = [0.0] * 5000
-        self.PlannedY = [0.0] * 5000
-        self.FollowedX = [0.0] * 5000
-        self.FollowedY = [0.0] * 5000
+        # Plot Generated Path on Plot
+        bgd = plt.imread("/root/ros_ws/src/integration/integration/PathPlanning/Map/Map.png")
+        plt.imshow(bgd,zorder=0, extent=[0, 5000, 0, 5000])
+        plt.plot(PlannedX,PlannedY)
+        plt.savefig('/root/ros_ws/src/integration/integration/PathPlanning/Map/Path.png')
 
-        # self.LogFile = open("/root/ros_ws/src/integration/integration/PathPlanning/Map/log.txt",'a')
-        
+        self.LogFile = open("/root/ros_ws/src/integration/integration/PathPlanning/Map/log.txt",'a')
         self.PlannnedIndex = 0
         
-        self.MaxPlannnedIndex = 0
         self.PathPlanningTargetPosition = np.array([0.0, 0.0, 0.0])
+
+        
     ######################################################################################################################################## 
     # Main Function
     def OffboardControl(self):
@@ -191,23 +197,28 @@ class IntegrationNode(Node):
             self.OffboardControlModeCallback()
 
             if self.InitialPositionFlag:
-                print("Sample")
                 ###########################################
                 # Sample PathPlanning Example
-                """
+                
                 if self.PlannnedIndex >= self.MaxPlannnedIndex:
                     self.LogFile.close()
+                    print("DONE")
                 else:
                     self.PathPlanningTargetPosition = np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex], -5.0])
-                    self.SetPosition(self.PathPlanningTargetPosition)
-                    #self.LogFile = open("/root/ros_ws/src/integration/integration/PathPlanning/Map/log.txt",'a')
+                    self.TargetYaw = np.arctan2(self.Target[1] - self.y, self.Target[0] - self.x)
+                    if self.PlannnedIndex > 400:
+                        self.TargetYaw = np.arctan2(self.Target[1] - 0, self.Target[0] - 0)
+                    self.SetPosition(self.PathPlanningTargetPosition, self.TargetYaw)
+                    # self.LogFile = open("/root/ros_ws/src/integration/integration/PathPlanning/Map/log.txt",'a')
+                    print(np.array([self.x, self.y]))
+                    print(np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex]]))
                     WaypointACK = np.linalg.norm(np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex]]) - np.array([self.x, self.y]))
-                    if  WaypointACK < 1.0:
-                        LogData = "%d %f %f %f %f\n" %(self.PlannnedIndex, self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex],self.x, self.y)
+                    if  WaypointACK < 3:
+                        LogData = "%d %f %f %f %f\n" %(self.PlannnedIndex, self.PlannedY[self.PlannnedIndex], self.PlannedX[self.PlannnedIndex], self.y, self.x)
                         self.LogFile.write(LogData)
                         self.PlannnedIndex += 1
-                        #print(self.PlannnedIndex)
-                """
+                        # print(self.PlannnedIndex)
+                
                 ###########################################
                 ##########################################
                 # Sample Collision Avoidance Example
@@ -222,14 +233,13 @@ class IntegrationNode(Node):
 
                 ###########################################
                 # Sample Control Position, Velocity, Attitude, Rate    
-                #self.SetPosition(self.TargetPosition)
-                #self.SetVelocity(self.TargetVelocity)
+                #self.SetPosition(self.TargetPosition, self.TargetYaw)
+                #self.SetVelocity(self.TargetVelocity, self.TargetYaw)
                 #self.SetAttitude(self.TargetAttitude, self.TargetBodyRate, self.TargetThrust, self.TargetYawRate)
                 #self.SetRate(self.TargetRate, self.TargetThrust)
             
             else:
                 self.Takeoff()
-                self.SetPosition([0.0, 20.0, -5.0])
                 
             if self.OffboardCount < self.OffboardCounter:
                 self.OffboardCount = self.OffboardCount + 1
@@ -238,9 +248,17 @@ class IntegrationNode(Node):
     # # MakeWorld
     # def MakeWorldCallback(self, request, response):
     #     if request.done == 1:
-    #         Planned = self.RRT.PathPlanning(self.Image, self.StartPoint, self.GoalPoint)
-    #         self.PlannedX = Planned[1] / 10
-    #         self.PlannedY = Planned[0] / 10
+    #         print("Requset")
+    #         RawImage = (cv2.imread("/root/ros_ws/src/integration/integration/PathPlanning/Map/test.png", cv2.IMREAD_GRAYSCALE))
+    #         Image = np.uint8(np.uint8((255 - RawImage)/ 255))
+    #         Image = cv2.flip(Image, 0)
+    #         Image = cv2.rotate(Image, cv2.ROTATE_90_CLOCKWISE)
+            
+    #         Planned = self.RRT.PathPlanning(Image, self.StartPoint, self.GoalPoint)
+    #         RawImage = cv2.flip(RawImage, 0)
+    #         cv2.imwrite('rawimage.png',RawImage)
+    #         self.PlannedX = Planned[0] / 10
+    #         self.PlannedY = Planned[1] / 10
     #         self.MaxPlannnedIndex = len(self.PlannedX) - 1
     #         print(len(self.PlannedX))
     #         response.ack = 1
@@ -276,22 +294,21 @@ class IntegrationNode(Node):
     ## PX4 User Level Function
     # Takeoff
     def Takeoff(self):
-        self.SetPosition(self.InitialPosition)
-        
+        self.SetPosition(self.InitialPosition, 0.0)
         if abs(self.z - self.InitialPosition[2]) < 0.3:
             self.InitialPositionFlag = True
             
 
     ## PX4 Controller
     # Set Position
-    def SetPosition(self, SetPosition):
+    def SetPosition(self, SetPosition, SetYaw):
         SetVelocity = [np.NaN, np.NaN, np.NaN]
-        self.TrajectorySetpointCallback(SetPosition, SetVelocity)
+        self.TrajectorySetpointCallback(SetPosition, SetVelocity, SetYaw)
         
     # Set Velocity
-    def SetVelocity(self, SetVelocity):
+    def SetVelocity(self, SetVelocity, SetYaw):
         SetPosition = [np.NaN, np.NaN, np.NaN]
-        self.TrajectorySetpointCallback(SetPosition, SetVelocity)
+        self.TrajectorySetpointCallback(SetPosition, SetVelocity, SetYaw)
 
     # Set Attitude
     def SetAttitude(self, SetQuaternion, BodyRate, SetThrust, SetYawRate):
@@ -327,7 +344,7 @@ class IntegrationNode(Node):
         self.OffboardControlModePublisher_.publish(msg)
 
     # TrajectorySetpoint
-    def TrajectorySetpointCallback(self, SetPosition, SetVelocity):
+    def TrajectorySetpointCallback(self, SetPosition, SetVelocity, SetYaw):
         msg = TrajectorySetpoint()
         msg.timestamp = self.timestamp2
         msg.x = SetPosition[0]
@@ -336,6 +353,7 @@ class IntegrationNode(Node):
         msg.vx = SetVelocity[0]
         msg.vy = SetVelocity[1]
         msg.vz = SetVelocity[2]
+        msg.yaw = SetYaw
 
         self.TrajectorySetpointPublisher_.publish(msg)
         
@@ -429,8 +447,8 @@ class IntegrationNode(Node):
     # Camera
     def CameraCallback(self, msg):
         current_frame = self.CvBridge.imgmsg_to_cv2(msg)
-        #current_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB)
-        cv2.imshow("camera", current_frame)
+        # current_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB)
+        # cv2.imshow("camera", current_frame)
         cv2.waitKey(1)
 
     # Lidar

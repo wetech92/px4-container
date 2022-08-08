@@ -41,15 +41,21 @@ fi
 # fi
 
 su -c "/home/user/ForestDeploy/ForestDeploy.sh -windowed" user &
+sleep 3s
 
-rm -rf /home/user/ForestDeploy/ForestDeploy/*.png
+touch /root/shared/simOn
 mapImg=$(find /home/user/ForestDeploy/ForestDeploy -maxdepth 1 -type f -name '*.png')
 
 while [ -z $mapImg ];
 do
     mapImg=$(find /home/user/ForestDeploy/ForestDeploy -maxdepth 1 -type f -name '*.png')
+	echo "Finding generated map..."
+	sleep 1s
 done
 
-cp $mapImg /root/shared/map.png
+echo "Found generated map! Copying to shared volume"
+sleep 1s
+
+cp $mapImg /root/shared/Map.png
 
 sleep infinity

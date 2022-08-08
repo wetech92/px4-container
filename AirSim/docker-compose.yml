@@ -16,7 +16,7 @@ services:
       - /usr/share/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json
       - /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json
       - /home/merlin/gitcodes/px4-container/AirSim/models/typhoon_h480/TyphoonH480.json:/home/user/Documents/AirSim/settings.json
-      - /home/merlin/gitcodes/px4-container/AirSim/entrypoint2.sh:/usr/local/bin/entrypoint.sh
+      - /home/merlin/gitcodes/px4-container/AirSim/entrypoint2.sh:/usr/local/bin/entrypoint-sim.sh
       - shared-image:/root/shared
       #- /mnt/wslg:/mnt/wslg
       #- /usr/lib/wsl:/usr/lib/wsl
@@ -28,7 +28,6 @@ services:
         ipv4_address: 172.19.0.5
     container_name: sitl-airsim
     image: kestr3l/px4:airsim-gpu-0.0.2
-    command: su -c "/home/user/ForestDeploy/ForestDeploy.sh -windowed" user
     # stdin_open: true
     # tty: true
     deploy:
@@ -51,10 +50,10 @@ services:
       #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
-      - /home/merlin/gitcodes/px4-container/AirSim/entrypoint.sh:/usr/local/bin/entrypoint.sh
+      # - /home/merlin/gitcodes/px4-container/scripts/buildRos2Pkg.sh:/root/tools/buildRos2Pkg.sh
+      # - /home/merlin/gitcodes/px4-container/AirSim/ros_ws:/root/ros_ws
+      - /home/merlin/gitcodes/px4-container/AirSim/entrypoint.sh:/usr/local/bin/entrypoint-px4.sh
       - shared-image:/root/shared
-      # - /home/merlin/gitcodes/px4-container/AirSim/python/spawnObject.py:/root/AirSim/python/spawnObject.py
-      # - /home/merlin/gitcodes/px4-container/AirSim/python/moveUAV.py:/root/AirSim/python/moveUAV.py
       #- /mnt/wslg:/mnt/wslg
       #- /usr/lib/wsl:/usr/lib/wsl
     devices:
