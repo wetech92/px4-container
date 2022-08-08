@@ -158,6 +158,8 @@ class IntegrationNode(Node):
         ## Path Planning Variables
         self.Target = [450.0, 450.0, -5.0]
 
+        
+
 
 
         # TakeOff Variables
@@ -180,6 +182,8 @@ class IntegrationNode(Node):
         
         self.MaxPlannnedIndex = 10
         self.PathPlanningTargetPosition = np.array([0.0, 0.0, 0.0])
+
+        
     ######################################################################################################################################## 
     # Main Function
     def OffboardControl(self):
@@ -198,7 +202,10 @@ class IntegrationNode(Node):
                     self.LogFile.close()
                 else:
                     self.PathPlanningTargetPosition = np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex], -5.0])
-                    self.SetPosition(self.PathPlanningTargetPosition)
+                    self.TargetYaw = np.arctan2(self.Target[1] - self.y, self.Target[0] - self.x)
+                    if self.PlannnedIndex > 400:
+                        self.TargetYaw = np.arctan2(self.Target[1] - 0, self.Target[0] - 0)
+                    self.SetPosition(self.PathPlanningTargetPosition, self.TargetYaw)
                     #self.LogFile = open("/root/ros_ws/src/integration/integration/PathPlanning/Map/log.txt",'a')
                     WaypointACK = np.linalg.norm(np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex]]) - np.array([self.x, self.y]))
                     if  WaypointACK < 5.0:
@@ -221,8 +228,8 @@ class IntegrationNode(Node):
 
                 ###########################################
                 # Sample Control Position, Velocity, Attitude, Rate    
-                #self.SetPosition(self.TargetPosition)
-                #self.SetVelocity(self.TargetVelocity)
+                #self.SetPosition(self.TargetPosition, self.TargetYaw)
+                #self.SetVelocity(self.TargetVelocity, self.TargetYaw)
                 #self.SetAttitude(self.TargetAttitude, self.TargetBodyRate, self.TargetThrust, self.TargetYawRate)
                 #self.SetRate(self.TargetRate, self.TargetThrust)
             
@@ -282,21 +289,21 @@ class IntegrationNode(Node):
     ## PX4 User Level Function
     # Takeoff
     def Takeoff(self):
-        self.SetPosition(self.InitialPosition)
+        self.SetPosition(self.InitialPosition, 0.0)
         if abs(self.z - self.InitialPosition[2]) < 0.3:
             self.InitialPositionFlag = True
             
 
     ## PX4 Controller
     # Set Position
-    def SetPosition(self, SetPosition):
+    def SetPosition(self, SetPosition, SetYaw):
         SetVelocity = [np.NaN, np.NaN, np.NaN]
-        self.TrajectorySetpointCallback(SetPosition, SetVelocity)
+        self.TrajectorySetpointCallback(SetPosition, SetVelocity, SetYaw)
         
     # Set Velocity
-    def SetVelocity(self, SetVelocity):
+    def SetVelocity(self, SetVelocity, SetYaw):
         SetPosition = [np.NaN, np.NaN, np.NaN]
-        self.TrajectorySetpointCallback(SetPosition, SetVelocity)
+        self.TrajectorySetpointCallback(SetPosition, SetVelocity, SetYaw)
 
     # Set Attitude
     def SetAttitude(self, SetQuaternion, BodyRate, SetThrust, SetYawRate):
@@ -332,7 +339,7 @@ class IntegrationNode(Node):
         self.OffboardControlModePublisher_.publish(msg)
 
     # TrajectorySetpoint
-    def TrajectorySetpointCallback(self, SetPosition, SetVelocity):
+    def TrajectorySetpointCallback(self, SetPosition, SetVelocity, SetYaw):
         msg = TrajectorySetpoint()
         msg.timestamp = self.timestamp2
         msg.x = SetPosition[0]
@@ -341,6 +348,7 @@ class IntegrationNode(Node):
         msg.vx = SetVelocity[0]
         msg.vy = SetVelocity[1]
         msg.vz = SetVelocity[2]
+        msg.yaw = SetYaw
 
         self.TrajectorySetpointPublisher_.publish(msg)
         
