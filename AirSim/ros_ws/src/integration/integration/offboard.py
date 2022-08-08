@@ -77,10 +77,10 @@ class IntegrationNode(Node):
         self.VehicleAngularVelocitySubscriber_ = self.create_subscription(VehicleAngularVelocity, '/fmu/vehicle_angular_velocity/out', self.VehicleAngularVelocityCallback, 10)
 
         # Init Camera Subscriber
-        self.CameraSubscriber_ = self.create_subscription(Image, '/airsim_node/Drone1/OptCamera/Scene', self.CameraCallback, 60)
+        self.CameraSubscriber_ = self.create_subscription(Image, '/airsim_node/Typhoon_1/OptCamera/Scene', self.CameraCallback, 60)
 
         # Init Lidar Subscriber
-        self.LidarSubscriber_ = self.create_subscription(LaserScan, '/airsim_node/Drone1/lidar/RPLIDAR_A3', self.LidarCallback, 10)
+        self.LidarSubscriber_ = self.create_subscription(LaserScan, '/airsim_node/Typhoon_1/lidar/RPLIDAR_A3', self.LidarCallback, 10)
 
         # # Init Client
         # self.ResetWorldClient = self.create_client(Empty, '/reset_world')
