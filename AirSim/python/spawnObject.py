@@ -4,6 +4,7 @@ import argparse
 import random
 import time
 import os
+import numpy as np
 import threading
 
 def genObj(asset_name,region,low,high):
@@ -12,7 +13,20 @@ def genObj(asset_name,region,low,high):
         client = airsim.VehicleClient()
         desired_name = f"{asset_name}_airsim_{i}"
         scale = airsim.Vector3r(random.uniform(1.0,2.0), random.uniform(1.0,2.0), random.uniform(1.0,2.0))
-        pose = airsim.Pose(position_val=airsim.Vector3r(random.randrange(-region[0],region[0]), random.randrange(-region[1],region[1]), 0.0))
+
+        posX = random.randrange(-region[0],region[0])
+        posY = random.randrange(-region[1],region[1])
+        posZ = 0.3
+        dist1 = np.linalg.norm(np.array((posX,posY)) - np.array((-240,-240)))
+        dist2 = np.linalg.norm(np.array((posX,posY)) - np.array((240,240)))
+
+        # Reroll until flight area is secured
+        while dist1 <= 2.5 or dist2 <= 2.5:
+            posX = random.randrange(-region[0],region[0])
+            posY = random.randrange(-region[1],region[1])
+            distOrigin = np.linalg.norm(np.array((posX,posY)) - np.array((-240,-240)))
+
+        pose = airsim.Pose(position_val=airsim.Vector3r(posX,posY,posZ))
 
         obj_name = client.simSpawnObject(desired_name, asset_name, pose, scale, False)
         objList.append(obj_name)
