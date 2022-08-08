@@ -148,5 +148,6 @@ RUN \
 
 WORKDIR /root
 
-COPY AirSim/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY AirSim/entrypoint-sim.sh /usr/local/bin/entrypoint.sh
+# COPY AirSim/entrypoint-px4.sh /usr/local/bin/entrypoint.sh
 CMD [ "/usr/local/bin/entrypoint.sh" ]
