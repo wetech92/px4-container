@@ -30,25 +30,47 @@ if ${REBUILD}; then
 	/root/tools/buildRos2Pkg.sh
 fi
 
-if ${WSL}; then
-	find /root/AirSim/python -type f -name "*.py" -print0 | xargs -0 sed -i "s/airsim.VehicleClient()/airsim.VehicleClient(ip = str(os.environ\['simhost']), port=41451)/g"
-	#find /root/AirSim/python -type f -name "*.py" -print0 | xargs -0 sed -i "s/ip = str(os.environ\['simhost']), port=41451//g" for reverse
+if [ -n $PX4_SIM_HOST_ADDR ]; then
+	find /root/AirSim/python -type f -name "*.py" -print0 | xargs -0 sed -i "s/airsim.VehicleClient()/airsim.VehicleClient(ip=\"${PX4_SIM_HOST_ADDR}\", port=41451)/g"
+	find /root/AirSim/python -type f -name "*.py" -print0 | xargs -0 sed -i "s/airsim.MultirotorClient()/airsim.MultirotorClient(ip=\"${PX4_SIM_HOST_ADDR}\", port=41451)/g"
 fi
+
+# if ${WSL}; then
+# 	find /root/AirSim/python -type f -name "*.py" -print0 | xargs -0 sed -i "s/airsim.VehicleClient()/airsim.VehicleClient(ip = str(os.environ\['simhost']), port=41451)/g"
+# 	#find /root/AirSim/python -type f -name "*.py" -print0 | xargs -0 sed -i "s/ip = str(os.environ\['simhost']), port=41451//g" for reverse
+# fi
+
+sleep 2s
+echo "Generating Objects"
+python3 /root/AirSim/python/spawnObject.py -a SM_SP_01 -r 240 240
+sleep 1s
+
+python3 /root/AirSim/python/moveUAV.py
 
 $build_path/bin/px4 -d "$build_path/etc" -w $build_path -s $build_path/etc/init.d-posix/rcS &
 nohup mavlink-routerd -e 172.19.0.7:14550 127.0.0.1:14550 &
+sleep 3s
 
-sleep 5s
 source /opt/ros/galactic/setup.sh
 source /root/AirSim/ros2/install/setup.bash
 source /root/px4_ros/install/setup.bash
 source /root/ros_ws/install/setup.bash
 
-micrortps_agent -t UDP
-sleep 3S
+micrortps_agent -t UDP &
+sleep 1s
 
-ros2 launch airsim_ros_pkgs airsim_node.launch.py host:=172.19.0.5
-sleep 3S
+echo "Starting AIRSIM ROS PKGS"
+ros2 launch airsim_ros_pkgs airsim_node.launch.py host:=172.19.0.5 &
+sleep 1s
 
-ros2 run integration IntegrationTest
+mapImg=$(find /root/shared -maxdepth 1 -type f -name '*.png')
+
+while [ -z $mapImg ];
+do
+    mapImg=$(find /root/shared -maxdepth 1 -type f -name '*.png')
+done
+
+cp $mapImg /root/ros_ws_src/integration/PathPlanning/Map/map.png
+
+# ros2 run integration IntegrationTest
 sleep infinity
