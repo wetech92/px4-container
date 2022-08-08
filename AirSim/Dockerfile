@@ -90,8 +90,6 @@ FROM stage_deps as stage_final
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-ARG VULKAN_SDK_VERSION
-
 ENV \
 	DEBIAN_FRONTEND noninteractive \
 	LANG=C.UTF-8 \
