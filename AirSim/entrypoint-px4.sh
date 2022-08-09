@@ -40,7 +40,7 @@ fi
 # 	#find /root/AirSim/python -type f -name "*.py" -print0 | xargs -0 sed -i "s/ip = str(os.environ\['simhost']), port=41451//g" for reverse
 # fi
 
-rm -rf /root/shared/*.png &
+rm -rf /root/shared/Map.png &
 rm -rf /root/shared/simOn &
 sleep 1s
 

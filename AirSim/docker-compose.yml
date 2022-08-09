@@ -47,7 +47,7 @@ services:
       - PX4_SIM_HOST_ADDR=172.19.0.5
       - PX4_SIM_MODEL=typhoon_inha
       - build_path=/root/PX4-Autopilot/build/px4_sitl_rtps
-      - REBUILD=true
+      # - REBUILD=true
       #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
@@ -91,7 +91,7 @@ services:
       px4-sitl-airsim:
         ipv4_address: 172.19.0.7
     container_name: sitl-qgc
-    image: kestr3l/qgc-app:4.0.0
+    image: kestr3l/qgc-app:nobg-4.0.0
     deploy:
       resources:
         reservations:

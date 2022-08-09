@@ -208,7 +208,7 @@ class IntegrationNode(Node):
                     self.LogFile.close()
                     print("DONE")
                 else:
-                    self.PathPlanningTargetPosition = np.array([self.PlannedY[self.PlannnedIndex], self.PlannedX[self.PlannnedIndex], -5.0])
+                    self.PathPlanningTargetPosition = np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex], -5.0])
                     self.TargetYaw = np.arctan2(self.Target[1] - self.y, self.Target[0] - self.x)
                     if self.PlannnedIndex > 400:
                         self.TargetYaw = np.arctan2(self.Target[1] - 0, self.Target[0] - 0)
@@ -216,9 +216,9 @@ class IntegrationNode(Node):
                     # self.LogFile = open("/root/ros_ws/src/integration/integration/PathPlanning/Map/log.txt",'a')
                     print(np.array([self.x, self.y]))
                     print(np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex]]))
-                    WaypointACK = np.linalg.norm(np.array([self.PlannedY[self.PlannnedIndex], self.PlannedX[self.PlannnedIndex]]) - np.array([self.x, self.y]))
+                    WaypointACK = np.linalg.norm(np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex]]) - np.array([self.x, self.y]))
                     if  WaypointACK < 5:
-                        LogData = "%d %f %f %f %f\n" %(self.PlannnedIndex, self.PlannedY[self.PlannnedIndex], self.PlannedX[self.PlannnedIndex], self.y, self.x)
+                        LogData = "%d %f %f %f %f\n" %(self.PlannnedIndex, self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex], self.x, self.y)
                         self.LogFile.write(LogData)
                         self.PlannnedIndex += 1
                         # print(self.PlannnedIndex)
@@ -244,6 +244,9 @@ class IntegrationNode(Node):
             
             else:
                 self.Takeoff()
+                print("Takeoff")
+                print(np.array([self.x,self.y]))
+                print(np.array([self.PlannedX[0],self.PlannedY[0]]))
                 
             if self.OffboardCount < self.OffboardCounter:
                 self.OffboardCount = self.OffboardCount + 1
@@ -349,8 +352,8 @@ class IntegrationNode(Node):
     def TrajectorySetpointCallback(self, SetPosition, SetVelocity, SetYaw):
         msg = TrajectorySetpoint()
         msg.timestamp = self.timestamp2
-        msg.x = SetPosition[0]
-        msg.y = SetPosition[1]
+        msg.x = SetPosition[1]
+        msg.y = SetPosition[0]
         msg.z = SetPosition[2]
         msg.vx = SetVelocity[0]
         msg.vy = SetVelocity[1]
@@ -412,8 +415,8 @@ class IntegrationNode(Node):
         self.EstimatorStatesTime = msg.timestamp
         
         # Position NED
-        self.x = msg.states[7]
-        self.y = msg.states[8]
+        self.x = msg.states[8]
+        self.y = msg.states[7]
         self.z = msg.states[9]
 
             # Velocity NED
