@@ -167,18 +167,22 @@ class IntegrationNode(Node):
         self.RawImage = (cv2.imread("/root/ros_ws/src/integration/integration/PathPlanning/Map/Map.png", cv2.IMREAD_GRAYSCALE))
         self.Image = np.uint8(np.uint8((255 - self.RawImage)/ 255))
         self.Image = cv2.flip(self.Image, 0)
+        # self.Image = cv2.rotate(self.Image, cv2.ROTATE_90_CLOCKWISE)
         self.Planned = self.RRT.PathPlanning(self.Image, self.StartPoint, self.GoalPoint)
-        self.PlannedX = self.Planned[0] / 10
-        self.PlannedY = self.Planned[1] / 10
+        self.PlannedX = (self.Planned[0] / 10)
+        self.PlannedY = (self.Planned[1] / 10)
         self.MaxPlannnedIndex = len(self.PlannedX) - 1
         print(len(self.PlannedX))
         self.PathPlanningInitialize = True
 
         # Plot Generated Path on Plot
-        bgd = plt.imread("/root/ros_ws/src/integration/integration/PathPlanning/Map/Map.png")
-        plt.imshow(bgd,zorder=0, extent=[0, 5000, 0, 5000])
-        plt.plot(PlannedX,PlannedY)
+        self.bgd = plt.imread("/root/ros_ws/src/integration/integration/PathPlanning/Map/Map.png")
+        plt.imshow(self.bgd,zorder=0, extent=[0, 5000, 0, 5000])
+        plt.plot(self.PlannedX*10,self.PlannedY*10)
         plt.savefig('/root/ros_ws/src/integration/integration/PathPlanning/Map/Path.png')
+
+        self.PlannedX = self.PlannedX - 10
+        self.PlannedY = self.PlannedY - 10
 
         self.LogFile = open("/root/ros_ws/src/integration/integration/PathPlanning/Map/log.txt",'a')
         self.PlannnedIndex = 0
@@ -204,7 +208,7 @@ class IntegrationNode(Node):
                     self.LogFile.close()
                     print("DONE")
                 else:
-                    self.PathPlanningTargetPosition = np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex], -5.0])
+                    self.PathPlanningTargetPosition = np.array([self.PlannedY[self.PlannnedIndex], self.PlannedX[self.PlannnedIndex], -5.0])
                     self.TargetYaw = np.arctan2(self.Target[1] - self.y, self.Target[0] - self.x)
                     if self.PlannnedIndex > 400:
                         self.TargetYaw = np.arctan2(self.Target[1] - 0, self.Target[0] - 0)
@@ -212,8 +216,8 @@ class IntegrationNode(Node):
                     # self.LogFile = open("/root/ros_ws/src/integration/integration/PathPlanning/Map/log.txt",'a')
                     print(np.array([self.x, self.y]))
                     print(np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex]]))
-                    WaypointACK = np.linalg.norm(np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex]]) - np.array([self.x, self.y]))
-                    if  WaypointACK < 3:
+                    WaypointACK = np.linalg.norm(np.array([self.PlannedY[self.PlannnedIndex], self.PlannedX[self.PlannnedIndex]]) - np.array([self.x, self.y]))
+                    if  WaypointACK < 5:
                         LogData = "%d %f %f %f %f\n" %(self.PlannnedIndex, self.PlannedY[self.PlannnedIndex], self.PlannedX[self.PlannnedIndex], self.y, self.x)
                         self.LogFile.write(LogData)
                         self.PlannnedIndex += 1
@@ -314,10 +318,8 @@ class IntegrationNode(Node):
     def SetAttitude(self, SetQuaternion, BodyRate, SetThrust, SetYawRate):
         self.VehicleAttitudeSetpointCallback(SetQuaternion, BodyRate, SetThrust, SetYawRate)
     
-    # Set Rate
-    def SetRate(self, SetRate, SetThrust):
-        self.VehicleRatesSetpointCallback(SetRate, SetThrust)
-
+    # Set Rate        self.PlannedX = self.PlannedX - 10
+        self.PlannedY = self.PlannedY - 10
     ## PX4 Publisher
     # VehicleCommand
     def VehicleCommandCallback(self, command, param1, param2):

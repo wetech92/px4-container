@@ -16,7 +16,7 @@ services:
       - /usr/share/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json
       - /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json
       - /home/merlin/gitcodes/px4-container/AirSim/models/typhoon_h480/TyphoonH480.json:/home/user/Documents/AirSim/settings.json
-      - /home/merlin/gitcodes/px4-container/AirSim/entrypoint2.sh:/usr/local/bin/entrypoint-sim.sh
+      - /home/merlin/gitcodes/px4-container/AirSim/entrypoint-sim.sh:/usr/local/bin/entrypoint.sh
       - shared-image:/root/shared
       #- /mnt/wslg:/mnt/wslg
       #- /usr/lib/wsl:/usr/lib/wsl
@@ -47,12 +47,13 @@ services:
       - PX4_SIM_HOST_ADDR=172.19.0.5
       - PX4_SIM_MODEL=typhoon_inha
       - build_path=/root/PX4-Autopilot/build/px4_sitl_rtps
+      - REBUILD=true
       #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       # - /home/merlin/gitcodes/px4-container/scripts/buildRos2Pkg.sh:/root/tools/buildRos2Pkg.sh
       # - /home/merlin/gitcodes/px4-container/AirSim/ros_ws:/root/ros_ws
-      - /home/merlin/gitcodes/px4-container/AirSim/entrypoint.sh:/usr/local/bin/entrypoint-px4.sh
+      - /home/merlin/gitcodes/px4-container/AirSim/entrypoint-px4.sh:/usr/local/bin/entrypoint.sh
       - shared-image:/root/shared
       #- /mnt/wslg:/mnt/wslg
       #- /usr/lib/wsl:/usr/lib/wsl
