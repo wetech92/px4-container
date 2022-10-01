@@ -25,9 +25,26 @@
 #include <algorithm>
 #include "gazebo_dryden_plugin.h"
 #include "common.h"
-DrydenWind wind2;
+#include <iostream>
+#include <stddef.h>
+#include <stdio.h>
+extern "C" {
+#include "dryden_code_gen.h"
+}
+void rt_OneStep(void);
+void rt_OneStep(void)
+{
+  static boolean_T OverrunFlag = false;
 
-double wx, wy, wz;
+  /* Disable interrupts here */
+
+  /* Check for overrun *
+  /* Step the model */
+  dryden_code_gen_step();
+
+  /* Get model outputs here */
+
+}
 
 namespace gazebo {
 
@@ -37,22 +54,20 @@ GazeboDrydenPlugin::~GazeboDrydenPlugin() {
 
 void GazeboDrydenPlugin::Load(physics::WorldPtr world, sdf::ElementPtr sdf) {
   world_ = world;
+  dryden_code_gen_initialize();
 
   double wind_gust_start = kDefaultWindGustStart;
   double wind_gust_duration = kDefaultWindGustDuration;
 
   if (sdf->HasElement("robotNamespace")) {
     namespace_ = sdf->GetElement("robotNamespace")->Get<std::string>();
+    std::cout << "asaas " << namespace_<< std::endl;
   } else {
     gzerr << "[gazebo_wind_plugin] Please spefcify a robotNamespace.\n";
   }
 
   node_handle_ = transport::NodePtr(new transport::Node());
   node_handle_->Init(namespace_);
-
-
-
-
 
   getSdfParam<std::string>(sdf, "windPubTopic", wind_pub_topic_, wind_pub_topic_);
   double pub_rate = 2.0;
@@ -131,6 +146,7 @@ void GazeboDrydenPlugin::OnUpdate(const common::UpdateInfo& _info) {
   ignition::math::Vector3d wind = wind_strength * wind_direction;
 
   ignition::math::Vector3d wind_gust(0, 0, 0);
+  ignition::math::Vector3d wind_gustpqr(0, 0, 0);
   // Calculate the wind gust velocity.
   if (now >= wind_gust_start_ && now < wind_gust_end_) {
     // Get normal distribution wind gust strength
@@ -141,25 +157,36 @@ void GazeboDrydenPlugin::OnUpdate(const common::UpdateInfo& _info) {
     wind_gust_direction.X() = wind_gust_direction_distribution_X_(wind_gust_direction_generator_);
     wind_gust_direction.Y() = wind_gust_direction_distribution_Y_(wind_gust_direction_generator_);
     wind_gust_direction.Z() = wind_gust_direction_distribution_Z_(wind_gust_direction_generator_);
-
-    wind2.initialize(20.0,20.0,20.0,1.0,1.0,1.0,2.0);
-
-    wind2.getWind(0.1, &wx, &wy, &wz);
+    rt_OneStep();
+    //f1.open("/root/PX4-Autopilot/gust.txt ",std::ios::app);
     std::cout.precision(6);
-    //std::cout << "dryden " << wx << " " << wy << " " << wz << " " << std::endl;
-    wind_gust.X() = wx;
-    wind_gust.Y() = wy;
-    wind_gust.Z() = wz;
+    //f1 << dryden_code_gen_Y.uvw_ptr[0] << " " << dryden_code_gen_Y.uvw_ptr[1] << " " << dryden_code_gen_Y.uvw_ptr[2] << " " << dryden_code_gen_Y.pqr_ptr[0] << " " << dryden_code_gen_Y.pqr_ptr[1]<< " " << dryden_code_gen_Y.pqr_ptr[2]<< "\n";
+		//f1.close();
+    wind_gust.X() = dryden_code_gen_Y.uvw_ptr[0];
+    wind_gust.Y() = dryden_code_gen_Y.uvw_ptr[1];
+    wind_gust.Z() = dryden_code_gen_Y.uvw_ptr[2];
+    wind_gustpqr.X() = dryden_code_gen_Y.pqr_ptr[0];
+    wind_gustpqr.Y() = dryden_code_gen_Y.pqr_ptr[1];
+    wind_gustpqr.Z() = dryden_code_gen_Y.pqr_ptr[2];
+
+
   }
 
   gazebo::msgs::Vector3d* wind_v = new gazebo::msgs::Vector3d();
+  gazebo::msgs::Vector3d* wind_p = new gazebo::msgs::Vector3d();
   wind_v->set_x(wind.X() + wind_gust.X());
   wind_v->set_y(wind.Y() + wind_gust.Y());
   wind_v->set_z(wind.Z() + wind_gust.Z());
 
+  wind_p->set_x(wind_gustpqr.X());
+  wind_p->set_y(wind_gustpqr.Y());
+  wind_p->set_z(wind_gustpqr.Z());
+  std::cout << "dry " << wind.X() + wind_gust.X()  << " " << wind_gustpqr.X()<< std::endl;
+
   wind_msg.set_frame_id(frame_id_);
   wind_msg.set_time_usec(now.Double() * 1e6);
   wind_msg.set_allocated_velocity(wind_v);
+  wind_msg.set_allocated_velocity2(wind_p);
 
   wind_pub_->Publish(wind_msg);
 }
