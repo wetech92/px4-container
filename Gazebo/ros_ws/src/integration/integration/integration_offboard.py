@@ -1,3 +1,4 @@
+import sys
 import rclpy
 from rclpy.node import Node
 
@@ -53,9 +54,6 @@ from .PathPlanning.RRT import RRT
 import time
 
 
-
-
-
 class IntegrationNode(Node):
 
     def __init__(self):
@@ -103,9 +101,28 @@ class IntegrationNode(Node):
         
 
         # Offboard Period
-        OffboardPeriod = 0.01
-        self.OffboardCounter = 1 / OffboardPeriod
+        OffboardPeriod = 1/250
+        self.OffboardCounter = 100
         self.OffboardTimer = self.create_timer(OffboardPeriod, self.OffboardControl)
+############ THREAD #################################
+        # Test MPPI Callback
+        MPPIPeoriod = 5
+        self.MPPITimer = self.create_timer(MPPIPeoriod, self.MPPICallback)
+        self.MPPIOutput = 0
+############ LOGGING ##############################
+        # Kaist Verification Thread
+        KaistVerificationPeoriod = 1/25
+        self.KaistVerificationThread = self.create_timer(KaistVerificationPeoriod, self.KaistVerificationCallback)
+
+        # Jeonbuk Verification Thread
+        JeonbukVerificationPeoriod = 1/25
+        self.JeonbukVerificationThread = self.create_timer(JeonbukVerificationPeoriod, self.JeonbukVerificationCallback)
+        
+        # Test GPR Callback
+        #GPRPeoriod = 1
+        #self.GPRTimer = self.create_timer(GPRPeoriod, self.GPRCallback)
+        #self.GPROutput = 0
+        #self.GPRUpdateFlag = False
 
         # Timestamp
         self.timestamp = 0.0
@@ -158,6 +175,7 @@ class IntegrationNode(Node):
         ## Path Planning Variables
         self.Target = [450.0, 450.0, -5.0]
 
+
         
 
 
@@ -188,7 +206,11 @@ class IntegrationNode(Node):
     # Main Function
     def OffboardControl(self):
         if self.PathPlanningInitialize == True:
+            print("MPPI Output")
+            print(self.MPPIOutput)
+            
             if self.OffboardCount == self.OffboardCounter:
+                
                 self.offboard()
                 self.arm()
             
@@ -202,13 +224,11 @@ class IntegrationNode(Node):
                     self.LogFile.close()
                 else:
                     self.PathPlanningTargetPosition = np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex], -5.0])
-                    self.TargetYaw = np.arctan2(self.Target[1] - self.y, self.Target[0] - self.x)
-                    if self.PlannnedIndex > 400:
-                        self.TargetYaw = np.arctan2(self.Target[1] - 0, self.Target[0] - 0)
+                    self.TargetYaw = np.arctan2(self.PlannedY[self.PlannnedIndex] - self.y, self.PlannedX[self.PlannnedIndex] - self.x)
                     self.SetPosition(self.PathPlanningTargetPosition, self.TargetYaw)
                     #self.LogFile = open("/root/ros_ws/src/integration/integration/PathPlanning/Map/log.txt",'a')
                     WaypointACK = np.linalg.norm(np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex]]) - np.array([self.x, self.y]))
-                    if  WaypointACK < 5.0:
+                    if  WaypointACK < 3.0:
                         LogData = "%d %f %f %f %f\n" %(self.PlannnedIndex, self.PlannedY[self.PlannnedIndex], self.PlannedX[self.PlannnedIndex], self.y, self.x)
                         self.LogFile.write(LogData)
                         self.PlannnedIndex += 1
@@ -240,6 +260,28 @@ class IntegrationNode(Node):
                 self.OffboardCount = self.OffboardCount + 1
     ########################################################################################################################################
     
+    def JeonbukVerificationCallback(self):
+        
+        if self.OffboardCount > 1000: # Log Terminal Condition
+            self.JeonbukLogFile.close()
+        else:
+            self.JeonbukLogFile = open("/root/ros_ws/src/integration/integration/Jeonbuklog.txt",'a')
+            LogData = "%d \n" %(self.OffboardCount)
+            self.JeonbukLogFile.write(LogData)
+
+    def KaistVerificationCallback(self): # Log Terminal Condition
+        if self.OffboardCount > 1250:
+            self.KaistLogFile.close()
+        else:
+            self.KaistLogFile = open("/root/ros_ws/src/integration/integration/Kaistlog.txt",'a')
+            LogData = "%d \n" %(self.OffboardCount)
+            self.KaistLogFile.write(LogData)
+    
+    def MPPICallback(self):
+        # MPPI Calculation
+        self.MPPIOutput= self.MPPIOutput+ 1
+
+
     # MakeWorld
     def MakeWorldCallback(self, request, response):
         if request.done == 1:
@@ -257,6 +299,7 @@ class IntegrationNode(Node):
             self.MaxPlannnedIndex = len(self.PlannedX) - 1
             print(len(self.PlannedX))
             response.ack = 1
+            time.sleep(40)
             self.PathPlanningInitialize = True
             return response
             
@@ -450,7 +493,6 @@ class IntegrationNode(Node):
     def LidarCallback(self, msg):
         ObsPos = [0.0] * 2
         ObsDist = min(msg.ranges)
-        print(ObsDist)
         self.CollisionAvoidanceFlag = False
         if ObsDist < 10.0:
             ObsAngle = np.argmin(msg.ranges)
@@ -498,7 +540,6 @@ class IntegrationNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-
     Integration = IntegrationNode()
     rclpy.spin(Integration)
     Integration.destroy_node()

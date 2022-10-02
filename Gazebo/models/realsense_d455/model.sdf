@@ -32,13 +32,14 @@
         </geometry>
       </visual>
       <sensor type="camera" name="realsense_d455_RGB">
-          <update_rate>60</update_rate>
+          <update_rate>90</update_rate>
           <visualize>true</visualize>
           <camera name="realsense_d455_RGB">
-            <horizontal_fov>1.57</horizontal_fov>
+            <horizontal_fov>1.5707</horizontal_fov>
+            <vertical_fov>1.1344</vertical_fov>
             <image>
-              <width>1920</width>
-              <height>1080</height>
+              <width>1280</width>
+              <height>800</height>
               <format>R8G8B8</format>
             </image>
             <distortion>

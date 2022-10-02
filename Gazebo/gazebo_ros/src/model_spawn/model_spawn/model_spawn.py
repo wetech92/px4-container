@@ -8,9 +8,9 @@ import time
 import os
 import random
 import cv2
+import sys
 
 import numpy as np
-
 
 class ModelSpawnClass(Node):
 
@@ -67,7 +67,7 @@ class ModelSpawnClass(Node):
         self.GoalPosX = 5000
         self.GoalPosY = 5000
 
-        self.KnownObsNum = 200
+        self.KnownObsNum = int(sys.argv[1])
 
         self.KnownObsName = [""] * self.KnownObsNum
         self.KnownObsNamespace = [""] * self.KnownObsNum
@@ -75,7 +75,7 @@ class ModelSpawnClass(Node):
         self.KnownObsPosY = [0] * self.KnownObsNum
         self.KnownObsIndex = [0] * self.KnownObsNum
 
-        self.UnknownObsNum = 10
+        self.UnknownObsNum = int(sys.argv[2])
 
         self.UnknownObsName = [""] * self.UnknownObsNum
         self.UnknownObsNamespace = [""] * self.UnknownObsNum
@@ -87,8 +87,8 @@ class ModelSpawnClass(Node):
 
         self.FireIndex = 0
 
-        self.FirePosX = random.uniform(100, 400)
-        self.FirePosY = random.uniform(100, 400)
+        self.FirePosX = random.uniform(400, 500)
+        self.FirePosY = random.uniform(100, 300)
         self.FireName = [""] * self.KnownObsNum
         self.FireNamespace = [""] * self.KnownObsNum
 
@@ -114,7 +114,7 @@ class ModelSpawnClass(Node):
         
     # Goal Spawn
     def MakeWorld(self):
-        self.GoalSpawn()
+        #self.GoalSpawn()
         self.UnknownObsSpawn()
         self.KnownObsSpawn()
         self.RequestMakeWorldDone()
@@ -158,13 +158,13 @@ class ModelSpawnClass(Node):
             #Center = (self.KnownObsPosX[i] * 10 , self.KnownObsPosY[i] * 10)
             Center = (int(self.KnownObsPosX[i] * 10) , int(self.KnownObsPosY[i] * 10))
             if index == 0:
-                Temp = 2
-            elif index == 1:
                 Temp = 4
-            elif index == 2:
+            elif index == 1:
                 Temp = 8
+            elif index == 2:
+                Temp = 10
             #Radius = int(Temp / 2)
-            Radius = int(Temp / 2 * 30)
+            Radius = int(Temp / 2 * 20)
             cv2.circle(self.GridMap, Center, Radius, Color, -1)
 
         cv2.rotate(self.GridMap, cv2.ROTATE_180)
@@ -210,3 +210,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+
