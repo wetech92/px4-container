@@ -87,6 +87,7 @@ done
 echo "Found generated map! Copying to RRT directory"
 sleep 1s
 
+mkdir /root/ros_ws/src/integration/integration/PathPlanning/Map/
 cp $mapImg /root/ros_ws/src/integration/integration/PathPlanning/Map/Map.png
 sleep 5s
 
