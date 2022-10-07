@@ -15,8 +15,8 @@ services:
       - /usr/share/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json
       - /usr/share/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json
       - /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json
-      - /home/merlin/gitcodes/px4-container/AirSim/models/typhoon_h480/TyphoonH480.json:/home/user/Documents/AirSim/settings.json
-      - /home/merlin/gitcodes/px4-container/AirSim/entrypoint-sim.sh:/usr/local/bin/entrypoint.sh
+      - $HOME/gitcodes/px4-container/AirSim/models/typhoon_h480/TyphoonH480.json:/home/user/Documents/AirSim/settings.json
+      - $HOME/gitcodes/px4-container/AirSim/entrypoint-sim.sh:/usr/local/bin/entrypoint.sh
       - shared-image:/root/shared
       #- /mnt/wslg:/mnt/wslg
       #- /usr/lib/wsl:/usr/lib/wsl
@@ -51,9 +51,9 @@ services:
       #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
-      # - /home/merlin/gitcodes/px4-container/scripts/buildRos2Pkg.sh:/root/tools/buildRos2Pkg.sh
-      # - /home/merlin/gitcodes/px4-container/AirSim/ros_ws:/root/ros_ws
-      - /home/merlin/gitcodes/px4-container/AirSim/entrypoint-px4.sh:/usr/local/bin/entrypoint.sh
+      # - $HOME/gitcodes/px4-container/scripts/buildRos2Pkg.sh:/root/tools/buildRos2Pkg.sh
+      # - $HOME/gitcodes/px4-container/AirSim/ros_ws:/root/ros_ws
+      - $HOME/gitcodes/px4-container/AirSim/entrypoint-px4.sh:/usr/local/bin/entrypoint.sh
       - shared-image:/root/shared
       #- /mnt/wslg:/mnt/wslg
       #- /usr/lib/wsl:/usr/lib/wsl
