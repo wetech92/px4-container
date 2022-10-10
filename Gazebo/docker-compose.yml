@@ -1,0 +1,68 @@
+version: "3"
+services:
+  gazebo-px4:
+    privileged: true
+    environment:
+      - DISPLAY=$DISPLAY
+      - WAYLAND_DISPLAY=$WAYLAND_DISPLAY
+      - QT_NO_MITSHM=1
+      - XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
+      - NVIDIA_DISABLE_REQUIRE=1
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - ITESIM_VEHICLE=typhoon_inha
+      - ITESIM_WOLRD=grass
+      #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /usr/share/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json
+      - /usr/share/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json
+      - /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json
+      - $HOME/gitcodes/px4-container/Gazebo/entrypoint.sh:/usr/local/bin/entrypoint.sh
+      #- /mnt/wslg:/mnt/wslg
+      #- /usr/lib/wsl:/usr/lib/wsl
+    devices:
+      - /dev/dri:/dev/dri
+      #- /dev/dxg:/dev/dxg
+    networks:
+      px4-sitl-gazebo:
+        ipv4_address: 172.20.0.5
+    container_name: sitl-airsim
+    image: kestr3l/px4:gazebo-gpu-0.0.2
+    # stdin_open: true
+    # tty: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+  qgc:
+    privileged: true
+    environment:
+      - DISPLAY=$DISPLAY
+      - WAYLAND_DISPLAY=$WAYLAND_DISPLAY
+      - QT_NO_MITSHM=1 
+      - XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
+      #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      #- /mnt/wslg:/mnt/wslg
+      #- /usr/lib/wsl:/usr/lib/wsl
+    devices:
+      - /dev/dri:/dev/dri
+      #- /dev/dxg:/dev/dxg
+    networks:
+      px4-sitl-gazebo:
+        ipv4_address: 172.20.0.7
+    container_name: sitl-qgc
+    image: kestr3l/qgc-app:nobg-4.0.0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+networks:
+    px4-sitl-gazebo:
+      external: true
+# docker network create --gateway 172.20.0.1 --subnet 172.20.0.0/16 px4-sitl-gazebo
