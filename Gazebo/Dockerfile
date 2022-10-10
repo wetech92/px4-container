@@ -110,7 +110,7 @@ RUN \
 		/etc/ssh/sshd_config \
 	&& sed -i "s/#PasswordAuthentication yes/PasswordAuthentication yes/g" \
 		/etc/ssh/sshd_config \
-	&& sed -i "s/\${GAZEBO_PLUGIN_PATH}/\/root\/PX4-Autopilot\/Tools\/sitl_gazebo\/build/g" \
+	&& sed -i "s/\${GAZEBO_PLUGIN_PATH}/\/root\/PX4-Autopilot\/build\/px4_sitl_rtps\/build_gazebo/g" \
 		/usr/share/gazebo-11/setup.sh \
 	&& sed -i "s/\${GAZEBO_MODEL_PATH}/\/root\/PX4-Autopilot\/Tools\/sitl_gazebo\/models/g" \
 		/usr/share/gazebo-11/setup.sh \
@@ -123,7 +123,7 @@ RUN \
     && echo "source /root/gazebo_ros/install/setup.bash" >> /root/.bashrc
 
 RUN \
-	echo "source /usr/share/gazebo-11/setup.sh" >> /root/.zsrhc \
+	echo "source /usr/share/gazebo-11/setup.sh" >> /root/.zshrc \
 	&& echo "source /root/px4_ros/install/setup.zsh" >> /root/.zshrc \
 	&& echo "source /root/ros_ws/install/setup.zsh" >> /root/.zshrc \
 	&& echo "source /root/gazebo_ros/install/setup.zsh" >> /root/.zshrc
