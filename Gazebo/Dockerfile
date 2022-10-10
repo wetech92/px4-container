@@ -3,6 +3,8 @@ ARG BASETAG
 
 FROM ${BASEIMAGE}:${BASETAG} as stage_apt
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 ENV \
     DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
