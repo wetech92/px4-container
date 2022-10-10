@@ -3,12 +3,15 @@ from setuptools import setup
 package_name = 'integration'
 PPO = "integration/PPO"
 CA = "integration/CollisionAvoidance/ArtificialPotentialField"
+JBNU = "integration/CollisionAvoidance/JBNU"
 PP = "integration/PathPlanning/RRT"
+SAC = "integration/PathPlanning/SAC"
+PF = "integration/PathFollowing"
 
 setup(
     name=package_name,
     version='0.0.0',
-    packages=[package_name, PPO, CA, PP],
+    packages=[package_name, PPO, CA, PP, SAC, PF, JBNU],
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),

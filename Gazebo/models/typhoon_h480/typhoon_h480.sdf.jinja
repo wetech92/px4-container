@@ -150,265 +150,6 @@
       <self_collide>0</self_collide>
     </link>
 
-    <link name="cgo3_mount_link">
-      <inertial>
-        <!-- place holder -->
-        <pose>-0.041 0 -0.162 0 0 0</pose>
-        <mass>0.1</mass>
-        <inertia>
-          <ixx>0.001</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.001</iyy>
-          <iyz>0</iyz>
-          <izz>0.001</izz>
-        </inertia>
-      </inertial>
-      <visual name='cgo3_mount_visual'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <scale>0.001 0.001 0.001</scale>
-            <uri>model://typhoon_h480/meshes/cgo3_mount_remeshed_v1.stl</uri>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/DarkGrey</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-        </material>
-      </visual>
-    </link>
-    <joint name='cgo3_mount_joint' type='revolute'>
-      <child>cgo3_mount_link</child>
-      <parent>base_link</parent>
-      <pose>0 0 0 0 0 0</pose>
-      <axis>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>0</lower>
-          <upper>0</upper>
-          <effort>100</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <damping>1</damping>
-        </dynamics>
-        <use_parent_model_frame>1</use_parent_model_frame>
-      </axis>
-      <physics>
-        <ode>
-          <implicit_spring_damper>1</implicit_spring_damper>
-        </ode>
-      </physics>
-    </joint>
-
-    <link name="cgo3_vertical_arm_link">
-      <inertial>
-        <!-- place holder -->
-        <pose>-0.041 0 -0.162 0 0 0</pose>
-        <mass>0.1</mass>
-        <inertia>
-          <ixx>0.001</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.001</iyy>
-          <iyz>0</iyz>
-          <izz>0.001</izz>
-        </inertia>
-      </inertial>
-      <visual name='cgo3_vertical_arm_visual'>
-        <pose>-0.051 0 0 0 0 3.141592</pose>
-        <geometry>
-          <mesh>
-            <scale>0.001 0.001 0.001</scale>
-            <uri>model://typhoon_h480/meshes/cgo3_vertical_arm_remeshed_v1.stl</uri>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/DarkGrey</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-        </material>
-      </visual>
-    </link>
-    <joint name='cgo3_vertical_arm_joint' type='revolute'>
-      <child>cgo3_vertical_arm_link</child>
-      <parent>cgo3_mount_link</parent>
-      <pose>-0.026 0 -0.10 0 0 0</pose>
-      <!--
-      <controlIndex>6</controlIndex>
-      -->
-      <axis>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>100</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <damping>0.1</damping>
-        </dynamics>
-        <use_parent_model_frame>1</use_parent_model_frame>
-      </axis>
-      <physics>
-        <ode>
-          <implicit_spring_damper>1</implicit_spring_damper>
-          <limit>
-            <!-- testing soft limits -->
-            <cfm>0.1</cfm>
-            <erp>0.2</erp>
-          </limit>
-        </ode>
-      </physics>
-    </joint>
-
-    <link name="cgo3_horizontal_arm_link">
-      <inertial>
-        <!-- place holder -->
-        <pose>-0.041 0 -0.081 0 0 0</pose>
-        <mass>0.1</mass>
-        <inertia>
-          <ixx>0.001</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.001</iyy>
-          <iyz>0</iyz>
-          <izz>0.001</izz>
-        </inertia>
-      </inertial>
-      <visual name='cgo3_horizontal_arm_visual'>
-        <pose>-0.05 0 0 0 0 3.141592</pose>
-        <geometry>
-          <mesh>
-            <scale>0.001 0.001 0.001</scale>
-            <uri>model://typhoon_h480/meshes/cgo3_horizontal_arm_remeshed_v1.stl</uri>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/DarkGrey</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-        </material>
-      </visual>
-    </link>
-    <joint name='cgo3_horizontal_arm_joint' type='revolute'>
-      <child>cgo3_horizontal_arm_link</child>
-      <parent>cgo3_vertical_arm_link</parent>
-      <pose>-0.07 0 -0.162 0 0 0</pose>
-      <!--
-      <controlIndex>7</controlIndex>
-      -->
-      <axis>
-        <xyz>-1 0 0</xyz>
-        <limit>
-          <lower>-0.785398</lower>
-          <upper>0.785398</upper>
-          <effort>100</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <damping>0.1</damping>
-        </dynamics>
-        <use_parent_model_frame>1</use_parent_model_frame>
-      </axis>
-      <physics>
-        <ode>
-          <implicit_spring_damper>1</implicit_spring_damper>
-          <limit>
-            <!-- testing soft limits -->
-            <cfm>0.1</cfm>
-            <erp>0.2</erp>
-          </limit>
-        </ode>
-      </physics>
-    </joint>
-
-    <link name="cgo3_camera_link">
-      <inertial>
-        <!-- place holder -->
-        <pose>-0.041 0 -0.162 0 0 0</pose>
-        <mass>0.1</mass>
-        <inertia>
-          <ixx>0.001</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.001</iyy>
-          <iyz>0</iyz>
-          <izz>0.001</izz>
-        </inertia>
-      </inertial>
-      <sensor name="camera_imu" type="imu">
-        <always_on>1</always_on>
-      </sensor>
-      <sensor name="camera" type="camera">
-        <pose>0.0 0 -0.162 0 0 0</pose>
-        <camera>
-          <horizontal_fov>2.0</horizontal_fov>
-          <image>
-            <format>R8G8B8</format>
-            <width>640</width>
-            <height>360</height>
-          </image>
-          <clip>
-            <near>0.05</near>
-            <far>15000</far>
-          </clip>
-        </camera>
-        <always_on>0</always_on>
-        <update_rate>0</update_rate>
-        <visualize>false</visualize>
-        <plugin name="GstCameraPlugin" filename="libgazebo_gst_camera_plugin.so">
-            <robotNamespace></robotNamespace>
-            <udpHost>127.0.0.1</udpHost>
-            <udpPort>{{ gst_udp_port }}</udpPort>
-        </plugin>
-        <plugin name="CameraManagerPlugin" filename="libgazebo_camera_manager_plugin.so">
-            <robotNamespace>typhoon_h480</robotNamespace>
-            <interval>1</interval>
-            <width>3840</width>
-            <height>2160</height>
-            <maximum_zoom>8.0</maximum_zoom>
-            <video_uri>{{ video_uri }}</video_uri>
-            <system_id>{{ mavlink_id }}</system_id>
-            <cam_component_id>{{ cam_component_id }}</cam_component_id>
-            <mavlink_cam_udp_port>{{ mavlink_cam_udp_port }}</mavlink_cam_udp_port>
-        </plugin>
-      </sensor>
-    </link>
-    <joint name='cgo3_camera_joint' type='revolute'>
-      <child>cgo3_camera_link</child>
-      <parent>cgo3_horizontal_arm_link</parent>
-      <pose>-0.01 0.03 -0.162 0 0 0</pose>
-      <axis>
-        <xyz>0 -1 0</xyz>
-        <limit>
-          <lower>-1.5708</lower>
-          <upper>0.7854</upper>
-          <effort>100</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <damping>0.1</damping>
-        </dynamics>
-        <use_parent_model_frame>1</use_parent_model_frame>
-      </axis>
-      <physics>
-        <ode>
-          <implicit_spring_damper>1</implicit_spring_damper>
-          <limit>
-            <!-- testing soft limits -->
-            <cfm>0.1</cfm>
-            <erp>0.2</erp>
-          </limit>
-        </ode>
-      </physics>
-    </joint>
-
     <link name="left_leg">
       <inertial>
         <!-- place holder -->
@@ -431,22 +172,6 @@
             <length>0.3</length>
           </cylinder>
         </geometry>
-        <surface>
-          <friction>
-            <ode>
-              <mu>1</mu>
-              <mu2>1</mu2>
-            </ode>
-          </friction>
-          <contact>
-            <ode>
-              <kp>1e+8</kp>
-              <kd>1</kd>
-              <max_vel>0.01</max_vel>
-              <min_depth>0.001</min_depth>
-            </ode>
-          </contact>
-        </surface>
       </collision>
       <collision name='collision_bar'>
         <pose>0.00052 -0.08503 -0.121187 -0.501318 0 0</pose>
@@ -456,22 +181,6 @@
             <length>0.176893</length>
           </cylinder>
         </geometry>
-        <surface>
-          <friction>
-            <ode>
-              <mu>1</mu>
-              <mu2>1</mu2>
-            </ode>
-          </friction>
-          <contact>
-            <ode>
-              <kp>1e+8</kp>
-              <kd>1</kd>
-              <max_vel>0.01</max_vel>
-              <min_depth>0.001</min_depth>
-            </ode>
-          </contact>
-        </surface>
       </collision>
       <visual name='base_link_left_leg'>
         <pose>0 0 0 0 0 0</pose>
@@ -497,22 +206,10 @@
         <xyz>-1 0 0</xyz>
         <limit>
           <lower>0</lower>
-          <upper>1</upper>
-          <effort>100</effort>
-          <velocity>-1</velocity>
-          <stiffness>100000000</stiffness>
-          <dissipation>1</dissipation>
+          <upper>0</upper>
         </limit>
-        <dynamics>
-          <damping>0.1</damping>
-        </dynamics>
         <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
-      <physics>
-        <ode>
-          <implicit_spring_damper>1</implicit_spring_damper>
-        </ode>
-      </physics>
     </joint>
 
     <link name="right_leg">
@@ -538,22 +235,6 @@
             <length>0.3</length>
           </cylinder>
         </geometry>
-        <surface>
-          <friction>
-            <ode>
-              <mu>1</mu>
-              <mu2>1</mu2>
-            </ode>
-          </friction>
-          <contact>
-            <ode>
-              <kp>1e+8</kp>
-              <kd>1</kd>
-              <max_vel>0.01</max_vel>
-              <min_depth>0.001</min_depth>
-            </ode>
-          </contact>
-        </surface>
       </collision>
       <collision name='collision_bar'>
         <pose>0.00052 0.08503 -0.121187 0.501318 0 0</pose>
@@ -563,22 +244,6 @@
             <length>0.176893</length>
           </cylinder>
         </geometry>
-        <surface>
-          <friction>
-            <ode>
-              <mu>1</mu>
-              <mu2>1</mu2>
-            </ode>
-          </friction>
-          <contact>
-            <ode>
-              <kp>1e+8</kp>
-              <kd>1</kd>
-              <max_vel>0.01</max_vel>
-              <min_depth>0.001</min_depth>
-            </ode>
-          </contact>
-        </surface>
       </collision>
       <visual name='base_link_right_leg'>
         <pose>0 0 0 0 0 0</pose>
@@ -604,22 +269,10 @@
         <xyz>1 0 0</xyz>
         <limit>
           <lower>0</lower>
-          <upper>1</upper>
-          <effort>100</effort>
-          <velocity>-1</velocity>
-          <stiffness>100000000</stiffness>
-          <dissipation>1</dissipation>
+          <upper>0</upper>
         </limit>
-        <dynamics>
-          <damping>0.1</damping>
-        </dynamics>
         <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
-      <physics>
-        <ode>
-          <implicit_spring_damper>1</implicit_spring_damper>
-        </ode>
-      </physics>
     </joint>
 
     <link name='typhoon_h480/imu_link'>
@@ -713,19 +366,13 @@
         <limit>
           <lower>-1e+16</lower>
           <upper>1e+16</upper>
-          <effort>10</effort>
-          <velocity>-1</velocity>
         </limit>
         <dynamics>
-          <damping>0.005</damping>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
         </dynamics>
         <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
-      <physics>
-        <ode>
-          <implicit_spring_damper>1</implicit_spring_damper>
-        </ode>
-      </physics>
     </joint>
     <link name='rotor_0'>
       <pose>-0.209396 0.122762 0.082219 0 0 2.09439510239</pose>
@@ -785,19 +432,13 @@
         <limit>
           <lower>-1e+16</lower>
           <upper>1e+16</upper>
-          <effort>10</effort>
-          <velocity>-1</velocity>
         </limit>
         <dynamics>
-          <damping>0.005</damping>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
         </dynamics>
         <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
-      <physics>
-        <ode>
-          <implicit_spring_damper>1</implicit_spring_damper>
-        </ode>
-      </physics>
     </joint>
     <link name='rotor_4'>
       <pose>-0.00187896 0.242705 0.0822169 0 0 0</pose>
@@ -857,19 +498,13 @@
         <limit>
           <lower>-1e+16</lower>
           <upper>1e+16</upper>
-          <effort>10</effort>
-          <velocity>-1</velocity>
         </limit>
         <dynamics>
-          <damping>0.005</damping>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
         </dynamics>
         <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
-      <physics>
-        <ode>
-          <implicit_spring_damper>1</implicit_spring_damper>
-        </ode>
-      </physics>
     </joint>
     <link name='rotor_1'>
       <pose>0.211396 -0.119762 0.082219 0 0 -2.09439510239</pose>
@@ -929,19 +564,13 @@
         <limit>
           <lower>-1e+16</lower>
           <upper>1e+16</upper>
-          <effort>10</effort>
-          <velocity>-1</velocity>
         </limit>
         <dynamics>
-          <damping>0.005</damping>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
         </dynamics>
         <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
-      <physics>
-        <ode>
-          <implicit_spring_damper>1</implicit_spring_damper>
-        </ode>
-      </physics>
     </joint>
 
     <link name='rotor_5'>
@@ -1002,19 +631,13 @@
         <limit>
           <lower>-1e+16</lower>
           <upper>1e+16</upper>
-          <effort>10</effort>
-          <velocity>-1</velocity>
         </limit>
         <dynamics>
-          <damping>0.005</damping>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
         </dynamics>
         <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
-      <physics>
-        <ode>
-          <implicit_spring_damper>1</implicit_spring_damper>
-        </ode>
-      </physics>
     </joint>
     <link name='rotor_2'>
       <pose>-0.209396 -0.122762 0.082219 0 0 2.09439510239</pose>
@@ -1074,19 +697,13 @@
         <limit>
           <lower>-1e+16</lower>
           <upper>1e+16</upper>
-          <effort>10</effort>
-          <velocity>-1</velocity>
         </limit>
         <dynamics>
-          <damping>0.005</damping>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
         </dynamics>
         <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
-      <physics>
-        <ode>
-          <implicit_spring_damper>1</implicit_spring_damper>
-        </ode>
-      </physics>
     </joint>
 
 
@@ -1230,16 +847,16 @@
       <magSubTopic>/mag</magSubTopic>
       <baroSubTopic>/baro</baroSubTopic>
       <mavlink_addr>INADDR_ANY</mavlink_addr>
-      <mavlink_tcp_port>{{ mavlink_tcp_port }}</mavlink_tcp_port>
-      <mavlink_udp_port>{{ mavlink_udp_port }}</mavlink_udp_port>
-      <serialEnabled>{{ serial_enabled }}</serialEnabled>
-      <serialDevice>{{ serial_device }}</serialDevice>
-      <baudRate>{{ serial_baudrate }}</baudRate>
+      <mavlink_tcp_port>4560</mavlink_tcp_port>
+      <mavlink_udp_port>14560</mavlink_udp_port>
+      <serialEnabled>0</serialEnabled>
+      <serialDevice>/dev/ttyACM0</serialDevice>
+      <baudRate>921600</baudRate>
       <qgc_addr>INADDR_ANY</qgc_addr>
       <qgc_udp_port>14550</qgc_udp_port>
       <sdk_addr>INADDR_ANY</sdk_addr>
       <sdk_udp_port>14540</sdk_udp_port>
-      <hil_mode>{{ hil_mode }}</hil_mode>
+      <hil_mode>0</hil_mode>
       <hil_state_level>false</hil_state_level>
       <enable_lockstep>true</enable_lockstep>
       <use_tcp>true</use_tcp>
@@ -1293,72 +910,6 @@
           <zero_position_armed>100</zero_position_armed>
           <joint_control_type>velocity</joint_control_type>
         </channel>
-        <channel name="gimbal_roll">
-          <input_index>6</input_index>
-          <input_offset>0</input_offset>
-          <input_scaling>-3.1415</input_scaling>
-          <zero_position_disarmed>0</zero_position_disarmed>
-          <zero_position_armed>0</zero_position_armed>
-          <joint_control_type>position_gztopic</joint_control_type>
-          <gztopic>/gimbal_roll_cmd</gztopic>
-          <joint_name>typhoon_h480::cgo3_camera_joint</joint_name>
-        </channel>
-        <channel name="gimbal_pitch">
-          <input_index>7</input_index>
-          <input_offset>0</input_offset>
-          <input_scaling>-3.1415</input_scaling>
-          <zero_position_disarmed>0</zero_position_disarmed>
-          <zero_position_armed>0</zero_position_armed>
-          <joint_control_type>position_gztopic</joint_control_type>
-          <gztopic>/gimbal_pitch_cmd</gztopic>
-          <joint_name>typhoon_h480::cgo3_camera_joint</joint_name>
-        </channel>
-        <channel name="gimbal_yaw">
-          <input_index>8</input_index>
-          <input_offset>0</input_offset>
-          <input_scaling>-3.1415</input_scaling>
-          <zero_position_disarmed>0</zero_position_disarmed>
-          <zero_position_armed>0</zero_position_armed>
-          <joint_control_type>position_gztopic</joint_control_type>
-          <gztopic>/gimbal_yaw_cmd</gztopic>
-          <joint_name>typhoon_h480::cgo3_vertical_arm_joint</joint_name>
-        </channel>
-        <channel name="left_leg">
-          <input_index>9</input_index>
-          <input_offset>1</input_offset>
-          <input_scaling>0.5</input_scaling>
-          <zero_position_disarmed>0</zero_position_disarmed>
-          <zero_position_armed>0</zero_position_armed>
-          <joint_control_type>position</joint_control_type>
-          <joint_control_pid>
-            <p>3.5</p>
-            <i>0.5</i>
-            <d>0</d>
-            <iMax>4</iMax>
-            <iMin>-4</iMin>
-            <cmdMax>6</cmdMax>
-            <cmdMin>-6</cmdMin>
-          </joint_control_pid>
-          <joint_name>left_leg_joint</joint_name>
-        </channel>
-        <channel name="right_leg">
-          <input_index>10</input_index>
-          <input_offset>1</input_offset>
-          <input_scaling>0.5</input_scaling>
-          <zero_position_disarmed>0</zero_position_disarmed>
-          <zero_position_armed>0</zero_position_armed>
-          <joint_control_type>position</joint_control_type>
-          <joint_control_pid>
-            <p>3.5</p>
-            <i>0.5</i>
-            <d>0</d>
-            <iMax>4</iMax>
-            <iMin>-4</iMin>
-            <cmdMax>6</cmdMax>
-            <cmdMin>-6</cmdMin>
-          </joint_control_pid>
-          <joint_name>right_leg_joint</joint_name>
-        </channel>
       </control_channels>
     </plugin>
     <static>0</static>
@@ -1374,50 +925,6 @@
       <accelerometerRandomWalk>0.006</accelerometerRandomWalk>
       <accelerometerBiasCorrelationTime>300.0</accelerometerBiasCorrelationTime>
       <accelerometerTurnOnBiasSigma>0.196</accelerometerTurnOnBiasSigma>
-    </plugin>
-    <plugin name='gimbal_controller' filename='libgazebo_gimbal_controller_plugin.so'>
-      <joint_yaw>typhoon_h480::cgo3_vertical_arm_joint</joint_yaw>
-      <joint_roll>typhoon_h480::cgo3_horizontal_arm_joint</joint_roll>
-      <joint_pitch>typhoon_h480::cgo3_camera_joint</joint_pitch>
-      <control_gimbal_channels>
-        <channel>
-          <joint_control_pid>
-            <p>0.4</p>
-            <i>0.05</i>
-            <d>0.02</d>
-            <iMax>0</iMax>
-            <iMin>0</iMin>
-            <cmdMax>1.0</cmdMax>
-            <cmdMin>-1.0</cmdMin>
-          </joint_control_pid>
-          <joint_axis>joint_yaw</joint_axis>
-        </channel>
-        <channel>
-          <joint_control_pid>
-            <p>0.8</p>
-            <i>0.035</i>
-            <d>0.02</d>
-            <iMax>0</iMax>
-            <iMin>0</iMin>
-            <cmdMax>0.3</cmdMax>
-            <cmdMin>-0.3</cmdMin>
-          </joint_control_pid>
-          <joint_axis>joint_roll</joint_axis>
-        </channel>
-        <channel>
-          <joint_control_pid>
-            <p>0.3</p>
-            <i>0.01245</i>
-            <d>0.015</d>
-            <iMax>0</iMax>
-            <iMin>0</iMin>
-            <cmdMax>0.3</cmdMax>
-            <cmdMin>-0.3</cmdMin>
-          </joint_control_pid>
-          <joint_axis>joint_pitch</joint_axis>
-        </channel>
-      </control_gimbal_channels>
-      <gimbal_imu>camera_imu</gimbal_imu>
     </plugin>
   </model>
 </sdf>

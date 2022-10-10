@@ -168,7 +168,7 @@ micrortps_agent -t UDP
 cd ~/gazebo_ros
 colcon build
 . install/setup.bash
-ros2 run model_spawn ModelSpawn
+ros2 run model_spawn ModelSpawn {known_obs_num} {unknown_obs_num}
 ```
 
 ### 3.5 Terminal-5 integration package
