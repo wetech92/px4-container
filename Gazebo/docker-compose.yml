@@ -9,19 +9,29 @@ services:
       - XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
       - NVIDIA_DISABLE_REQUIRE=1
       - NVIDIA_DRIVER_CAPABILITIES=all
-      - ITESIM_VEHICLE=typhoon_inha
-      - ITESIM_WOLRD=grass
+      # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
       #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
+      # ----------SET ITE SIMULTAION PARAMETERS----------
+      - build_path=/root/PX4-Autopilot/build/px4_sitl_rtps
+      - sitl_gazebo_path=/root/PX4-Autopilot/Tools/sitl_gazebo
+      - PX4_SIM_HOST_ADDR=localhost
+      - PX4_SIM_MODEL=typhoon_inha
+      - PX4_SIM_WOLRLD=grass
+      # - REBUILD=true
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /usr/share/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json
       - /usr/share/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json
       - /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json
+      # -------------SET YOUR HOME DIRECTORY-------------
       - $HOME/gitcodes/px4-container/Gazebo/entrypoint.sh:/usr/local/bin/entrypoint.sh
+      # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
       #- /mnt/wslg:/mnt/wslg
       #- /usr/lib/wsl:/usr/lib/wsl
     devices:
+      # -----COMMENT OUT IF YOU EXPERIENCE OCI ERROR-----
       - /dev/dri:/dev/dri
+      # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
       #- /dev/dxg:/dev/dxg
     networks:
       px4-sitl-gazebo:
@@ -44,13 +54,17 @@ services:
       - WAYLAND_DISPLAY=$WAYLAND_DISPLAY
       - QT_NO_MITSHM=1 
       - XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
+      # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
       #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
+      # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
       #- /mnt/wslg:/mnt/wslg
       #- /usr/lib/wsl:/usr/lib/wsl
     devices:
+      # -----COMMENT OUT IF YOU EXPERIENCE OCI ERROR-----
       - /dev/dri:/dev/dri
+      # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
       #- /dev/dxg:/dev/dxg
     networks:
       px4-sitl-gazebo:
