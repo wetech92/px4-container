@@ -2,6 +2,8 @@ import sys
 import rclpy
 from rclpy.node import Node
 
+from pytictoc import TicToc
+
 # PX4 MSG Subscriber
 from px4_msgs.msg import EstimatorStates
 from px4_msgs.msg import VehicleAngularVelocity
@@ -47,9 +49,21 @@ import math
 #  Artificial Potential Field
 from .CollisionAvoidance.ArtificialPotentialField import ArtificialPotentialField
 
+# JBNU Collision Avoidance
+from .CollisionAvoidance.JBNU import JBNU_Obs
+
 ## Path Planning Module
 #  RRT
 from .PathPlanning.RRT import RRT
+from .PathPlanning.SAC import SACOnnx
+
+## Path Following Module
+# MPPI
+from .PathFollowing.PF import PF
+from .PathFollowing.NDO import NDO
+from .PathFollowing.GPR import GPR
+from .PathFollowing.Guid_MPPI import MPPI
+from .PathFollowing.PF_Cost import Calc_PF_cost
 
 import time
 
@@ -58,8 +72,13 @@ class IntegrationNode(Node):
 
     def __init__(self):
         super().__init__('integration')
+        self.t = TicToc()
         # Init PathPlanning Module
         self.RRT = RRT.RRT()
+        self.SAC = SACOnnx.SACOnnx()
+
+        # Init JBNU CA Module
+        self.JBNU = JBNU_Obs.JBNU_Collision()
 
         # Init CVBridge
         self.CvBridge = CvBridge()
@@ -104,12 +123,12 @@ class IntegrationNode(Node):
         OffboardPeriod = 1/250
         self.OffboardCounter = 100
         self.OffboardTimer = self.create_timer(OffboardPeriod, self.OffboardControl)
-############ THREAD #################################
+        '''
         # Test MPPI Callback
         MPPIPeoriod = 5
         self.MPPITimer = self.create_timer(MPPIPeoriod, self.MPPICallback)
         self.MPPIOutput = 0
-############ LOGGING ##############################
+        
         # Kaist Verification Thread
         KaistVerificationPeoriod = 1/25
         self.KaistVerificationThread = self.create_timer(KaistVerificationPeoriod, self.KaistVerificationCallback)
@@ -117,7 +136,7 @@ class IntegrationNode(Node):
         # Jeonbuk Verification Thread
         JeonbukVerificationPeoriod = 1/25
         self.JeonbukVerificationThread = self.create_timer(JeonbukVerificationPeoriod, self.JeonbukVerificationCallback)
-        
+        '''
         # Test GPR Callback
         #GPRPeoriod = 1
         #self.GPRTimer = self.create_timer(GPRPeoriod, self.GPRCallback)
@@ -175,11 +194,6 @@ class IntegrationNode(Node):
         ## Path Planning Variables
         self.Target = [450.0, 450.0, -5.0]
 
-
-        
-
-
-
         # TakeOff Variables
         self.InitialPosition = [0.0, 0.0, -5.0]
         self.InitialPositionFlag = False
@@ -201,15 +215,121 @@ class IntegrationNode(Node):
         self.MaxPlannnedIndex = 10
         self.PathPlanningTargetPosition = np.array([0.0, 0.0, 0.0])
 
-        
+        ######################## Start - KAIST ##############################
+        self.KAIST_ModuleUpdateFlag = False
+        self.KAIST_PF_PositionCommandFlag = False
+        self.KAIST_PF_AttitudeCommandFlag = False
+        #.. temp param.
+
+        self.Flag_CtrlMode          =   1   # 0, 1     | position control PX4 | attitude control with PF module |
+        self.Flag_UseMPPI           =   1   # 0, 1     | baseline guidance law only | guid. law with MPPI algorithm |
+        self.Flag_UseGPR            =   1   # 0, 1     | don't use GPR | use GPR with MPPI algorithm |
+
+        self.Flag_PrintPFtime       =   0   # 0, 1
+        self.Flag_PrintMPPItime     =   0   # 0, 1        
+        self.Flag_PrintLimitCount   =   500        
+
+    #.. temp vars
+        self.PFmoduleCount  =   0
+        self.InitTime       =   0.
+        self.CurrTime       =   0.
+
+    #.. Set Control Mode (for testing)
+        ### 0 : position control
+        if self.Flag_CtrlMode == 0:
+            OffboardPeriod = 0.004
+        ### 1 : attitude control
+        elif self.Flag_CtrlMode == 1:
+            OffboardPeriod = 0.004
+            # OffboardPeriod = 0.008
+        ### Default Flag : Set Control Mode 
+        else:
+            self.Flag_CtrlMode  =   0
+            OffboardPeriod      =   0.004
+            print("Default Flag : Set Control Mode")
+        ### Offboard Timer
+        self.OffboardCounter = 100
+        self.OffboardTimer = self.create_timer(OffboardPeriod, self.OffboardControl)
+
+    #.. Set WayPoint Type (for testing)
+        Flag_WPtype     =   2           # 0, 1, 2
+        ### 0 : Rectangular path ###
+        h           =   -5.
+        if Flag_WPtype == 0:
+            bP          =   np.array([5., 5., h])
+            d           =   40.
+            WPs         =   np.array([[0., 0., h], [bP[0], bP[1], h], [bP[0] + d, bP[1], h], [bP[0] + d, bP[1] + d, h], [bP[0], bP[1] + d, h], [bP[0], bP[1], h]])
+        ### 1 : ### Designed Path ###
+        elif Flag_WPtype == 1:
+            WPx     =   np.array([0., 1.5, 9.0,  11.9, 16.0, 42.5, 44.0, 44.6, 42.2, 21.0, \
+                17.9, 15.6, 13.9, 13.5, 16.4, 21.0, 28.9, 44.4, 43.8, 40.4, 26.9, -15.0, -25.0, -20.0, -10.0
+                ])
+            WPy     =   np.array([0., 7.7, 44.0, 46.4, 47.0, 46.7, 43.9, 38.1, 35.2, 34.7, \
+                33.4, 29.9, 23.6, 7.9,  5.0,  3.1,  4.3,  25.5, 30.8, 34.3, 38.2, 35.0,  10.0,   0.0, -5.0
+                ])
+            WPs         =   h*np.ones((len(WPx),3))
+            WPs[:,1]    =   WPx
+            WPs[:,0]    =   WPy
+        ### 2 : RRT path ###
+        elif Flag_WPtype == 2:
+            req = 1
+            res = 1
+            #self.MakeWorldService = self.create_service(MakeWorld, 'make_world', self.MakeWorldCallback(req, res))
+            WPs         =   h*np.ones((5000,3))
+            WPs[:,1]    =   self.PlannedX
+            WPs[:,0]    =   self.PlannedY
+        ### Default Flag : Set WayPoint Type
+        else:
+            bP          =   np.array([5., 5., h])
+            d           =   40.
+            WPs         =   np.array([[0., 0., h], [bP[0], bP[1], h], [bP[0] + d, bP[1], h], [bP[0] + d, bP[1] + d, h], [bP[0], bP[1] + d, h], [bP[0], bP[1], h]])
+            print("Default Flag : Set WayPoint Type")
+
+        ### SetWaypoint ###
+        self.PathPlanningInitialize = True
+        N           =   WPs.shape[0]
+        self.MaxPlannnedIndex   =   N
+        self.PlannedX   =   WPs[:,0]
+        self.PlannedY   =   WPs[:,1]
+
+    #.. Path Following (PF) Module - Attitude Control Command Generation (w/ Baseline Guidance Law)
+        self.PF     =   PF(OffboardPeriod, WPs)
+        self.PF.GCUParams.Flag_Write    =   1       # 0, 1 - Write in a PF.PF_main() functuin
+
+    #.. Nonlinear Disturbance Observer (NDO) Module - Disturbance Estimation for Current State
+        NDOgainX, NDOgainY, NDOgainZ = 6., 6., 3.
+        self.NDO    =   NDO(NDOgainX, NDOgainY, NDOgainZ)
+        self.Acc_disturb = 0.0
+
+    #.. Model Predictive Path Integral (MPPI) control Module - Parameter Decision of the Guidance Law
+        self.MPPI   =   MPPI()
+        MPPIPeriod          =   self.MPPI.MPPIParams.dt_MPPI
+        if self.Flag_UseMPPI == 1:
+            self.MPPITimer      =   self.create_timer(MPPIPeriod, self.KAIST_MPPI_CallBack)
+
+    #.. Gaussian Process Regression (GPR) Module - Disturbance Estimation for Current or Model Predictive States
+        self.GPR    =   GPR()
+        self.GPR.GPRparams_from_MPPIparams(self.MPPI.MPPIParams.dt_MPPI,self.MPPI.MPPIParams.UpdateCycle,self.MPPI.MPPIParams.N)
+        GPRPeriod   =   self.GPR.dt_GPR
+        if self.Flag_UseGPR == 1:
+            self.GPRTimer      =   self.create_timer(GPRPeriod, self.KAIST_GPR_Update_CallBack)
+
+    #.. KAIST PathFollowing Module - NDO, PF, CMD Update Callback
+        self.MPPI   =   MPPI()
+        MPPIPeriod          =   self.MPPI.MPPIParams.dt_MPPI
+        if self.Flag_UseMPPI == 1:
+            self.PFTimer      =   self.create_timer(MPPIPeriod, self.KAIST_PF_Module_Update)
+            
+    ########################  End  - KAIST ##############################
     ######################################################################################################################################## 
     # Main Function
     def OffboardControl(self):
+        self.JBNU.main()
+        
         if self.PathPlanningInitialize == True:
-            print("MPPI Output")
-            print(self.MPPIOutput)
             
             if self.OffboardCount == self.OffboardCounter:
+                
                 
                 self.offboard()
                 self.arm()
@@ -219,47 +339,48 @@ class IntegrationNode(Node):
             if self.InitialPositionFlag:
                 ###########################################
                 # Sample PathPlanning Example
-                
                 if self.PlannnedIndex >= self.MaxPlannnedIndex:
                     self.LogFile.close()
+
                 else:
                     self.PathPlanningTargetPosition = np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex], -5.0])
                     self.TargetYaw = np.arctan2(self.PlannedY[self.PlannnedIndex] - self.y, self.PlannedX[self.PlannnedIndex] - self.x)
-                    self.SetPosition(self.PathPlanningTargetPosition, self.TargetYaw)
-                    #self.LogFile = open("/root/ros_ws/src/integration/integration/PathPlanning/Map/log.txt",'a')
+                    
                     WaypointACK = np.linalg.norm(np.array([self.PlannedX[self.PlannnedIndex], self.PlannedY[self.PlannnedIndex]]) - np.array([self.x, self.y]))
                     if  WaypointACK < 3.0:
                         LogData = "%d %f %f %f %f\n" %(self.PlannnedIndex, self.PlannedY[self.PlannnedIndex], self.PlannedX[self.PlannnedIndex], self.y, self.x)
                         self.LogFile.write(LogData)
                         self.PlannnedIndex += 1
-                        print(self.PlannnedIndex)
                 
-                ###########################################
-                ##########################################
-                # Sample Collision Avoidance Example
-                """
-                if self.CollisionAvoidanceFlag == True:
-                    SetPosition = np.array([self.Target[0] -self.CA[0],  self.Target[0] -self.CA[1], -5.0])
-                    self.SetPosition(SetPosition)
-                else:
-                    self.SetPosition(self.Target)
-                """
-                ###########################################
+                if self.KAIST_ModuleUpdateFlag == True:
 
-                ###########################################
-                # Sample Control Position, Velocity, Attitude, Rate    
-                #self.SetPosition(self.TargetPosition, self.TargetYaw)
-                #self.SetVelocity(self.TargetVelocity, self.TargetYaw)
-                #self.SetAttitude(self.TargetAttitude, self.TargetBodyRate, self.TargetThrust, self.TargetYawRate)
-                #self.SetRate(self.TargetRate, self.TargetThrust)
+                    if self.KAIST_PF_PositionCommandFlag == True:
+                        self.SetPosition(self.TargetPosition, self.TargetYaw)
+                        print("pos")
+
+                    if self.KAIST_PF_AttitudeCommandFlag == True:
+                        self.SetAttitude(self.TargetAttitude, self.TargetBodyRate, self.TargetThrust, self.TargetYawRate)
+                        print("att")
+                        
+
+                
+                # If PF Module Can't Update, Use the RRT or SAC Pathplanning Command
+                else:
+                    self.SetPosition(self.PathPlanningTargetPosition, self.TargetYaw)
+                self.KAIST_ModuleUpdateFlag = False
+                self.KAIST_PF_PositionCommandFlag = False
+                self.KAIST_PF_AttitudeCommandFlag = False
+
             
+            
+
             else:
                 self.Takeoff()
                 
             if self.OffboardCount < self.OffboardCounter:
                 self.OffboardCount = self.OffboardCount + 1
     ########################################################################################################################################
-    
+    '''
     def JeonbukVerificationCallback(self):
         
         if self.OffboardCount > 1000: # Log Terminal Condition
@@ -276,12 +397,108 @@ class IntegrationNode(Node):
             self.KaistLogFile = open("/root/ros_ws/src/integration/integration/Kaistlog.txt",'a')
             LogData = "%d \n" %(self.OffboardCount)
             self.KaistLogFile.write(LogData)
+            ######################## Start - KAIST ##############################
+            nextWPidx   =   self.PlannnedIndex
+            WPs         =   self.PF.WPs
+            Posn        =   np.array([self.x, self.y, self.z])
+            Vn          =   np.array([self.vx, self.vy, self.vz])
+            Throttle    =   self.TargetThrust       # need to change this to actual thrust.
+            W1, W2          =   self.PF.GCUParams.W1_cost, self.PF.GCUParams.W2_cost
+            cost, dist_Path =   Calc_PF_cost(W1, W2, nextWPidx, WPs, Posn, Vn, Throttle)
+            ########################  End  - KAIST ##############################
+    '''
+    ######################## Start - KAIST ##############################      
+    ## MPPI_CallBack
+    def KAIST_MPPI_CallBack(self):
+        if self.InitialPositionFlag and self.PFmoduleCount > 50:
+            self.t.tic()
+            if self.MPPI.MPPIParams.count % self.MPPI.MPPIParams.UpdateCycle == 0:
+                if self.Flag_UseGPR == 1:
+                    self.MPPI.MPPIParams.est_delAccn    =   self.GPR.yPred
+                else:
+                    self.MPPI.MPPIParams.est_delAccn    =   self.NDO.outNDO * np.ones((self.MPPI.MPPIParams.N, 3))
+
+                Pos         =   np.array([self.x, self.y, self.z])
+                Vn          =   np.array([self.vx, self.vy, self.vz])
+                AngEuler    =   np.array([self.roll, self.pitch, self.yaw]) * math.pi /180.
+                # function
+                start = time.time()
+                u1, u1_MPPI, u2_MPPI    =   self.MPPI.Guid_MPPI(self.PF.GCUParams, self.PF.WPs, Pos, Vn, AngEuler)
+                if self.Flag_PrintMPPItime == 1 and self.PFmoduleCount < self.Flag_PrintLimitCount:
+                    print("MPPI call. time :", round(self.CurrTime - self.InitTime, 6), ", calc. time :", round(time.time() - start, 4),", PFmoduleCount :", self.PFmoduleCount)
+            
+                #.. Limit
+                Kmin    =   self.MPPI.MPPIParams.u1_min
+                LADmin  =   self.MPPI.MPPIParams.u2_min
+                u1_MPPI     =   np.where(u1_MPPI < Kmin, Kmin, u1_MPPI)
+                u2_MPPI     =   np.where(u2_MPPI < LADmin, LADmin, u2_MPPI)
+
+                # output
+                tau_u       =   self.MPPI.MPPIParams.tau_LPF
+                N_tau_u     =   self.MPPI.MPPIParams.N_tau_LPF
+                
+                for i_u in range(self.MPPI.MPPIParams.N - 1):
+                    du1     =   1/tau_u * (u1_MPPI[i_u + 1] - u1_MPPI[i_u])
+                    u1_MPPI[i_u + 1] = u1_MPPI[i_u] + du1 * self.MPPI.MPPIParams.dt_MPPI
+                    du2     =   1/tau_u * (u2_MPPI[i_u + 1] - u2_MPPI[i_u])
+                    u2_MPPI[i_u + 1] = u2_MPPI[i_u] + du2 * self.MPPI.MPPIParams.dt_MPPI
+                
+                for i_N in range(N_tau_u):
+                    u1_MPPI[0:self.MPPI.MPPIParams.N - 1] = u1_MPPI[1:self.MPPI.MPPIParams.N]
+                    u1_MPPI[self.MPPI.MPPIParams.N - 1]  = 0.5 * (np.max(u1_MPPI) + np.min(u1_MPPI))
+                    u2_MPPI[0:self.MPPI.MPPIParams.N - 1] = u2_MPPI[1:self.MPPI.MPPIParams.N]
+                    u2_MPPI[self.MPPI.MPPIParams.N - 1]  = 0.5 * (np.max(u2_MPPI) + np.min(u2_MPPI))
+
+                self.MPPI.MPPIParams.u1_MPPI = u1_MPPI
+                self.MPPI.MPPIParams.u2_MPPI = u2_MPPI
+
+            u1_MPPI     =   self.MPPI.MPPIParams.u1_MPPI
+            u2_MPPI     =   self.MPPI.MPPIParams.u2_MPPI
+
+            #.. direct
+            u1_MPPI[0:self.MPPI.MPPIParams.N - 1] = u1_MPPI[1:self.MPPI.MPPIParams.N]
+            u1_MPPI[self.MPPI.MPPIParams.N - 1]  = 0.5 * (np.max(u1_MPPI) + np.min(u1_MPPI))
+            u2_MPPI[0:self.MPPI.MPPIParams.N - 1] = u2_MPPI[1:self.MPPI.MPPIParams.N]
+            u2_MPPI[self.MPPI.MPPIParams.N - 1]  = 0.5 * (np.max(u2_MPPI) + np.min(u2_MPPI))
+
+            # update
+            self.MPPI.MPPIParams.u1_MPPI     =   u1_MPPI
+            self.MPPI.MPPIParams.u2_MPPI     =   u2_MPPI
+
+            # output
+            # self.PF.GCUParams.Kgain_guidPursuit    =   u1[1]
+            self.PF.GCUParams.desSpd                =   u1_MPPI[0]
+            self.PF.GCUParams.lookAheadDist         =   u2_MPPI[0]
+            self.PF.GCUParams.reachDist             =   self.PF.GCUParams.lookAheadDist
+
+            self.MPPI.MPPIParams.count = self.MPPI.MPPIParams.count + 1
+            self.t.toc()
+            
+            
+        pass
+
+    ## GPR_Update_CallBack
+    def KAIST_GPR_Update_CallBack(self):
+        if self.InitialPositionFlag and self.OffboardCount > 0:
+            
+            x_new   =   self.PF.GCUTime
+            Y_new   =   self.NDO.outNDO
+            self.GPR.GPR_dataset(x_new,Y_new)
+
+            if self.GPR.count % self.GPR.EstimateCycle == 0:
+            #.. GPR Estimation
+                self.GPR.GPR_estimate(x_new,testSize=self.GPR.N,dt=self.GPR.dt_Est)
+
+            if self.GPR.count % self.GPR.UpdateCycle == 0:
+            #.. GPR Update
+                self.GPR.GPR_update()
+
+            self.GPR.count = self.GPR.count + 1
+            
+        pass
+########################  End  - KAIST ##############################     
+
     
-    def MPPICallback(self):
-        # MPPI Calculation
-        self.MPPIOutput= self.MPPIOutput+ 1
-
-
     # MakeWorld
     def MakeWorldCallback(self, request, response):
         if request.done == 1:
@@ -292,6 +509,7 @@ class IntegrationNode(Node):
             Image = cv2.rotate(Image, cv2.ROTATE_90_CLOCKWISE)
             
             Planned = self.RRT.PathPlanning(Image, self.StartPoint, self.GoalPoint)
+            #Planned = self.SAC.PathPlanning(Image, self.StartPoint, self.GoalPoint)
             RawImage = cv2.flip(RawImage, 0)
             cv2.imwrite('rawimage.png',RawImage)
             self.PlannedX = Planned[0] / 10
@@ -299,10 +517,64 @@ class IntegrationNode(Node):
             self.MaxPlannnedIndex = len(self.PlannedX) - 1
             print(len(self.PlannedX))
             response.ack = 1
-            time.sleep(40)
+            time.sleep(25)
             self.PathPlanningInitialize = True
             return response
-            
+
+    ## KAIST Module Update Functions
+    def KAIST_PF_Module_Update(self):
+        
+        Acc_disturb, Vn, AngEuler = self.KAIST_NDO_Update()
+        ThrustCmd, AttCmd, tgPos, LOSazim = self.KAIST_PF_Update(Acc_disturb, Vn, AngEuler)
+        self.KAIST_Command_Update(ThrustCmd, AttCmd, tgPos, LOSazim)
+        self.KAIST_ModuleUpdateFlag = True
+        
+        #print("mppi", AttCmd)
+
+    def KAIST_NDO_Update(self):
+        dt          =   self.PF.GCUParams.dt_GCU
+        Vn          =   np.array([self.vx, self.vy, self.vz])
+        FbCmd       =   self.PF.GCUParams.FbCmd
+        AngEuler    =   np.array([self.roll, self.pitch, self.yaw]) * math.pi /180.
+        rho         =   self.PF.GCUParams.rho
+        mass        =   self.PF.GCUParams.Mass
+        Sref        =   self.PF.GCUParams.Sref
+        CD_md       =   self.PF.GCUParams.CD_model * 1.0
+        g           =   self.PF.GCUParams.g0
+        self.NDO.NDO_main(dt, Vn, FbCmd, AngEuler, mass, rho, Sref, CD_md, g)
+        Acc_disturb =   self.NDO.outNDO + self.NDO.a_drag_n
+
+        return  Acc_disturb, Vn , AngEuler
+
+    def KAIST_PF_Update(self, Acc_disturb, Vn, AngEuler):
+        nextWPidx   =   self.PlannnedIndex
+        print(nextWPidx)
+        Posn        =   np.array([self.x, self.y, self.z])
+        if self.PFmoduleCount < 1.:
+            self.InitTime   =   self.CurrTime
+        self.PF.GCUTime     =   self.CurrTime - self.InitTime
+        ThrustCmd, AttCmd, tgPos, LOSazim   =   self.PF.PF_main(nextWPidx, Posn, Vn, AngEuler, Acc_disturb)
+
+        return ThrustCmd, AttCmd, tgPos, LOSazim
+
+    def KAIST_Command_Update(self, ThrustCmd, AttCmd, tgPos, LOSazim):
+        if self.Flag_PrintPFtime == 1 and self.PFmoduleCount < self.Flag_PrintLimitCount:
+            print("PF call. time :", round(self.PF.GCUTime, 6), ", PFmoduleCount :", self.PFmoduleCount)
+        self.PFmoduleCount = self.PFmoduleCount + 1
+
+        #.. Set Position
+        if self.PlannnedIndex >= self.MaxPlannnedIndex or self.Flag_CtrlMode != 1:
+            self.KAIST_PF_PositionCommandFlag = True
+            self.TargetPosition     =   tgPos
+            self.TargetYaw          =   LOSazim
+
+        else:
+        #.. Set Attitude
+            w, x, y, z  =   self.Euler2Quaternion(AttCmd[0], AttCmd[1], AttCmd[2])
+            self.KAIST_PF_AttitudeCommandFlag = True
+            self.TargetAttitude =   np.array([w, x, y, z])
+            self.TargetThrust   =   ThrustCmd
+
     ## Vehicle Mode
     # Arming
     def arm(self):
@@ -434,7 +706,6 @@ class IntegrationNode(Node):
     ## Subscriber
     # VehicleAngularVelocity
     def VehicleAngularVelocityCallback(self, msg):
-
         # Rate
         self.p = msg.xyz[0] * 57.2958
         self.q = msg.xyz[1] * 57.2958
@@ -488,6 +759,7 @@ class IntegrationNode(Node):
         current_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB)
         cv2.imshow("camera", current_frame)
         cv2.waitKey(1)
+        self.JBNU.CA(current_frame)
 
     # Lidar
     def LidarCallback(self, msg):
