@@ -50,7 +50,7 @@ import math
 from .CollisionAvoidance.ArtificialPotentialField import ArtificialPotentialField
 
 # JBNU Collision Avoidance
-from .CollisionAvoidance.JBNU import JBNU_Obs
+# from .CollisionAvoidance.JBNU import JBNU_Obs
 
 ## Path Planning Module
 #  RRT
@@ -77,8 +77,8 @@ class IntegrationNode(Node):
         self.RRT = RRT.RRT()
         self.SAC = SACOnnx.SACOnnx()
 
-        # Init JBNU CA Module
-        self.JBNU = JBNU_Obs.JBNU_Collision()
+        # # Init JBNU CA Module
+        # self.JBNU = JBNU_Obs.JBNU_Collision()
 
         # Init CVBridge
         self.CvBridge = CvBridge()
@@ -324,7 +324,7 @@ class IntegrationNode(Node):
     ######################################################################################################################################## 
     # Main Function
     def OffboardControl(self):
-        self.JBNU.main()
+        # self.JBNU.main()
         
         if self.PathPlanningInitialize == True:
             
@@ -759,7 +759,7 @@ class IntegrationNode(Node):
         current_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB)
         cv2.imshow("camera", current_frame)
         cv2.waitKey(1)
-        self.JBNU.CA(current_frame)
+        # self.JBNU.CA(current_frame)
 
     # Lidar
     def LidarCallback(self, msg):
