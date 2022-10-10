@@ -8,15 +8,18 @@ jsonschema
 kconfiglib
 matplotlib==3.0.*
 meson
-numpy nunavut>=1.1.0
+numpy==1.23.3
+nunavut>=1.1.0
 onnx
 onnxruntime
 opencv-python
 packaging
 pkgconfig
 psutil
+pycuda
 pynacl
 pyros-genmsg
+pytictoc
 pyulog
 pyyaml
 requests
