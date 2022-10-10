@@ -9,6 +9,8 @@ kconfiglib
 matplotlib==3.0.*
 meson
 numpy nunavut>=1.1.0
+onnx
+onnxruntime
 opencv-python
 packaging
 pkgconfig
@@ -18,6 +20,7 @@ pyros-genmsg
 pyulog
 pyyaml
 requests
+scikit-learn
 serial
 six
 toml
