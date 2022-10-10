@@ -35,17 +35,39 @@ if ${REBUILD}; then
 	&& source /root/ROS2-node/install/setup.bash
 fi
 
+# Run PX4 SITL
+$build_path/bin/px4 -d "$build_path/etc" -w $build_path -s $build_path/etc/init.d-posix/rcS &
 
-# Run Gazebo SITL
+# Run Gazebo
 if [ ${HEADLESS} -eq 1]; then
 	echo "HEADLESS is ${HEADLESS}: 1, Running Gazebo SITL in HEADLESS mode"
-	HEADLESS=${HEADLESS} make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${ITESIM_VEHICLE}__${ITESIM_WOLRD} &
+	gzserver ${sitl_gazebo_path}/worlds/grass.world --verbose &
 else
 	echo "HEADLESS is ${HEADLESS}: Not 1, Running Gazebo SITL in normal mode"
-	make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${ITESIM_VEHICLE}__${ITESIM_WOLRD} &
+	gazebo ${sitl_gazebo_path}/worlds/${PX4_SIM_WOLRLD}.world --verbose &
 fi
 
-sleep 120s
+sleep 2s
 
+# Spawn Model
+gz model \
+	--spawn-file=${sitl_gazebo_path}/models/typhoon_inha/${PX4_SIM_MODEL}.sdf \
+	--model-name=typhoon_inha -x 1.0 -y 1.0 -z 0.0 &
+sleep 2s
+
+# source /opt/ros/galactic/setup.sh
+# source /root/AirSim/ros2/install/setup.bash
+# source /root/px4_ros/install/setup.bash
+# source /root/ros_ws/install/setup.bash
+
+echo "Initializing microRTPS Bridge"
 micrortps_agent -t UDP &
+sleep 1s
+
+echo "Spawning Objects"
 ros2 run model_spawn ModelSpawn
+sleep 1s
+
+echo "Run integration node"
+ros2 run integration IntegrationTest
+sleep infinity
