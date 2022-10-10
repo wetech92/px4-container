@@ -35,6 +35,12 @@ if ${REBUILD}; then
 	&& source /root/ROS2-node/install/setup.bash
 fi
 
+source /opt/ros/galactic/setup.sh
+source /root/gazebo_ros/install/setup.bash
+source /root/px4_ros/install/setup.bash
+source /root/ros_ws/install/setup.bash
+source /usr/share/gazebo-11/setup.sh
+
 # Run PX4 SITL
 $build_path/bin/px4 -d "$build_path/etc" -w $build_path -s $build_path/etc/init.d-posix/rcS &
 
@@ -54,11 +60,6 @@ gz model \
 	--spawn-file=${sitl_gazebo_path}/models/typhoon_inha/${PX4_SIM_MODEL}.sdf \
 	--model-name=typhoon_inha -x 1.0 -y 1.0 -z 0.0 &
 sleep 2s
-
-# source /opt/ros/galactic/setup.sh
-# source /root/AirSim/ros2/install/setup.bash
-# source /root/px4_ros/install/setup.bash
-# source /root/ros_ws/install/setup.bash
 
 echo "Initializing microRTPS Bridge"
 micrortps_agent -t UDP &
