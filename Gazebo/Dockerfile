@@ -103,7 +103,8 @@ RUN \
     --mount=type=cache,target=/etc/apt/sources.list.d,from=stage_apt,source=/etc/apt/sources.list.d \
         sh -c "$(wget -O - https://github.com/deluan/zsh-in-docker/releases/download/v1.1.2/zsh-in-docker.sh | sed "77d;s/export TERM=xterm/export TERM=xterm-256color/g")" -- \
         -t agnoster \
-        -p git \                                                                                                                                     -p https://github.com/zsh-users/zsh-autosuggestions \
+        -p git \
+		-p https://github.com/zsh-users/zsh-autosuggestions \                                                                                                                                     -p https://github.com/zsh-users/zsh-autosuggestions \
         -p https://github.com/zsh-users/zsh-syntax-highlighting \
         && echo "alias cat='batcat --paging=never'" >> /root/.zshrc \
 	&& sed -i "s/#Port 22/Port 1022/g" \
