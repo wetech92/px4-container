@@ -64,8 +64,17 @@ COPY Gazebo/models /root/PX4-Autopilot/Tools/sitl_gazebo/models
 COPY Gazebo/worlds /root/PX4-Autopilot/Tools/sitl_gazebo/worlds
 
 RUN \
-	make -C /root/PX4-Autopilot px4_sitl_rtps
-
+	make -C /root/PX4-Autopilot px4_sitl_rtps \
+	&& sed -i "s/\${MAVLINK_INCLUDE_DIRS}/\/root\/PX4-Autopilot\/build\/px4_sitl_rtps\/mavlink/g" \
+		/root/PX4-Autopilot/Tools/sitl_gazebo/CMakeLists.txt \
+	&& sed -i "s/find_package(MAVLink)/# find_package(MAVLink)/g" \
+		/root/PX4-Autopilot/Tools/sitl_gazebo/CMakeLists.txt \
+	&& cmake \
+		-B/root/PX4-Autopilot/build/px4_sitl_rtps/build_gazebo \
+		-S/root/PX4-Autopilot/Tools/sitl_gazebo \
+	&& make -C \
+		~/PX4-Autopilot/build/px4_sitl_rtps/build_gazebo \
+		-j$(nproc) -l$(nproc)
 
 FROM stage_deps as stage_final
 
@@ -95,18 +104,27 @@ RUN \
         -p git \                                                                                                                                     -p https://github.com/zsh-users/zsh-autosuggestions \
         -p https://github.com/zsh-users/zsh-syntax-highlighting \
         && echo "alias cat='batcat --paging=never'" >> /root/.zshrc \
-	&& sed -i "s/#Port 22/Port 1022/g" /etc/ssh/sshd_config \
-	&& sed -i "s/#PermitRootLogin prohibit-password/PermitRootLogin yes/g" /etc/ssh/sshd_config \
-	&& sed -i "s/#PasswordAuthentication yes/PasswordAuthentication yes/g" /etc/ssh/sshd_config \
-	&& ln -s /root/PX4-Autopilot/Tools/sitl_gazebo/models/ models
+	&& sed -i "s/#Port 22/Port 1022/g" \
+		/etc/ssh/sshd_config \
+	&& sed -i "s/#PermitRootLogin prohibit-password/PermitRootLogin yes/g" \
+		/etc/ssh/sshd_config \
+	&& sed -i "s/#PasswordAuthentication yes/PasswordAuthentication yes/g" \
+		/etc/ssh/sshd_config \
+	&& sed -i "s/\${GAZEBO_PLUGIN_PATH}/\/root\/PX4-Autopilot\/Tools\/sitl_gazebo\/build/g" \
+		/usr/share/gazebo-11/setup.sh \
+	&& sed -i "s/\${GAZEBO_MODEL_PATH}/\/root\/PX4-Autopilot\/Tools\/sitl_gazebo\/models/g" \
+		/usr/share/gazebo-11/setup.sh \
+	&& ln -s /root/PX4-Autopilot/Tools/sitl_gazebo/models /root/models
 
 RUN \
-	echo "source /root/px4_ros/install/setup.bash" >> /root/.bashrc \
+	echo "source /usr/share/gazebo-11/setup.sh" >> /root/.bashrc \
+	&& echo "source /root/px4_ros/install/setup.bash" >> /root/.bashrc \
 	&& echo "source /root/ros_ws/install/setup.bash" >> /root/.basrhc \
     && echo "source /root/gazebo_ros/install/setup.bash" >> /root/.bashrc
 
 RUN \
-	echo "source /root/px4_ros/install/setup.zsh" >> /root/.zshrc \
+	echo "source /usr/share/gazebo-11/setup.sh" >> /root/.zsrhc \
+	&& echo "source /root/px4_ros/install/setup.zsh" >> /root/.zshrc \
 	&& echo "source /root/ros_ws/install/setup.zsh" >> /root/.zshrc \
 	&& echo "source /root/gazebo_ros/install/setup.zsh" >> /root/.zshrc
 
