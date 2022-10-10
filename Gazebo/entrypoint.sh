@@ -39,10 +39,10 @@ fi
 # Run Gazebo SITL
 if [ ${HEADLESS} -eq 1]; then
 	echo "HEADLESS is ${HEADLESS}: 1, Running Gazebo SITL in HEADLESS mode"
-	HEADLESS=${HEADLESS} make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_typhoon_inha__grass &
+	HEADLESS=${HEADLESS} make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${ITESIM_VEHICLE}__${ITESIM_WOLRD} &
 else
 	echo "HEADLESS is ${HEADLESS}: Not 1, Running Gazebo SITL in normal mode"
-	HEADLESS=${HEADLESS} make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_typhoon_inha__grass &
+	make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${ITESIM_VEHICLE}__${ITESIM_WOLRD} &
 fi
 
 sleep 120s
