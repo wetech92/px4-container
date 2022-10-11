@@ -24,7 +24,7 @@ services:
       - /usr/share/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json
       - /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json
       # -------------SET YOUR HOME DIRECTORY-------------
-      # - $HOME/gitcodes/px4-container/Gazebo/entrypoint.sh:/usr/local/bin/entrypoint.sh
+      - $HOME/gitcodes/px4-container/Gazebo/entrypoint.sh:/usr/local/bin/entrypoint.sh
       # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
       #- /mnt/wslg:/mnt/wslg
       #- /usr/lib/wsl:/usr/lib/wsl
