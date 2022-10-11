@@ -1,7 +1,8 @@
 import sys
 import rclpy
 from rclpy.node import Node
-
+from rclpy.qos import ReliabilityPolicy, QoSProfile, LivelinessPolicy, DurabilityPolicy, HistoryPolicy
+from rclpy.qos_event import SubscriptionEventCallbacks
 from pytictoc import TicToc
 
 # PX4 MSG Subscriber
@@ -99,10 +100,10 @@ class IntegrationNode(Node):
         self.VehicleAngularVelocitySubscriber_ = self.create_subscription(VehicleAngularVelocity, '/fmu/vehicle_angular_velocity/out', self.VehicleAngularVelocityCallback, 10)
 
         # Init Camera Subscriber
-        self.CameraSubscriber_ = self.create_subscription(Image, '/realsense_d455_RGB/image', self.CameraCallback, 60)
+        self.CameraSubscriber_ = self.create_subscription(Image, '/realsense_d455_RGB/image', self.CameraCallback, QoSProfile(depth=30, reliability=ReliabilityPolicy.BEST_EFFORT))
 
         # Init Lidar Subscriber
-        self.LidarSubscriber_ = self.create_subscription(LaserScan, '/rplidar_a3/laserscan', self.LidarCallback, 10)
+        self.LidarSubscriber_ = self.create_subscription(LaserScan, '/rplidar_a3/laserscan', self.LidarCallback, QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT))
 
         # Init Client
         self.ResetWorldClient = self.create_client(Empty, '/reset_world')

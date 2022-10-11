@@ -18,7 +18,7 @@ class PF():
         self.WPs        =   WPs
 
     #.. Datalog
-        self.datalogFile    =   open("/root/datalog/data/datalog.txt",'w')
+        #self.datalogFile    =   open("/root/datalog/data/datalog.txt",'w')
 
     #.. Vars.
         self.GCUTime        =   0.
@@ -119,21 +119,21 @@ class PF():
 
             self.total_cost     =   self.total_cost + cost
 
-            if self.GCUParams.Flag_Write == 1:    
-                if nextWPidx < WPs.shape[0]:
-                #.. Save Data
-                    AccCmdw_total   =   np.dot(cI_W, AccCmdn_total)
-                    outNDOw         =   np.dot(cI_W, Acc_disturb)
-                    Spd     =   np.linalg.norm(Vn)
-                    Data = "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n" %(
-                        self.GCUTime, AttCmd[0]*R2D, AttCmd[1]*R2D, AttCmd[2]*R2D, AngEuler[0]*R2D, AngEuler[1]*R2D, AngEuler[2]*R2D,
-                        AccCmdw_total[0], AccCmdw_total[1], AccCmdw_total[2], 0., 0., 0.,
-                        Pos[0], Pos[1], Pos[2], tgPos[0], tgPos[1], tgPos[2], 
-                        cost, self.total_cost, dist_Path, outNDOw[0], outNDOw[1], outNDOw[2],
-                        Spd, self.GCUParams.desSpd, self.GCUParams.lookAheadDist, 0., 0., 0.,
-                        )
-                    self.datalogFile.write(Data)
-                else:
-                    self.datalogFile.close()
+            # if self.GCUParams.Flag_Write == 1:    
+            #     if nextWPidx < WPs.shape[0]:
+            #     #.. Save Data
+            #         AccCmdw_total   =   np.dot(cI_W, AccCmdn_total)
+            #         outNDOw         =   np.dot(cI_W, Acc_disturb)
+            #         Spd     =   np.linalg.norm(Vn)
+            #         Data = "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n" %(
+            #             self.GCUTime, AttCmd[0]*R2D, AttCmd[1]*R2D, AttCmd[2]*R2D, AngEuler[0]*R2D, AngEuler[1]*R2D, AngEuler[2]*R2D,
+            #             AccCmdw_total[0], AccCmdw_total[1], AccCmdw_total[2], 0., 0., 0.,
+            #             Pos[0], Pos[1], Pos[2], tgPos[0], tgPos[1], tgPos[2], 
+            #             cost, self.total_cost, dist_Path, outNDOw[0], outNDOw[1], outNDOw[2],
+            #             Spd, self.GCUParams.desSpd, self.GCUParams.lookAheadDist, 0., 0., 0.,
+            #             )
+            #         self.datalogFile.write(Data)
+            #     else:
+            #         self.datalogFile.close()
 
             return ThrustCmd, AttCmd, tgPos, LOSazim
