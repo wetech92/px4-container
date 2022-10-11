@@ -1,5 +1,6 @@
 ARG BASEIMAGE=kestr3l/px4
 ARG BASETAG
+# kestr3l/px4:gazebo-gpu-0.0.3
 
 FROM ${BASEIMAGE}:${BASETAG} as stage_apt
 
@@ -52,13 +53,23 @@ RUN \
 		$(sed '$!d' /tmp/pydeps.txt) \
 	&& rm -rf /tmp/*
 
-RUN git clone https://github.com/microsoft/AirSim.git -b v1.8.1 /root/AirSim \
+RUN \
+	git clone https://github.com/microsoft/AirSim.git -b v1.8.1 /root/AirSim \
 	&& /root/AirSim/setup.sh \
 	&& /root/AirSim/build.sh --gcc
 
-RUN 
+RUN \
+	sed -i "s/msr::airlib::MultirotorRpcLibClient client/msr::airlib::MultirotorRpcLibClient client(\"172.21.0.5\")/g" /root/AirSim/GazeboDrone/src/main.cpp \
+	&& mkdir /root/AirSim/GazeboDrone/build \
+	&& cmake \
+		-B/root/AirSim/GazeboDrone/build \
+		-S/root/AirSim/GazeboDrone \
+		-DCMAKE_C_COMPILER=gcc-8 \
+		-DCMAKE_CXX_COMPILER=g++-8 \
+	&& make -C \
+		/root/AirSim/GazeboDrone/build
 
-COPY AirSim/ros2/airsim_ros_wrapper.cpp /root/AirSim/ros2/src/airsim_ros_pkgs/src/airsim_ros_wrapper.cpp
+COPY AirSim-Gazebo/ros2/airsim_ros_wrapper.cpp /root/AirSim/ros2/src/airsim_ros_pkgs/src/airsim_ros_wrapper.cpp
 
 WORKDIR /root/AirSim/ros2
 
@@ -106,6 +117,7 @@ COPY --from=stage_airsim /root/AirSim/AirLib /root/AirSim/AirLib
 COPY --from=stage_airsim /root/AirSim/MavLinkCom /root/AirSim/MavLinkCom
 COPY --from=stage_airsim /root/AirSim/cmake /root/AirSim/cmake
 COPY --from=stage_airsim /root/AirSim/external /root/AirSim/external
+COPY --from=stage_airsim /root/AirSim/GazeboDrone /root/AirSim/GazeboDrone
 COPY --from=stage_airsim /root/AirSim/ros2 /root/AirSim/ros2
 COPY --from=stage_airsim /root/.local /root/.local
 
@@ -116,7 +128,7 @@ COPY scripts /root/tools
 COPY AirSim/scripts /root/run
 
 COPY --chown=1001:1001 AirSim/ForestDeploy /home/user/ForestDeploy
-COPY --chown=1001:1001 AirSim/models/typhoon_h480/TyphoonH480.json /home/user/Documents/AirSim/settings.json
+COPY --chown=1001:1001 AirSim-Gazebo/models/AirSim/typhoon_h480/TyphoonH480.json /home/user/Documents/AirSim/settings.json
 
 RUN \
 	rm -rf Gazebo/gazebo_ros \
@@ -124,11 +136,11 @@ RUN \
 
 RUN \
 	echo "source /root/AirSim/ros2/install/setup.bash" >> /root/.bashrc \
-	&& sed -i "/source \/root\/gazebo_ros\/install\/setup.bash/d"
+	&& sed -i "/source \/root\/gazebo_ros\/install\/setup.bash/d" /root/.bashrc
 
 RUN \
 	echo "source /root/AirSim/ros2/install/setup.zsh" >> /root/.zshrc \
-	&& sed -i "/source \/root\/gazebo_ros\/install\/setup.zsh/d"
+	&& sed -i "/source \/root\/gazebo_ros\/install\/setup.zsh/d" /root/.zshrc
 
 WORKDIR /root
 
