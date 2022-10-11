@@ -52,10 +52,12 @@ RUN \
 		--build-base ~/ros_ws/build \
 		--install-base ~/ros_ws/install \
 		--base-paths ~/ros_ws/src \
+		--symlink-install \
 	&& colcon build \
 		--build-base ~/gazebo_ros/build \
 		--install-base ~/gazebo_ros/install \
-		--base-paths ~/gazebo_ros/src
+		--base-paths ~/gazebo_ros/src \
+		--symlink-install
 		
 
 FROM stage_deps as stage_px4sitl
