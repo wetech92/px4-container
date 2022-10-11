@@ -58,17 +58,20 @@ sleep 2s
 # Spawn Model
 gz model \
 	--spawn-file=${sitl_gazebo_path}/models/typhoon_inha/${PX4_SIM_MODEL}.sdf \
-	--model-name=typhoon_inha -x 1.0 -y 1.0 -z -2.0 &
+	--model-name=typhoon_inha -x 1.0 -y 1.0 -z 0.0 &
 sleep 2s
+
+nohup mavlink-routerd -e 172.20.0.7:14550 127.0.0.1:14550 &
+sleep 3s
 
 echo "Initializing microRTPS Bridge"
 micrortps_agent -t UDP &
 sleep 1s
 
 echo "Spawning Objects"
-ros2 run model_spawn ModelSpawn
+ros2 run model_spawn ModelSpawn 100 20 &
 sleep 1s
 
 echo "Run integration node"
-ros2 run integration IntegrationTest
+ros2 run integration IntegrationTest &
 sleep infinity

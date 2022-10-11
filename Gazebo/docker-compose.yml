@@ -14,7 +14,7 @@ services:
       # ----------SET ITE SIMULTAION PARAMETERS----------
       - build_path=/root/PX4-Autopilot/build/px4_sitl_rtps
       - sitl_gazebo_path=/root/PX4-Autopilot/Tools/sitl_gazebo
-      - PX4_SIM_HOST_ADDR=localhost
+      - PX4_SIM_HOST_ADDR=172.20.0.5
       - PX4_SIM_MODEL=typhoon_inha
       - PX4_SIM_WOLRLD=grass
       # - REBUILD=true
@@ -24,7 +24,9 @@ services:
       - /usr/share/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json
       - /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json
       # -------------SET YOUR HOME DIRECTORY-------------
-      - $HOME/gitcodes/px4-container/Gazebo/entrypoint.sh:/usr/local/bin/entrypoint.sh
+      # - /home/a4vai/gitcodes/px4-container/Gazebo/entrypoint.sh:/usr/local/bin/entrypoint.sh
+      # --------SET FOR DEVELOPMENT OR DEBUGGING---------
+      # - /home/a4vai/gitcodes/px4-container/Gazebo/ros_ws/src:/root/ros_ws/src
       # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
       #- /mnt/wslg:/mnt/wslg
       #- /usr/lib/wsl:/usr/lib/wsl
@@ -37,7 +39,7 @@ services:
       px4-sitl-gazebo:
         ipv4_address: 172.20.0.5
     container_name: sitl-gazebo
-    image: kestr3l/px4:gazebo-gpu-0.0.2
+    image: kestr3l/px4:gazebo-gpu-0.0.3
     # stdin_open: true
     # tty: true
     deploy:
