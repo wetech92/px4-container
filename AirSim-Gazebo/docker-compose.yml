@@ -1,0 +1,108 @@
+version: "3"
+services:
+  airsim:
+    privileged: true
+    environment:
+      - DISPLAY=$DISPLAY
+      - WAYLAND_DISPLAY=$WAYLAND_DISPLAY
+      - QT_NO_MITSHM=1 
+      - XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
+      # - NVIDIA_DISABLE_REQUIRE=1
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /usr/share/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json
+      - /usr/share/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json
+      - /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json
+      - /home/a4vai/gitcodes/px4-container/AirSim-Gazebo/models/AirSim/typhoon_h480/TyphoonH480.json:/home/user/Documents/AirSim/settings.json
+      - /home/a4vai/gitcodes/px4-container/AirSim-Gazebo/entrypoint-sim.sh:/usr/local/bin/entrypoint.sh
+      - shared-image:/root/shared
+      #- /mnt/wslg:/mnt/wslg
+      #- /usr/lib/wsl:/usr/lib/wsl
+    devices:
+      - /dev/dri:/dev/dri
+      #- /dev/dxg:/dev/dxg
+    networks:
+      px4-sitl-as-gz:
+        ipv4_address: 172.21.0.5
+    container_name: sitl-as-gz
+    image: kestr3l/px4:airsimg-gpu-0.0.3
+    # stdin_open: true
+    # tty: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+  px4:
+    privileged: true
+    environment:
+      - DISPLAY=$DISPLAY
+      - WAYLAND_DISPLAY=$WAYLAND_DISPLAY
+      - QT_NO_MITSHM=1 
+      - XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
+      - build_path=/root/PX4-Autopilot/build/px4_sitl_rtps
+      - sitl_gazebo_path=/root/PX4-Autopilot/Tools/sitl_gazebo
+      - PX4_SIM_HOST_ADDR=172.21.0.6
+      - PX4_SIM_MODEL=typhoon_inha
+      - PX4_SIM_WOLRLD=grass
+      # - REBUILD=true
+      #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      # - /home/a4vai/gitcodes/px4-container/AirSim-Gazebo/ros2/src:/root/AirSim/ros2/src
+      # - $HOME/gitcodes/px4-container/scripts/buildRos2Pkg.sh:/root/tools/buildRos2Pkg.sh
+      # - $HOME/gitcodes/px4-container/AirSim/ros_ws:/root/ros_ws
+      - /home/a4vai/gitcodes/px4-container/AirSim-Gazebo/entrypoint-px4.sh:/usr/local/bin/entrypoint.sh
+      - shared-image:/root/shared
+      #- /mnt/wslg:/mnt/wslg
+      #- /usr/lib/wsl:/usr/lib/wsl
+    devices:
+      - /dev/dri:/dev/dri
+      #- /dev/dxg:/dev/dxg
+    networks:
+      px4-sitl-as-gz:
+        ipv4_address: 172.21.0.6
+    container_name: sitl-px4
+    image: kestr3l/px4:airsimg-gpu-0.0.3
+    # stdin_open: true
+    # tty: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+  qgc:
+    privileged: true
+    environment:
+      - DISPLAY=$DISPLAY
+      - WAYLAND_DISPLAY=$WAYLAND_DISPLAY
+      - QT_NO_MITSHM=1 
+      - XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
+      #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      #- /mnt/wslg:/mnt/wslg
+      #- /usr/lib/wsl:/usr/lib/wsl
+    devices:
+      - /dev/dri:/dev/dri
+      #- /dev/dxg:/dev/dxg
+    networks:
+      px4-sitl-as-gz:
+        ipv4_address: 172.21.0.7
+    container_name: sitl-qgc
+    image: kestr3l/qgc-app:nobg-4.0.0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+networks:
+    px4-sitl-as-gz:
+      external: true
+volumes:
+     shared-image:
+# docker network create --gateway 172.21.0.1 --subnet 172.21.0.0/16 px4-sitl-as-gz
