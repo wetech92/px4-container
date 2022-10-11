@@ -58,7 +58,7 @@ sleep 2s
 # Spawn Model
 gz model \
 	--spawn-file=${sitl_gazebo_path}/models/typhoon_inha/${PX4_SIM_MODEL}.sdf \
-	--model-name=typhoon_inha -x 1.0 -y 1.0 -z 0.0 &
+	--model-name=typhoon_inha -x 1.0 -y 1.0 -z -2.0 &
 sleep 2s
 
 echo "Initializing microRTPS Bridge"
