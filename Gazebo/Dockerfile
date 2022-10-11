@@ -64,6 +64,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 COPY Gazebo/models /root/PX4-Autopilot/Tools/sitl_gazebo/models
 COPY Gazebo/worlds /root/PX4-Autopilot/Tools/sitl_gazebo/worlds
+COPY Gazebo/plugins /root/PX4-Autopilot/Tools/sitl_gazebo
 
 RUN \
 	make -C /root/PX4-Autopilot px4_sitl_rtps \
@@ -77,6 +78,7 @@ RUN \
 	&& make -C \
 		~/PX4-Autopilot/build/px4_sitl_rtps/build_gazebo \
 		-j$(nproc) -l$(nproc)
+
 
 FROM stage_deps as stage_final
 
