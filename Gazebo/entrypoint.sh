@@ -41,25 +41,28 @@ source /root/px4_ros/install/setup.bash
 source /root/ros_ws/install/setup.bash
 source /usr/share/gazebo-11/setup.sh
 
-# Run PX4 SITL
-$build_path/bin/px4 -d "$build_path/etc" -w $build_path -s $build_path/etc/init.d-posix/rcS &
-
-# Run Gazebo
-if [ ${HEADLESS} -eq 1]; then
-	echo "HEADLESS is ${HEADLESS}: 1, Running Gazebo SITL in HEADLESS mode"
-	gzserver ${sitl_gazebo_path}/worlds/grass.world --verbose &
-else
-	echo "HEADLESS is ${HEADLESS}: Not 1, Running Gazebo SITL in normal mode"
-	gazebo ${sitl_gazebo_path}/worlds/${PX4_SIM_WOLRLD}.world --verbose &
-fi
-
+make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_typhoon_inha__grass &
 sleep 2s
 
-# Spawn Model
-gz model \
-	--spawn-file=${sitl_gazebo_path}/models/typhoon_inha/${PX4_SIM_MODEL}.sdf \
-	--model-name=typhoon_inha -x 1.0 -y 1.0 -z 0.0 &
-sleep 2s
+# # Run PX4 SITL
+# $build_path/bin/px4 -d "$build_path/etc" -w $build_path -s $build_path/etc/init.d-posix/rcS &
+
+# # Run Gazebo
+# if [ ${HEADLESS} -eq 1]; then
+# 	echo "HEADLESS is ${HEADLESS}: 1, Running Gazebo SITL in HEADLESS mode"
+# 	gzserver ${sitl_gazebo_path}/worlds/grass.world --verbose &
+# else
+# 	echo "HEADLESS is ${HEADLESS}: Not 1, Running Gazebo SITL in normal mode"
+# 	gazebo ${sitl_gazebo_path}/worlds/${PX4_SIM_WOLRLD}.world --verbose &
+# fi
+
+# sleep 2s
+
+# # Spawn Model
+# gz model \
+# 	--spawn-file=${sitl_gazebo_path}/models/typhoon_inha/${PX4_SIM_MODEL}.sdf \
+# 	--model-name=typhoon_inha -x 1.0 -y 1.0 -z 0.0 &
+# sleep 2s
 
 nohup mavlink-routerd -e 172.20.0.7:14550 127.0.0.1:14550 &
 sleep 3s
