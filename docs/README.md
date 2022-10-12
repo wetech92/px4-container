@@ -1,5 +1,10 @@
 # A4-VAI ITE User Guide Documents
 
+## General, Initial Setup
+
+- [Quick Start Manual: Run in 20 Minutes](quickStartManual.md)
+- [Setting Up an Environment](setupEnvironment.md)
+
 ## Docker
 
 - [Building a Container From Source](buildContainer.md)
@@ -12,8 +17,13 @@
 
 ## Gazebo
 
+- Working
+
 ## AirSim
+
+- Working
 
 ## Miscellaneous
 
 - [List of Common Convenience Scipts and Examples](scriptList.md)
+  - 'DEPRECATED', will be removed on future release

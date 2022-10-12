@@ -1,6 +1,6 @@
 # Building a Container From Source
 
-## Build Prequisites
+## 1 Build Prequisites
 
 - Host must have docker installed (>=19.03)
   - Recommend to install it by [convenience script](https://docs.docker.com/engine/install/ubuntu/#install-using-the-convenience-script) provided by docker
@@ -13,9 +13,9 @@
 - Host must have at least 20 GB of smpty storage (Recommended)
 - Host must be a X64 device
 
-## Build Commands
+## 2 Build Commands
 
-### Build Command Basics
+### 2.1 Build Command Basics
 
 - This repository uses Docker Buildkit for faster, efficient build
    - Attempt to build image without `DOCKER_BUILDKIT` will result in error
@@ -34,12 +34,12 @@ $ DOCKER_BUILDKIT=1 docker build --no-cache \
       - Ex. `--build-arg BASEIMAGE=ubuntu --build-arg PROCVER=gpu`
       - As you can see, `--build-arg` can be stated multiple times
    - `-t <IMAGE_NAME>:<TAG>`: Designate image tag
-      - Ex. `-t kestr3l/px4:base-cpu-0.0.2`
+      - Ex. `-t kestr3l/px4:base-gpu-0.0.2`
    - `-f`: Designate target dockerfile to build image
       - Ex. `-f /Base/Dockerfile`
    - `.`: Directory to start build. Which is, where to read files from
 
-### Setting `ARG` values
+### 2.2 Setting `ARG` values
 
 - Three following `ARG` values must be set to start build process:
    - `BASEIMAGE`: Base image to build an image
@@ -48,30 +48,15 @@ $ DOCKER_BUILDKIT=1 docker build --no-cache \
    - `BASETAG`: Base image's tag to build an image
       - Depends on type and image you want to build
    - `PROCVER`: Whether a image is GPU version of CPU version
-      - Must be one from `gpu` or `cpu`
+      - Must be one from `gpu`
       - Value other than them will provoke a build error.
 
-## Build Steps and Example
+## 3 Build Steps and Example
 
 - Block diagrams of multi-stage build process are available in there as an image and draw.io file
 - Build of `gazebo` and `airsim` tagged image requires corresponding `base` tagged image
 
-
-### Base
-
-- CPU only
-
-```shell
-DOCKER_BUILDKIT=1 docker build --no-cache \
-    --build-arg BASEIMAGE=ubuntu \
-    --build-arg BASETAG=20.04 \
-    --build-arg PROCVER=cpu \
-    -t <IMAGE_NAME>:base-cpu-<VERSION> \
-    -f Base/Dockerfile .
-```
-
-- With GPU support
-  - GPU-supported version includes `tensorflow-gpu 2.5.0` and `tf-agents 0.8.0`
+### 3.1 Base
 
 ```shell
 DOCKER_BUILDKIT=1 docker build --no-cache \
@@ -85,19 +70,7 @@ DOCKER_BUILDKIT=1 docker build --no-cache \
 > Based on user's need, CUDA & cudNN's version may vary.
 Check [nvidia/cuda](https://hub.docker.com/r/nvidia/cuda) for base imags with different CUDA & cudNN versions.
 
-### Gazebo
-
-- CPU only
-
-```shell
-DOCKER_BUILDKIT=1 docker build --no-cache \
-    --build-arg BASEIMAGE=<IMAGE_NAME> \
-    --build-arg BASETAG=base-cpu-<VERSION> \
-    -t <IMAGE_NAME>:gazebo-cpu-<VERSION> \
-    -f Gazebo/Dockerfile .
-```
-
-- With GPU support
+### 3.2 Gazebo
 
 ```shell
 DOCKER_BUILDKIT=1 docker build --no-cache \
@@ -107,34 +80,31 @@ DOCKER_BUILDKIT=1 docker build --no-cache \
     -f Gazebo/Dockerfile .
 ```
 
-### AirSim
-
-- CPU only
-
-```shell
-DOCKER_BUILDKIT=1 docker build --no-cache \
-    --build-arg BASEIMAGE=<IMAGE_NAME> \
-    --build-arg BASETAG=base-cpu-<VERSION> \
-    -t <IMAGE_NAME>:airsim-cpu-<VERSION> \
-    -f AirSim/Dockerfile .
-```
-
-> **Using a GPU is stronly recommended for AirSim simulatitin**
-> UE4 simulation environment required a lot of graphical computing power to be run
-> Building with command above will be run without any problem. However, it's not practical to use this image due to reason described above
-
-- With GPU support
+### 3.3 AirSim
 
 ```shell
 DOCKER_BUILDKIT=1 docker build --no-cache \
     --build-arg BASEIMAGE=kestr3l/px4 \
     --build-arg BASETAG=base-gpu-0.0.2 \
     --build-arg VULKAN_SDK_VERSION=`curl -sk https://vulkan.lunarg.com/sdk/latest/linux.txt` \
-    -t kestr3l/px4:airsim-gpu-0.0.2 \
+    -t <IMAGE_NAME>:airsim-gpu-<VERSION> \
     -f AirSim/Dockerfile .
 ```
 
-## Reference
+### 3.4 AirSim-Gazebo
+
+```shell
+DOCKER_BUILDKIT=1 docker build --no-cache \
+    --build-arg BASEIMAGE=kestr3l/px4 \
+    --build-arg BASETAG=gazebo-gpu-0.0.2 \
+    --build-arg VULKAN_SDK_VERSION=`curl -sk https://vulkan.lunarg.com/sdk/latest/linux.txt` \
+    -t <IMAGE_NAME>:airsimg-gpu-<VERSION> \
+    -f AirSim-Gazebo/Dockerfile .
+```
+
+> AirSim-Gazebo builds from the Gazebo image, not from the base image
+
+## 4 Reference
 
 1. [Install Docker Engine on Ubuntu - Install using the convenience script](https://docs.docker.com/engine/install/ubuntu/#install-using-the-convenience-script)
 2. [NVIDIA Driver Installation Quickstart Guide](https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html)
