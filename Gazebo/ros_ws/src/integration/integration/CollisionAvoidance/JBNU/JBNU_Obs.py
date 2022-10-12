@@ -2,13 +2,21 @@ import cv2
 import numpy as np
 from random import *
 #import airsim
-from tensorflow.keras.models import load_model
+# from tensorflow.keras.models import load_model
+import onnx
+import onnxruntime as rt
 
 class JBNU_Collision():
     def __init__(self):
+        # AIRSIM DEPENDENT CODES: WILL BE REMOVED
         #self.client = airsim.CarClient()
         #self.client.confirmConnection()
-        self.model_pretrained = load_model('/root/ros_ws/src/integration/integration/CollisionAvoidance/JBNU/Best_feed_forward.h5')
+        
+        #self.model_pretrained = load_model('/root/ros_ws/src/integration/integration/CollisionAvoidance/JBNU/Best_feed_forward.h5')
+        model_pretrained = onnx.load('/root/ros_ws/src/integration/integration/CollisionAvoidance/JBNU/feedforward.onnx')
+        onnx.checker.check_model(model_pretrained)
+        sess = rt.InferenceSession(model_pretrained.SerializeToString(),providers=rt.get_available_providers())
+
 
         print("initialJBNU")
         
