@@ -69,17 +69,7 @@ COPY Gazebo/worlds /root/PX4-Autopilot/Tools/sitl_gazebo/worlds
 COPY Gazebo/plugins /root/PX4-Autopilot/Tools/sitl_gazebo
 
 RUN \
-	make -C /root/PX4-Autopilot px4_sitl_rtps \
-	&& sed -i "s/\${MAVLINK_INCLUDE_DIRS}/\/root\/PX4-Autopilot\/build\/px4_sitl_rtps\/mavlink/g" \
-		/root/PX4-Autopilot/Tools/sitl_gazebo/CMakeLists.txt \
-	&& sed -i "s/find_package(MAVLink)/# find_package(MAVLink)/g" \
-		/root/PX4-Autopilot/Tools/sitl_gazebo/CMakeLists.txt \
-	&& cmake \
-		-B/root/PX4-Autopilot/build/px4_sitl_rtps/build_gazebo \
-		-S/root/PX4-Autopilot/Tools/sitl_gazebo \
-	&& make -C \
-		~/PX4-Autopilot/build/px4_sitl_rtps/build_gazebo \
-		-j$(nproc) -l$(nproc)
+	HEADLESS=1 make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_typhoon_inha__grass
 
 
 FROM stage_deps as stage_final
