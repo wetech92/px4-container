@@ -71,26 +71,27 @@ source /root/ros_ws/install/setup.bash
 source /usr/share/gazebo-11/setup.sh
 
 # Run MAVLink Router for Communication with QGC
-echo ">>>>>>>>>>>>>INITIALIZEING MAVLINK ROUTER FOR QGC CONNECTION<<<<<<<<<<<<"
+echo ">>>>>>>>>>>>>INITIALIZEING MAVLINK ROUTER FOR QGC CONNECTION<<<<<<<<<<<"
 nohup mavlink-routerd -e 172.20.0.7:14550 127.0.0.1:14550 &
 sleep 3s
 
 # Run microRTPS bridge for Communication in ROS2 msg
-echo ">>>>>>>>>>>INITIALIZEING microRTPS BRIDGE FOR ROS2 CONNECTION<<<<<<<<<<<"
+echo ">>>>>>>>>>>INITIALIZEING microRTPS BRIDGE FOR ROS2 CONNECTION<<<<<<<<<<"
 micrortps_agent -t UDP &
 sleep 1s
 
 if [[ -n ${DEBUG_ENTRYPOINT} ]]; then
-	echo ">>>>>>>>>>ENTRYPOINT DEBUGGING ENABLED. DO NOT RUN ANY PROCESS<<<<<<<<<<"
+	echo ">>>>>>>>>>ENTRYPOINT DEBUGGING ENABLED. DO NOT RUN ANY PROCESS<<<<<<<<<"
 	echo "    ____  __________  __  ________"
 	echo "   / __ \/ ____/ __ )/ / / / ____/"
 	echo "  / / / / __/ / __  / / / / / __  "
 	echo " / /_/ / /___/ /_/ / /_/ / /_/ /  "
 	echo "/_____/_____/_____/\____/\____/   "
-	echo ">>>>>>>>>>Noneun Ge Jeil<<<<<<<<<<"
+	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>Noneun Ge Jeil JOAH<<<<<<<<<<<<<<<<<<<<<<<<<<"
+	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>Debugging JOAH<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
 else
-	echo ">>>>>>>>>>>>>>>>RUNNING ITE SITL WITH DEFINED CONDITION<<<<<<<<<<<<<<<<<"
-	ECHO "   _________ _____   __________  ____  "
+	echo ">>>>>>>>>>>>>>>>RUNNING ITE SITL WITH DEFINED CONDITION<<<<<<<<<<<<<<<<"
+	echo "   _________ _____   __________  ____  "
 	echo "  / ____/   /__  /  / ____/ __ )/ __ \ "
 	echo " / / __/ /| | / /  / __/ / __  / / / / "
 	echo "/ /_/ / ___ |/ /__/ /___/ /_/ / /_/ /  "

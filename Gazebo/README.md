@@ -1,182 +1,123 @@
-# A4-VAI ILE PX4 Container Image: Gazebo
+# A4-VAI ITE Container Image: Gazebo
 
-## 1. Build
+- Please Refer to [Running a Container](/docs/runContainer.md) for more info
 
-### 1.1 CPU Only
-
-```shell
-DOCKER_BUILDKIT=1 docker build --no-cache \
-    --build-arg BASEIMAGE=<IMAGE_NAME> \
-    --build-arg BASETAG=base-cpu-<VERSION> \
-    -t <IMAGE_NAME>:gazebo-cpu-<VERSION> \
-    -f Gazebo/Dockerfile .
-```
-
-### 1.2 With GPU Support
-
-- GPU-supported version includes `tensorflow-gpu 2.5.0` and `tf-agents 0.8.0`
+## 1 Manual Run
 
 ```shell
-DOCKER_BUILDKIT=1 docker build --no-cache \
-    --build-arg BASEIMAGE=<IMAGE_NAME> \
-    --build-arg BASETAG=base-gpu-<VERSION> \
-    -t <IMAGE_NAME>:gazebo-gpu-<VERSION> \
-    -f Gazebo/Dockerfile .
+xhost +
 ```
 
-> Based on user's need, CUDA & cudNN's version may vary.<br/>
-Check [nvidia/cuda](https://hub.docker.com/r/nvidia/cuda) for base imags with different CUDA & cudNN versions.
+### 1.1 Run Container
 
-## 2. Run Container
-
-- **Be aware that with `--rm` option, container will immediately be removed after process exit**
-- However, it is very recommended to use it to avoid having leftover 'prune' containers
-
-### 2.1 Basic Command
-
-- Before entering command after boot, type `xhost +` first.
-- For support of DRI (Direct Rendering Interface = H/W Acceleration), use following command:
+#### 1.1.1 Generic Linux System
 
 ```shell
 docker run -it --rm \
-   -e DISPLAY=$DISPLAY \
-   -e QT_NO_MITSHM=1 \
-   -e XDG_RUNTIME_DIR=/tmp \
-   -v /tmp/.X11-unix:/tmp/.X11-unix \
-   --net host \
-   --device=/dev/dri:/dev/dri \
-   --privileged \
-   <IMAGE_NAME>:<TAG>
+  -e DISPLAY=$DISPLAY \
+  -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY
+  -e QT_NO_MITSHM=1 \
+  -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+  -e NVIDIA_DRIVER_CAPABILITIES=all \
+  -e PX4_SIM_MODEL=typhoon_inha \
+  -e PX4_SIM_WOLRLD=grass \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v /usr/share/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json \
+  -v /usr/share/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json \
+  -v /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json \
+  --net host \
+  --device=/dev/dri:/dev/dri \
+  --name gazebo-sitl \
+  --gpus all \
+  --privileged \
+  kestr3l/px4:gazebo-gpu-0.0.3 zsh
 ```
 
-> If you are using Wayland as a display server protocol, (Ubuntu 22.034 or else) add following:<br/>
-`-e WAYLAND_DISPLAY=$WAYLAND_DISPLAY`
-
-### 2.2 Rebuild User-Defined ROS2 Package and Run
-
-- Giving environment variable `$REBUILD` as `true` will rebuild and install ROS2 packages in workspace `ros_ws`
-- Bind mounting your modified workspace to `/root/ros_ws` will make test process easier without rebuilding container
-- **THIS PART IS FOR PLACEHOLDER PURPORSE ONLY FOR NOW. IT IS NOT IMPLEMENTED YET. AS IMPLEMENTED, THIS LINE WILL BE REMOVED**
+#### 1.1.2 Windows Subsystems for Linux 2 (WSL2 / Windows 11)
 
 ```shell
 docker run -it --rm \
-   -e DISPLAY=$DISPLAY \
-   -e QT_NO_MITSHM=1 \
-   -e XDG_RUNTIME_DIR=/tmp \
-   -e REBUILD = true \
-   -v /tmp/.X11-unix:/tmp/.X11-unix \
-   -v <PATH_TO_YOUR_ROS_WORKSPACE>:/root/ros_ws \
-   --net host \
-   --device=/dev/dri:/dev/dri \
-   --privileged \
-   <IMAGE_NAME>:<TAG>
+  -e DISPLAY=$DISPLAY \
+  -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+  -e QT_NO_MITSHM=1 \
+  -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+  -e LD_LIBRARY_PATH=/usr/lib/wsl/lib \
+  -e NVIDIA_DRIVER_CAPABILITIES=all \
+  -e PX4_SIM_MODEL=typhoon_inha \
+  -e PX4_SIM_WOLRLD=grass \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v /mnt/wslg:/mnt/wslg \
+  -v /usr/lib/wsl:/usr/lib/wsl \
+  --device=/dev/dri:/dev/dri \
+  --device=/dev/dxg \
+  --name gazebo-sitl \
+  --net host \
+  --gpus all \
+  --privileged \
+  kestr3l/px4:gazebo-gpu-0.0.3 zsh
 ```
 
-### 2.3 Start Container Without Running Simulation
-
-- Our docker image does not have `ENTRYPOINT` option. Replacing `CMD` with other parameter will not initialize `entrypoint.sh`
-- Declaring argument `CMD` as `bash` will simply initialize bash shell (`/bin/bash`)
-
-```shell
-docker run -it --rm \
-   -e DISPLAY=$DISPLAY \
-   -e QT_NO_MITSHM=1 \
-   -e XDG_RUNTIME_DIR=/tmp \
-   -v /tmp/.X11-unix:/tmp/.X11-unix \
-   --net host \
-   --device=/dev/dri:/dev/dri \
-   --privileged \
-   <IMAGE_NAME>:<TAG> bash
-```
-
-### 2.4 With WSLg GPU Acceleration Support
-
-- WSL2 does support GPU acceleration via Direct-X **starting from Windows 11**
-- Additional parameters should be handed over to use graphical H/W acceleration inside a docker container:
-  - `-e LD_LIBRARY_PATH=/usr/lib/wsl/lib`
-  - `-v /tmp/.X11-unix:/tmp/.X11-unix`
-  - `-v /mnt/wslg:/mnt/wslg`
-  - `-v /usr/lib/wsl:/usr/lib/wsl`
-  - `--device=/dev/dxg \`
-- **This is very recommended for WSL environment**
+#### 1.1.3 QGroundControl
 
 ```shell
 docker run -it --rm \
    -e DISPLAY=$DISPLAY \
    -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
    -e QT_NO_MITSHM=1 \
-   -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
-   -e LD_LIBRARY_PATH=/usr/lib/wsl/lib \
+   -e XDG_RUNTIME_DIR=/tmp \
    -v /tmp/.X11-unix:/tmp/.X11-unix \
-   -v /mnt/wslg:/mnt/wslg \
-   -v /usr/lib/wsl:/usr/lib/wsl \
-   --device=/dev/dxg \
    --net host \
-   --gpus all \
+   --device=/dev/dri:/dev/dri \
    --privileged \
-   <IMAGE_NAME>:<TAG> bash
+   kestr3l/qgc-app:nobg-4.0.0
 ```
 
-## 3. Usage
-```shell
-Must sequantially execute below each Terminal Number and Terminal Commands
-Turn on each new 5 Terminals
-Execute below Commands
-```
-```shell
-docker exec -it Gzbash bash
-```
+### 1.2 Manual Commands
 
-### 3.1 Terminal-1 PX4-Autopilot
+#### 1.2.1 Connect Terminal to Container
+
+- Do this on each command execution
 
 ```shell
-cd ~/PX4-Autopilot
-make px4_sitl_rtps gazebo_{vehilce_option}__{world_option}
+docker exec -it gazebo-sitl zsh
 ```
+
+#### 1.2.2 Run microRTPS
 
 ```shell
-vehicle_option
-Quadrotor: iris
-Hexarotor: QTR_inha, typhoon_inha
-```
-
-```shell 
-world_option
-empty, grass, grass_dryden
-```
-### 3.2 Terminal-2 QGroundControl
-
-```shell
-cd 
-su -c "/home/user/QGroundControl.AppImage --appimage-extract-and-run" user
-```
-
-```shell
-Must Activate Check Application Settings/Virtual Joystick Checkbox
-```
-### 3.3 Terminal-3 FastRTPS-micrortps_agent
-
-```shell
-cd ~/px4_ros
-. install/setup.bash
 micrortps_agent -t UDP
 ```
 
+#### 1.2.3 Run microRTPS
 
-### 3.4 Terminal-4 model_spawn package
 ```shell
-cd ~/gazebo_ros
-colcon build
-. install/setup.bash
-ros2 run model_spawn ModelSpawn {known_obs_num} {unknown_obs_num}
+make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_typhoon_inha__grass
 ```
 
-### 3.5 Terminal-5 integration package
+> Model typhoon_inha / World grass
+
+#### 1.2.4 Model Spawn Service
+
 ```shell
-cd ~/ros_ws
-colcon build
-. install/setup.bash
-. ~/gazebo_ros/install/setup.bash
-. ~/px4_ros/install/setup.bash
+ros2 run model_spawn ModelSpawn 100 20
+```
+
+> Known object 100 / Unkown object 20
+
+#### 1.2.4 Model Spawn Service
+
+```shell
 ros2 run integration IntegrationTest
 ```
+
+## 2. Docker-Compose
+
+```shell
+docker-compose up
+```
+
+## 3. Expected Result
+
+- Gazebo will start and QGC will be stated as 'Connected'
+- Objects will be generated on map
+- Soon after, flight will begin
