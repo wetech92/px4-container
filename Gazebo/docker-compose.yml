@@ -3,6 +3,7 @@ services:
   gazebo-px4:
     privileged: true
     environment:
+      # -----------DEFAULT VALUE DO NOT MODIFY-----------
       - DISPLAY=$DISPLAY
       - WAYLAND_DISPLAY=$WAYLAND_DISPLAY
       - QT_NO_MITSHM=1
@@ -12,21 +13,33 @@ services:
       # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
       #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
       # ----------SET ITE SIMULTAION PARAMETERS----------
-      - build_path=/root/PX4-Autopilot/build/px4_sitl_rtps
-      - sitl_gazebo_path=/root/PX4-Autopilot/Tools/sitl_gazebo
       - PX4_SIM_HOST_ADDR=172.20.0.5
+      - PX4_BIN_PATH=/root/PX4-Autopilot/build/px4_sitl_rtps/bin/px4
+      #- PX4_SITL_DEBUGGER=ide
+      - PX4_SIM_PROGRAM=gazebo
       - PX4_SIM_MODEL=typhoon_inha
       - PX4_SIM_WOLRLD=grass
-      # - REBUILD=true
+      - PX4_SOURCE_PATH=/root/PX4-Autopilot
+      - PX4_BUILD_PATH=/root/PX4-Autopilot/build/px4_sitl_rtps
+      - HEADLESS=0
+      # - sitl_gazebo_path=/root/PX4-Autopilot/Tools/sitl_gazebo
     volumes:
+      # -----------DEFAULT VALUE DO NOT MODIFY-----------
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /usr/share/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json
       - /usr/share/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json
       - /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json
       # -------------SET YOUR HOME DIRECTORY-------------
-      # - /home/a4vai/gitcodes/px4-container/Gazebo/entrypoint.sh:/usr/local/bin/entrypoint.sh
+      # - ${HOME}/gitcodes/px4-container/Gazebo/entrypoint.sh:/usr/local/bin/entrypoint.sh
       # --------SET FOR DEVELOPMENT OR DEBUGGING---------
-      # - /home/a4vai/gitcodes/px4-container/Gazebo/ros_ws/src:/root/ros_ws/src
+      # - ${HOME}/gitcodes/px4-container/Gazebo/entrypoint.sh:/usr/local/bin/entrypoint.sh
+      # - PX4_SITL_DEBUGGER=ide
+      # - REBUILD_RPKG_INTEGRATION=1
+      # - ${HOME}/gitcodes/px4-container/Gazebo/ros_ws/src:/root/ros_ws/src
+      # - REBUILD_RPKG_GAZEBO=1
+      # - ${HOME}/gitcodes/px4-container/Gazebo/gazebo_ws/src:/root/gazebo_ws/src
+      # - ${HOME}/gitcodes/px4-container/Gazebo/models:/root/PX4-Autopilot/Tools/sitl_gazebo/models
+      # - ${HOME}/gitcodes/px4-container/Gazebo/worlds:/root/PX4-Autopilot/Tools/sitl_gazebo/worlds
       # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
       #- /mnt/wslg:/mnt/wslg
       #- /usr/lib/wsl:/usr/lib/wsl
@@ -40,8 +53,6 @@ services:
         ipv4_address: 172.20.0.5
     container_name: sitl-gazebo
     image: kestr3l/px4:gazebo-gpu-0.0.3
-    # stdin_open: true
-    # tty: true
     deploy:
       resources:
         reservations:
@@ -81,4 +92,7 @@ services:
 networks:
     px4-sitl-gazebo:
       external: true
+
+# NETWORK CONFIG: gazebo-px4 -> 172.20.0.5 / qgc -> 172.20.0.6
+# RUN FOLLOWING DOCKER NETWORK GENERATION COMMAND BEFORE RUN
 # docker network create --gateway 172.20.0.1 --subnet 172.20.0.0/16 px4-sitl-gazebo

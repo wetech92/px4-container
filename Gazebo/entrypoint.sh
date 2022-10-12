@@ -26,55 +26,59 @@ else
 	exec "$@"
 fi
 
+# ------------A4VAI DEFINED ENTRYPOINT-------------
 
-if ${REBUILD}; then
+source /opt/ros/galactic/setup.bash
+
+# Rebuild ALL ROS2 nodes if activated
+if ${REBUILD_R_INGRTN}; then
 	colcon build \
-		--build-base /root/ROS2-node/build \
-        --install-base /root/ROS2-node/install \
-        --base-paths /root/ROS2-node/src \
-	&& source /root/ROS2-node/install/setup.bash
+		--build-base /root/ros_ws/build \
+        --install-base /root/ros_ws/install \
+        --base-paths /root/ros_ws/src \
+		--symlink-install
+elif ${REBUILD_R_GAZEBO}; then
+	colcon build \
+		--build-base ~/gazebo_ros/build \
+		--install-base ~/gazebo_ros/install \
+		--base-paths ~/gazebo_ros/src \
+		--symlink-install
 fi
 
-source /opt/ros/galactic/setup.sh
+# Set environment variables in this shell script
 source /root/gazebo_ros/install/setup.bash
 source /root/px4_ros/install/setup.bash
 source /root/ros_ws/install/setup.bash
 source /usr/share/gazebo-11/setup.sh
 
-make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_typhoon_inha__grass &
-sleep 2s
+# Run PX4 SITL
+HEADLESS=${HEADLESS} /root/PX4-Autopilot/Tools/sitl_run.sh \
+	${PX4_BIN_PATH} \
+	${PX4_SITL_DEBUGGER} \
+	${PX4_SIM_PROGRAM} \
+	${PX4_SIM_MODEL} \
+	${PX4_SIM_WOLRLD} \
+	${PX4_SOURCE_PATH} \
+	${PX4_BUILD_PATH} &
+sleep 5s
 
-# # Run PX4 SITL
-# $build_path/bin/px4 -d "$build_path/etc" -w $build_path -s $build_path/etc/init.d-posix/rcS &
-
-# # Run Gazebo
-# if [ ${HEADLESS} -eq 1]; then
-# 	echo "HEADLESS is ${HEADLESS}: 1, Running Gazebo SITL in HEADLESS mode"
-# 	gzserver ${sitl_gazebo_path}/worlds/grass.world --verbose &
-# else
-# 	echo "HEADLESS is ${HEADLESS}: Not 1, Running Gazebo SITL in normal mode"
-# 	gazebo ${sitl_gazebo_path}/worlds/${PX4_SIM_WOLRLD}.world --verbose &
-# fi
-
-# sleep 2s
-
-# # Spawn Model
-# gz model \
-# 	--spawn-file=${sitl_gazebo_path}/models/typhoon_inha/${PX4_SIM_MODEL}.sdf \
-# 	--model-name=typhoon_inha -x 1.0 -y 1.0 -z 0.0 &
-# sleep 2s
-
+# Run MAVLink Router for Communication with QGC
 nohup mavlink-routerd -e 172.20.0.7:14550 127.0.0.1:14550 &
 sleep 3s
 
+# Run microRTPS bridge for Communication in ROS2 msg
 echo "Initializing microRTPS Bridge"
 micrortps_agent -t UDP &
 sleep 1s
 
+# Spawn objects in gazebo world
 echo "Spawning Objects"
 ros2 run model_spawn ModelSpawn 100 20 &
 sleep 1s
 
+# Run integration node for the one and the all
 echo "Run integration node"
 ros2 run integration IntegrationTest &
+
+# Keep container running. The Sleeping Beauty
 sleep infinity
