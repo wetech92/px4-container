@@ -27,6 +27,11 @@ else
 fi
 
 # ------------A4VAI DEFINED ENTRYPOINT-------------
+echo "    ___   __ __      _    _____    ____"
+echo "   /   | / // /     | |  / /   |  /  _/"
+echo "  / /| |/ // /______| | / / /| |  / /  "
+echo " / ___ /__  __/_____/ |/ / ___ |_/ /   "
+echo "/_/  |_| /_/        |___/_/  |_/___/   "
 
 source /opt/ros/galactic/setup.bash
 
@@ -34,6 +39,11 @@ source /opt/ros/galactic/setup.bash
 if [[ -n ${REBUILD_RPKG_INTEGRATION} ]]; then
 	echo ">>>>>>>>>>>>>>>>integration ROS2 PKG REBUILD FLAG ENABLED<<<<<<<<<<<<<<<"
 	echo ">>>>>>>>>START REBUILDING AND INSTALLATION OF PKG 'integration'<<<<<<<<<"
+	echo "    ____  __________  __  ________    ____  "
+	echo "   / __ \/ ____/ __ )/ / / /  _/ /   / __ \ "
+	echo "  / /_/ / __/ / __  / / / // // /   / / / / "
+	echo " / _, _/ /___/ /_/ / /_/ // // /___/ /_/ /  "
+	echo "/_/ |_/_____/_____/\____/___/_____/_____/   "
 	colcon build \
 		--build-base /root/ros_ws/build \
         --install-base /root/ros_ws/install \
@@ -42,6 +52,11 @@ if [[ -n ${REBUILD_RPKG_INTEGRATION} ]]; then
 elif [[ -n ${REBUILD_RPKG_GAZEBO} ]]; then
 	echo ">>>>>>>>>>>>>>>>model_spawn ROS2 PKG REBUILD FLAG ENABLED<<<<<<<<<<<<<<<"
 	echo ">>>>>>>>>START REBUILDING AND INSTALLATION OF PKG 'model_spawn'<<<<<<<<<"
+	echo "    ____  __________  __  ________    ____  "
+	echo "   / __ \/ ____/ __ )/ / / /  _/ /   / __ \ "
+	echo "  / /_/ / __/ / __  / / / // // /   / / / / "
+	echo " / _, _/ /___/ /_/ / /_/ // // /___/ /_/ /  "
+	echo "/_/ |_/_____/_____/\____/___/_____/_____/   "
 	colcon build \
 		--build-base ~/gazebo_ros/build \
 		--install-base ~/gazebo_ros/install \
@@ -65,28 +80,22 @@ echo ">>>>>>>>>>>INITIALIZEING microRTPS BRIDGE FOR ROS2 CONNECTION<<<<<<<<<<<"
 micrortps_agent -t UDP &
 sleep 1s
 
-if [[ ${DEBUG_ENTRYPOINT} -eq 1 ]]; then
+if [[ -n ${DEBUG_ENTRYPOINT} ]]; then
 	echo ">>>>>>>>>>ENTRYPOINT DEBUGGING ENABLED. DO NOT RUN ANY PROCESS<<<<<<<<<<"
-	echo " ______     __   __   ______     __"
-	echo "/\  __ \   /\ \ / /  /\  __ \   /\ \ "
-	echo "\ \  __ \  \ \ \'/   \ \  __ \  \ \ \  "
-	echo " \ \_\ \_\  \ \__|    \ \_\ \_\  \ \_\ "
-	echo "  \/_/\/_/   \/_/      \/_/\/_/   \/_/ "
- 
-                                       
+	echo "    ____  __________  __  ________"
+	echo "   / __ \/ ____/ __ )/ / / / ____/"
+	echo "  / / / / __/ / __  / / / / / __  "
+	echo " / /_/ / /___/ /_/ / /_/ / /_/ /  "
+	echo "/_____/_____/_____/\____/\____/   "
 	echo ">>>>>>>>>>Noneun Ge Jeil<<<<<<<<<<"
 else
 	echo ">>>>>>>>>>>>>>>>RUNNING ITE SITL WITH DEFINED CONDITION<<<<<<<<<<<<<<<<<"
-	# # Run PX4 SITL		
-	# /root/PX4-Autopilot/Tools/sitl_run.sh \
-	# 	${PX4_BIN_PATH} \
-	# 	${PX4_SITL_DEBUGGER:=none} \
-	# 	${PX4_SIM_PROGRAM} \
-	# 	${PX4_SIM_MODEL} \
-	# 	${PX4_SIM_WOLRLD} \
-	# 	${PX4_SOURCE_PATH} \
-	# 	${PX4_BUILD_PATH} &
-	make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${PX4_SIM_MODEL}__${PX4_SIM_WOLRLD} &
+	ECHO "   _________ _____   __________  ____  "
+	echo "  / ____/   /__  /  / ____/ __ )/ __ \ "
+	echo " / / __/ /| | / /  / __/ / __  / / / / "
+	echo "/ /_/ / ___ |/ /__/ /___/ /_/ / /_/ /  "
+	echo "\____/_/  |_/____/_____/_____/\____/   "
+	HEADLESS=${HEADLESS} make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${PX4_SIM_MODEL}__${PX4_SIM_WOLRLD} &
 	sleep 1s
 	# Spawn objects in gazebo world
 	echo "Spawning Objects"

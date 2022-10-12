@@ -15,19 +15,14 @@ services:
       # ----------SET ITE SIMULTAION PARAMETERS----------
       #  ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ 
       - PX4_SIM_HOST_ADDR=172.20.0.5
-      # - PX4_BIN_PATH=/root/PX4-Autopilot/build/px4_sitl_rtps/bin/px4
-      #- PX4_SITL_DEBUGGER=ide
-      # - PX4_SIM_PROGRAM=gazebo
       - PX4_SIM_MODEL=typhoon_inha
       - PX4_SIM_WOLRLD=grass
-      # - PX4_SOURCE_PATH=/root/PX4-Autopilot
-      # - PX4_BUILD_PATH=/root/PX4-Autopilot/build/px4_sitl_rtps
       - NO_PXH=1
       # - sitl_gazebo_path=/root/PX4-Autopilot/Tools/sitl_gazebo
       # --------SET FOR DEVELOPMENT OR DEBUGGING---------
       # ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ 
       # - HEADLESS=1
-      #- DEBUG_ENTRYPOINT=1
+      # - DEBUG_ENTRYPOINT=1
       # - PX4_SITL_DEBUGGER=ide
       # - REBUILD_RPKG_INTEGRATION=1
       # - REBUILD_RPKG_GAZEBO=1
@@ -40,15 +35,15 @@ services:
       - /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json
       # --------SET FOR DEVELOPMENT OR DEBUGGING---------
       # ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ 
-      - ${HOME}/gitcodes/px4-container/Gazebo/entrypoint.sh:/usr/local/bin/entrypoint.sh
+      # - ${HOME}/gitcodes/px4-container/Gazebo/entrypoint.sh:/usr/local/bin/entrypoint.sh
       # - ${HOME}/gitcodes/px4-container/Gazebo/ros_ws/src:/root/ros_ws/src
       # - ${HOME}/gitcodes/px4-container/Gazebo/gazebo_ws/src:/root/gazebo_ws/src
       # - ${HOME}/gitcodes/px4-container/Gazebo/models:/root/PX4-Autopilot/Tools/sitl_gazebo/models
       # - ${HOME}/gitcodes/px4-container/Gazebo/worlds:/root/PX4-Autopilot/Tools/sitl_gazebo/worlds
       # ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ 
       # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
-      #- /mnt/wslg:/mnt/wslg
-      #- /usr/lib/wsl:/usr/lib/wsl
+      # - /mnt/wslg:/mnt/wslg
+      # - /usr/lib/wsl:/usr/lib/wsl
     devices:
       # -----COMMENT OUT IF YOU EXPERIENCE OCI ERROR-----
       - /dev/dri:/dev/dri
@@ -75,17 +70,17 @@ services:
       - QT_NO_MITSHM=1 
       - XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
       # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
-      #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
+      # - LD_LIBRARY_PATH=/usr/lib/wsl/lib
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
-      #- /mnt/wslg:/mnt/wslg
-      #- /usr/lib/wsl:/usr/lib/wsl
+      # - /mnt/wslg:/mnt/wslg
+      # - /usr/lib/wsl:/usr/lib/wsl
     devices:
       # -----COMMENT OUT IF YOU EXPERIENCE OCI ERROR-----
       - /dev/dri:/dev/dri
       # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
-      #- /dev/dxg:/dev/dxg
+      # - /dev/dxg:/dev/dxg
     networks:
       px4-sitl-gazebo:
         ipv4_address: 172.20.0.7
