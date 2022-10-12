@@ -8,7 +8,6 @@ services:
       - WAYLAND_DISPLAY=$WAYLAND_DISPLAY
       - QT_NO_MITSHM=1
       - XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
-      - NVIDIA_DISABLE_REQUIRE=1
       - NVIDIA_DRIVER_CAPABILITIES=all
       # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
       #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
