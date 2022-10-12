@@ -1,6 +1,5 @@
 ARG BASEIMAGE=kestr3l/px4
 ARG BASETAG
-# kestr3l/px4:gazebo-gpu-0.0.3
 
 FROM ${BASEIMAGE}:${BASETAG} as stage_apt
 
@@ -30,119 +29,105 @@ FROM ${BASEIMAGE}:${BASETAG} as stage_deps
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
 
-COPY AirSim/aptdeps.txt /tmp/aptdeps.txt
+COPY Gazebo/aptdeps.txt /tmp/aptdeps.txt
 
 RUN \
     --mount=type=cache,target=/var/cache/apt,from=stage_apt,source=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt,from=stage_apt,source=/var/lib/apt \
     --mount=type=cache,target=/etc/apt/sources.list.d,from=stage_apt,source=/etc/apt/sources.list.d \
 	apt-get install --no-install-recommends -y $(cat /tmp/aptdeps.txt) \
-	&& rm -rf /tmp/*
-
-
-FROM stage_deps as stage_airsim
-
-SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
-
-COPY AirSim/pydeps.txt /tmp/pydeps.txt
-
-RUN \
-	python3 -m pip install --user \
-		$(sed '$d' /tmp/pydeps.txt) \
-	&& python3 -m pip install --user \
-		$(sed '$!d' /tmp/pydeps.txt) \
-	&& rm -rf /tmp/*
-
-RUN \
-	git clone https://github.com/microsoft/AirSim.git -b v1.8.1 /root/AirSim \
-	&& /root/AirSim/setup.sh \
-	&& /root/AirSim/build.sh --gcc
-
-RUN \
-	sed -i "s/msr::airlib::MultirotorRpcLibClient client/msr::airlib::MultirotorRpcLibClient client(\"172.21.0.5\")/g" /root/AirSim/GazeboDrone/src/main.cpp \
-	&& mkdir /root/AirSim/GazeboDrone/build \
-	&& cmake \
-		-B/root/AirSim/GazeboDrone/build \
-		-S/root/AirSim/GazeboDrone \
-		-DCMAKE_C_COMPILER=gcc-8 \
-		-DCMAKE_CXX_COMPILER=g++-8 \
-	&& make -C \
-		/root/AirSim/GazeboDrone/build
-
-COPY AirSim-Gazebo/ros2/airsim_ros_wrapper.cpp /root/AirSim/ros2/src/airsim_ros_pkgs/src/airsim_ros_wrapper.cpp
-
-WORKDIR /root/AirSim/ros2
-
-RUN source /opt/ros/galactic/setup.bash \
-	&& colcon build \
-		--cmake-args -DCMAKE_C_COMPILER=gcc-8 \
-		--cmake-args -DCMAKE_CXX_COMPILER=g++-8 \
-		--cmake-args -DCMAKE_BUILD_TYPE=Debug
+    && rm -rf /tmp/*
 
 
 FROM stage_deps as stage_rnode
 
-SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+COPY Gazebo/gazebo_ros /root/gazebo_ros
+COPY Gazebo/ros_ws /root/ros_ws
 
 RUN \
-	rm -rf Gazebo/ros_ws
-
-COPY AirSim/ros_ws /root/ros_ws
-
-RUN \
-	colcon build \
+	source /opt/ros/galactic/setup.bash \
+	&& colcon build \
 		--build-base ~/ros_ws/build \
 		--install-base ~/ros_ws/install \
 		--base-paths ~/ros_ws/src \
+		--symlink-install \
+	&& colcon build \
+		--build-base ~/gazebo_ros/build \
+		--install-base ~/gazebo_ros/install \
+		--base-paths ~/gazebo_ros/src \
 		--symlink-install
+		
+
+FROM stage_deps as stage_px4sitl
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
+
+COPY Gazebo/models /root/PX4-Autopilot/Tools/sitl_gazebo/models
+COPY Gazebo/worlds /root/PX4-Autopilot/Tools/sitl_gazebo/worlds
+COPY Gazebo/plugins /root/PX4-Autopilot/Tools/sitl_gazebo
+
+RUN \
+	HEADLESS=1 make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_typhoon_inha__grass
 
 
 FROM stage_deps as stage_final
 
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+SHELL ["/bin/bash", "-o", "pipefail", "-c"] 
 
 ENV \
-	DEBIAN_FRONTEND noninteractive \
+	DEBIAN_FRONTEND=noninteractive \
 	LANG=C.UTF-8 \
-	LC_ALL=C.UTF-8  \
+	LC_ALL=C.UTF-8 \
 	ROS_DISTRO=galactic \
 	QT_X11_NO_MITSHM=1 \
 	NVIDIA_VISIBLE_DEVICES=all \
 	NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute,display \
 	REBUILD=false \
-	PATH=/root/.local/bin:$PATH \
-	SITL_MODEL=typhoon_inha
+	PATH=/root/.local/bin:$PATH
 
-COPY --from=stage_airsim /root/AirSim/AirLib /root/AirSim/AirLib
-COPY --from=stage_airsim /root/AirSim/MavLinkCom /root/AirSim/MavLinkCom
-COPY --from=stage_airsim /root/AirSim/cmake /root/AirSim/cmake
-COPY --from=stage_airsim /root/AirSim/external /root/AirSim/external
-COPY --from=stage_airsim /root/AirSim/GazeboDrone /root/AirSim/GazeboDrone
-COPY --from=stage_airsim /root/AirSim/ros2 /root/AirSim/ros2
-COPY --from=stage_airsim /root/.local /root/.local
-
+COPY --from=stage_rnode /root/gazebo_ros /root/gazebo_ros
 COPY --from=stage_rnode /root/ros_ws /root/ros_ws
-
-COPY AirSim/python /root/AirSim/python
-COPY scripts /root/tools
-COPY AirSim/scripts /root/run
-
-COPY --chown=1001:1001 AirSim/ForestDeploy /home/user/ForestDeploy
-COPY --chown=1001:1001 AirSim-Gazebo/models/AirSim/typhoon_h480/TyphoonH480.json /home/user/Documents/AirSim/settings.json
+COPY --from=stage_px4sitl /root/PX4-Autopilot /root/PX4-Autopilot
 
 RUN \
-	rm -rf Gazebo/gazebo_ros \
-	&& chmod +x /home/user/ForestDeploy/ForestDeploy.sh 
+    --mount=type=cache,target=/var/cache/apt,from=stage_apt,source=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt,from=stage_apt,source=/var/lib/apt \
+    --mount=type=cache,target=/etc/apt/sources.list.d,from=stage_apt,source=/etc/apt/sources.list.d \
+        sh -c "$(wget -O - https://github.com/deluan/zsh-in-docker/releases/download/v1.1.2/zsh-in-docker.sh | sed "77d;s/export TERM=xterm/export TERM=xterm-256color/g")" -- \
+        -t agnoster \
+        -p git \
+		-p https://github.com/zsh-users/zsh-autosuggestions \                                                                                                                                     -p https://github.com/zsh-users/zsh-autosuggestions \
+        -p https://github.com/zsh-users/zsh-syntax-highlighting \
+        && echo "alias cat='batcat --paging=never'" >> /root/.zshrc \
+	&& sed -i "s/#Port 22/Port 1022/g" \
+		/etc/ssh/sshd_config \
+	&& sed -i "s/#PermitRootLogin prohibit-password/PermitRootLogin yes/g" \
+		/etc/ssh/sshd_config \
+	&& sed -i "s/#PasswordAuthentication yes/PasswordAuthentication yes/g" \
+		/etc/ssh/sshd_config \
+	&& sed -i "s/\${GAZEBO_PLUGIN_PATH}/\/root\/PX4-Autopilot\/build\/px4_sitl_rtps\/build_gazebo/g" \
+		/usr/share/gazebo-11/setup.sh \
+	&& sed -i "s/\${GAZEBO_MODEL_PATH}/\/root\/PX4-Autopilot\/Tools\/sitl_gazebo\/models/g" \
+		/usr/share/gazebo-11/setup.sh \
+	&& ln -s /root/PX4-Autopilot/Tools/sitl_gazebo/models /root/models
 
 RUN \
-	echo "source /root/AirSim/ros2/install/setup.bash" >> /root/.bashrc \
-	&& sed -i "/source \/root\/gazebo_ros\/install\/setup.bash/d" /root/.bashrc
+	echo "source /usr/share/gazebo-11/setup.sh" >> /root/.bashrc \
+	&& echo "source /root/px4_ros/install/setup.bash" >> /root/.bashrc \
+	&& echo "source /root/ros_ws/install/setup.bash" >> /root/.basrhc \
+    && echo "source /root/gazebo_ros/install/setup.bash" >> /root/.bashrc
 
 RUN \
-	echo "source /root/AirSim/ros2/install/setup.zsh" >> /root/.zshrc \
-	&& sed -i "/source \/root\/gazebo_ros\/install\/setup.zsh/d" /root/.zshrc
+	echo "source /usr/share/gazebo-11/setup.sh" >> /root/.zshrc \
+	&& echo "source /root/px4_ros/install/setup.zsh" >> /root/.zshrc \
+	&& echo "source /root/ros_ws/install/setup.zsh" >> /root/.zshrc \
+	&& echo "source /root/gazebo_ros/install/setup.zsh" >> /root/.zshrc
 
 WORKDIR /root
 
-COPY AirSim/entrypoint-sim.sh /usr/local/bin/entrypoint.sh
-CMD [ "/usr/local/bin/entrypoint.sh" ]
+COPY scripts/initRepo.sh /root/tools/initRepo.sh
+
+COPY Gazebo/entrypoint.sh /usr/local/bin/entrypoint.sh
+CMD ["/usr/local/bin/entrypoint.sh"]
