@@ -98,13 +98,58 @@ else
 	echo "\____/_/  |_/____/_____/_____/\____/   "
 	HEADLESS=${HEADLESS} make -C /root/PX4-Autopilot px4_sitl_rtps gazebo_${PX4_SIM_MODEL}__${PX4_SIM_WOLRLD} &
 	sleep 1s
+
+	# Wait Until Gazebo starts up
+	gazeoDir=$(find /root -type d -name ".gazebo" -print)
+
+	while [ -z ${gazeoDir1} ];
+	do
+		gazeoDir1=$(find /root -type d -name ".gazebo" -print)
+		echo "Waiting until gazebo starts up"
+		sleep 1s
+	done
+
+	gazeoDir2=$(find /root/.gazebo -type d -name "client-11345" -print)
+
+	while [[ -z ${gazeoDir2} ]];
+	do
+		gazeoDir2=$(find /root/.gazebo -type d -name "client-11345" -print)
+		echo "Waiting until gazebo starts up"
+		sleep 1s
+	done
+
+	gazeboStat1=$(find /root/.gazebo/client-11345 -type f -name "default.log" -print)
+
+	while [[ -z ${gazeboStat1} ]];
+	do
+		gazeboStat1=$(find /root/.gazebo/client-11345 -type f -name "default.log" -print)
+		echo "Waiting until gazebo starts up"
+		sleep 1s
+	done
+
+	gazeboStat2=$(cat /root/.gazebo/client-11345/default.log | grep "Connected to gazebo master")
+
+	while [[ -z ${gazeboStat2} ]];
+	do
+		gazeboStat2=$(cat /root/.gazebo/client-11345/default.log | grep "Connected to gazebo master")
+		echo "Waiting until gazebo starts up"
+		sleep 1s
+	done
+
+
 	# Spawn objects in gazebo world
 	echo "Spawning Objects"
 	ros2 run model_spawn ModelSpawn 100 20 &
-	sleep 1s
+	sleep 10s
 	# Run integration node for the one and the all
 	echo "Run integration node"
 	ros2 run integration IntegrationTest &
+
+	echo "    _____ ____________       ______________    ____  ______ "
+	echo "   / ___//  _/_  __/ /      / ___/_  __/   |  / __ \/_  __/ "
+	echo "   \__ \ / /  / / / /       \__ \ / / / /| | / /_/ / / /    "
+	echo "  ___/ // /  / / / /___    ___/ // / / ___ |/ _, _/ / /     "
+	echo " /____/___/ /_/ /_____/   /____//_/ /_/  |_/_/ |_| /_/      "
 fi
 
 # Keep container running. The Sleeping Beauty
