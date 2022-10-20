@@ -2,7 +2,8 @@ from cv2 import CV_8UC1, CV_8UC3
 import rclpy
 from rclpy.node import Node
 from gazebo_msgs.srv import SpawnEntity
-from model_spawn_srvs.srv import MakeWorld
+# from model_spawn_srvs.srv import MakeWorld
+from model_spawn_srvs.srv import MapGeneration
 from sensor_msgs.msg import Image
 import time
 import os
@@ -12,11 +13,11 @@ import sys
 
 import numpy as np
 
+
 class ModelSpawnClass(Node):
 
     def __init__(self):
         super().__init__('ModelSpawn')
-
         # Init Grid Map
         self.MapWidth = int(5000)
         self.MapHeight = int(5000)
@@ -26,15 +27,11 @@ class ModelSpawnClass(Node):
         self.FireSpawnPublihsher = self.create_publisher(Image, 'MakeFire', 20)
         self.FireTimer = self.create_timer(25, self.FireSpawn)
 
-        # init Client
-        self.MakeWorldDoneClient = self.create_client(MakeWorld, "/make_world")
-        self.MakeWorldRequest = MakeWorld.Request()
         self.SpawnEntityClient = self.create_client(SpawnEntity, "/spawn_entity")
         self.SpawnEntityRequest = SpawnEntity.Request()
-        while not self.MakeWorldDoneClient.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
     
-
+        self.MapGenerationService_ = self.create_service(MapGeneration, 'map_generation', self.MapGenerationCallback)
+        
         self.KnownObsSDF = [""] * 3
         self.UnknownObsSDF = [""] * 2
 
@@ -98,26 +95,30 @@ class ModelSpawnClass(Node):
         self.FireObsName = ""
         self.FireObsNamespace = ""
         
-        self.MakeWorld()
+        self.worldGenerationRequset = False
+        self.mapGeneration = False
+        self.get_logger().info('running...')
+
         
     
-
-    # Client Request
-    def RequestMakeWorldDone(self):
-        self.MakeWorldRequest.done = 1
-        future = self.MakeWorldDoneClient.call_async(self.MakeWorldRequest)
-        rclpy.spin_until_future_complete(self, future)
-        result = future.result()
-        if result.ack == 1:
-            print("Done Grid Map")
-            self.MakeWorldDone = 1
+    def MapGenerationCallback(self, request, response):
+        self.get_logger().info("===== Request Map Generation =====")
+        self.worldGenerationRequset = request.world_generation_request
+        if self.worldGenerationRequset == True :
+            self.MakeWorld()
+            response.map_generation = self.mapGeneration
+            print("=== Map Generation ===")
+            return response
+        else :
+            self.mapGeneration = False
         
     # Goal Spawn
     def MakeWorld(self):
         #self.GoalSpawn()
         self.UnknownObsSpawn()
         self.KnownObsSpawn()
-        self.RequestMakeWorldDone()
+        # self.RequestMakeWorldDone()
+        self.mapGeneration = True
 
     # Goal Spawn
     def GoalSpawn(self):
@@ -170,10 +171,17 @@ class ModelSpawnClass(Node):
         cv2.rotate(self.GridMap, cv2.ROTATE_180)
         cv2.flip(self.GridMap,1)
 
-        cv2.cvtColor(self.GridMap, cv2.COLOR_BGR2GRAY)
+        cv2.cvtColor(self.GridMap, cv2.COLOR_RGB2GRAY)
         cv2.threshold(self.GridMap, 150, 255, cv2.THRESH_BINARY)
-        cv2.imwrite("/root/ros_ws/src/integration/integration/PathPlanning/Map/test.png",self.GridMap)
-
+        cv2.imwrite("/root/ros_ws/src/a4vai/a4vai/path_planning/Map/RawImage.png",self.GridMap)
+        RawImage = (cv2.imread("/root/ros_ws/src/a4vai/a4vai/path_planning/Map/RawImage.png", cv2.IMREAD_GRAYSCALE))
+        Image = np.uint8(np.uint8((255 - RawImage)/ 255))
+        Image = cv2.flip(Image, 0)
+        Image = cv2.rotate(Image, cv2.ROTATE_90_CLOCKWISE)
+        cv2.imwrite("/root/ros_ws/src/a4vai/a4vai/path_planning/Map/PathImage.png", Image)
+        RawImage = cv2.flip(RawImage, 0)
+        cv2.imwrite('RawImage.png',RawImage)
+        self.get_logger().info("===== Map Save!! =====")
 
     ## Client
     # SpawnEntity

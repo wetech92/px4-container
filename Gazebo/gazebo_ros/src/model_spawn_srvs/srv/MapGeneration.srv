@@ -1,0 +1,3 @@
+bool world_generation_request
+---
+bool map_generation
