@@ -8,6 +8,7 @@ float64[] gpr_output
 float64[] out_ndo
 int32 flag_guid_param
 ---
+uint64 response_timestamp	# time since system start (microseconds)
 bool response_guid
 float64 lad
-float64 spdcmd
+float64 spd_cmd

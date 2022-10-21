@@ -38,6 +38,8 @@ class PFGuidModule(Node):
     def __init__(self):
         super().__init__('pf_guid_module')
         ##  Input
+        self.requestFlag = False    #   bool
+        self.requestTimestamp = 0   #   uint
         self.PlannedX = []  #   double
         self.PlannedY = []  #   double
         self.PlannedZ = []  #   double
@@ -58,7 +60,8 @@ class PFGuidModule(Node):
         self.PFGuidService_ = self.create_service(PathFollowingGuid, 'path_following_guid', self.PFGuidCallback)
         print("===== Path Following Guidance Node is Initialize =====")
         
-        
+#################################################################################################################
+
     def PFGuidCallback(self, request, response):
         print("===== Request Path Following Guidance Node =====")
         '''
@@ -70,10 +73,6 @@ class PFGuidModule(Node):
         uint32 waypoint_index
         float64[] out_ndo
         int32 flag_guid_param
-        ---
-        bool response_guid
-        float64 lad
-        float64 spdcmd
         '''
         self.requestFlag = request.request_guid
         self.requestTimestamp = request.request_timestamp
@@ -81,33 +80,42 @@ class PFGuidModule(Node):
         self.PlannedY = request.waypoint_y
         self.PlannedZ = request.waypoint_z
         self.PlannedIndex = request.waypoint_index
+        self.GPR_output = request.gpr_output
         self.outNDO = request.out_ndo
         self.Flag_Guid_Param = request.flag_guid_param
         
         if self.requestFlag is True : 
             
             print("===== Path Following Guidance Generation !! =====")
-            
+            '''
+            uint64 response_timestamp	# time since system start (microseconds)
+            bool response_guid
+            float64 lad
+            float64 spd_cmd
+            '''
             response.response_timestamp = self.response_timestamp
             response.response_guid = True
-            response. lad = self.LAD
+            response.lad = self.LAD
+            response.spd_cmd = self.SPDCMD
             print("===== Response Path Following Guidance Node =====")
             return response
         else : 
             response.response_timestamp = self.response_timestamp
             response.response_guid = False
-            response.
+            response.lad = self.LAD
+            response.spd_cmd = self.SPDCMD
             print("===== Can't Response Path Following Guidance Node =====")
             return response
-
         
     def declare_subscriber_px4(self):
         #   init PX4 MSG Subscriber
         self.TimesyncSubscriber_ = self.create_subscription(Timesync, '/fmu/time_sync/out', self.TimesyncCallback, self.QOS_Sub_Sensor)
         self.EstimatorStatesSubscriber_ = self.create_subscription(EstimatorStates, '/fmu/estimator_states/out', self.EstimatorStatesCallback, self.QOS_Sub_Sensor)
-        self.VehicleAngularVelocitySubscriber_ = self.create_subscription(VehicleAngularVelocity, '/fmu/vehicle_angular_velocity/out', self.VehicleAngularVelocityCallback, self.QOS_Sub_Sensor)
+        # self.VehicleAngularVelocitySubscriber_ = self.create_subscription(VehicleAngularVelocity, '/fmu/vehicle_angular_velocity/out', self.VehicleAngularVelocityCallback, self.QOS_Sub_Sensor)
         print("====== px4 Subscriber Open ======")
         
+    def TimesyncCallback(self, msg):
+        self.response_timestamp = msg.timestamp
         
     def qosProfileGen(self):
         #   Reliability : 데이터 전송에 있어 속도를 우선시 하는지 신뢰성을 우선시 하는지를 결정하는 QoS 옵션
@@ -145,4 +153,22 @@ class PFGuidModule(Node):
         self.Pos = [self.x, self.y, self.z]
         self.Vn = [self.vx, self.vy, self.vz]
         self.AngEuler = [self.roll, self.theta, self.psi]
+        
+        
+    def Quaternion2Euler(self, w, x, y, z):
+
+        t0 = +2.0 * (w * x + y * z)
+        t1 = +1.0 - 2.0 * (x * x + y * y)
+        Roll = math.atan2(t0, t1) * 57.2958
+
+        t2 = +2.0 * (w * y - z * x)
+        t2 = +1.0 if t2 > +1.0 else t2
+        t2 = -1.0 if t2 < -1.0 else t2
+        Pitch = math.asin(t2) * 57.2958
+
+        t3 = +2.0 * (w * z + x * y)
+        t4 = +1.0 - 2.0 * (y * y + z * z)
+        Yaw = math.atan2(t3, t4) * 57.2958
+
+        return Roll, Pitch, Yaw
         

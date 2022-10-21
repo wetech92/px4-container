@@ -5,7 +5,7 @@ float64[] waypoint_y
 float64[] waypoint_z
 uint32 waypoint_index
 float64 lad
-float64 spdcmd
+float64 spd_cmd
 ---
 uint64 response_timestamp	# time since system start (microseconds)
 bool response_pathfollowing
@@ -13,4 +13,4 @@ float64 targetthrust
 float64[] targetattitude
 float64[] targetposition
 float64 targetyaw
-float64[] outndo
+float64[] out_ndo

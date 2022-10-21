@@ -32,14 +32,12 @@ from px4_msgs.msg import Timesync
 from msg_srv_act_interface.srv import PathFollowingSetpoint
 
 
-# Opencv-ROS
-import cv2
-
-
 class PFAttitudeCmdModule(Node):
     def __init__(self):
         super().__init__('pf_attitude_cmd_module')
         ##  Input
+        self.requestFlag = False    #   bool
+        self.requestTimestamp = 0   #   uint
         self.PlannedX = []  #   double
         self.PlannedY = []  #   double
         self.PlannedZ = []  #   double
@@ -57,12 +55,13 @@ class PFAttitudeCmdModule(Node):
         self.TargetPosition = []    #   double
         self.TargetYaw = 0
         self.outNDO = []    #   double
-        self.requestFlag = False
         ##  Function
-        self. qosProfileGen()
+        self.qosProfileGen()
         self.declare_subscriber_px4()
         self.PFAttitudeCmdService_ = self.create_service(PathFollowingSetpoint, 'path_following_att_cmd', self.PFAttitudeCmdCallback)
         print("===== Path Following Attitude Command Node is Initialize =====")
+
+#################################################################################################################
 
     def declare_subscriber_px4(self):
         #   init PX4 MSG Subscriber
@@ -74,15 +73,28 @@ class PFAttitudeCmdModule(Node):
         
     def PFAttitudeCmdCallback(self, request, response):
         print("===== Request Path Following Attitude Command Node =====")
+        '''
+        uint64 request_timestamp	# time since system start (microseconds)
+        bool request_pathfollowing
+        float64[] waypoint_x
+        float64[] waypoint_y
+        float64[] waypoint_z
+        uint32 waypoint_index
+        float64 lad
+        float64 spd_cmd
+        '''
         self.requestFlag = request.request_pathfollowing
         self.requestTimestamp = request.request_timestamp
         self.PlannedX = request.waypoint_x
         self.PlannedY = request.waypoint_y
         self.PlannedZ = request.waypoint_z
         self.PlannedIndex = request.waypoint_index
+        self.LAD = request.lad
+        self.SPDCMD = request.spd_cmd
         if self.requestFlag is True : 
             ##  Algorithm Function
             '''
+            uint64 response_timestamp	# time since system start (microseconds)
             bool response_pathfollowing
             float64 targetthrust
             float64[] targetattitude
@@ -108,6 +120,7 @@ class PFAttitudeCmdModule(Node):
             response.targetposition = self.TargetPosition
             response.targetyaw = self.TargetYaw
             response.out_ndo = self.outNDO
+            print("===== Can't Response Path Following Attitude Command Node =====")
             return response
         
         
@@ -158,95 +171,7 @@ class PFAttitudeCmdModule(Node):
     #     self.p = msg.xyz[0] * 57.295779513
     #     self.q = msg.xyz[1] * 57.295779513
     #     self.r = msg.xyz[2] * 57.295779513
-    
-    def KAIST_MPPI_CallBack(self):
-        if self.InitialPositionFlag and self.PFmoduleCount > 50:
-            self.t.tic()
-            if self.MPPI.MPPIParams.count % self.MPPI.MPPIParams.UpdateCycle == 0:
-                if self.Flag_UseGPR == 1:
-                    self.MPPI.MPPIParams.est_delAccn    =   self.GPR.yPred
-                else:
-                    self.MPPI.MPPIParams.est_delAccn    =   self.NDO.outNDO * np.ones((self.MPPI.MPPIParams.N, 3))
-
-                Pos         =   np.array([self.x, self.y, self.z])
-                Vn          =   np.array([self.vx, self.vy, self.vz])
-                AngEuler    =   np.array([self.roll, self.pitch, self.yaw]) * math.pi /180.
-                # function
-                start = time.time()
-                u1, u1_MPPI, u2_MPPI    =   self.MPPI.Guid_MPPI(self.PF.GCUParams, self.PF.WPs, Pos, Vn, AngEuler)
-                if self.Flag_PrintMPPItime == 1 and self.PFmoduleCount < self.Flag_PrintLimitCount:
-                    print("MPPI call. time :", round(self.CurrTime - self.InitTime, 6), ", calc. time :", round(time.time() - start, 4),", PFmoduleCount :", self.PFmoduleCount)
-            
-                #.. Limit
-                Kmin    =   self.MPPI.MPPIParams.u1_min
-                LADmin  =   self.MPPI.MPPIParams.u2_min
-                u1_MPPI     =   np.where(u1_MPPI < Kmin, Kmin, u1_MPPI)
-                u2_MPPI     =   np.where(u2_MPPI < LADmin, LADmin, u2_MPPI)
-
-                # output
-                tau_u       =   self.MPPI.MPPIParams.tau_LPF
-                N_tau_u     =   self.MPPI.MPPIParams.N_tau_LPF
-                
-                for i_u in range(self.MPPI.MPPIParams.N - 1):
-                    du1     =   1/tau_u * (u1_MPPI[i_u + 1] - u1_MPPI[i_u])
-                    u1_MPPI[i_u + 1] = u1_MPPI[i_u] + du1 * self.MPPI.MPPIParams.dt_MPPI
-                    du2     =   1/tau_u * (u2_MPPI[i_u + 1] - u2_MPPI[i_u])
-                    u2_MPPI[i_u + 1] = u2_MPPI[i_u] + du2 * self.MPPI.MPPIParams.dt_MPPI
-                
-                for i_N in range(N_tau_u):
-                    u1_MPPI[0:self.MPPI.MPPIParams.N - 1] = u1_MPPI[1:self.MPPI.MPPIParams.N]
-                    u1_MPPI[self.MPPI.MPPIParams.N - 1]  = 0.5 * (np.max(u1_MPPI) + np.min(u1_MPPI))
-                    u2_MPPI[0:self.MPPI.MPPIParams.N - 1] = u2_MPPI[1:self.MPPI.MPPIParams.N]
-                    u2_MPPI[self.MPPI.MPPIParams.N - 1]  = 0.5 * (np.max(u2_MPPI) + np.min(u2_MPPI))
-
-                self.MPPI.MPPIParams.u1_MPPI = u1_MPPI
-                self.MPPI.MPPIParams.u2_MPPI = u2_MPPI
-
-            u1_MPPI     =   self.MPPI.MPPIParams.u1_MPPI
-            u2_MPPI     =   self.MPPI.MPPIParams.u2_MPPI
-
-            #.. direct
-            u1_MPPI[0:self.MPPI.MPPIParams.N - 1] = u1_MPPI[1:self.MPPI.MPPIParams.N]
-            u1_MPPI[self.MPPI.MPPIParams.N - 1]  = 0.5 * (np.max(u1_MPPI) + np.min(u1_MPPI))
-            u2_MPPI[0:self.MPPI.MPPIParams.N - 1] = u2_MPPI[1:self.MPPI.MPPIParams.N]
-            u2_MPPI[self.MPPI.MPPIParams.N - 1]  = 0.5 * (np.max(u2_MPPI) + np.min(u2_MPPI))
-
-            # update
-            self.MPPI.MPPIParams.u1_MPPI     =   u1_MPPI
-            self.MPPI.MPPIParams.u2_MPPI     =   u2_MPPI
-
-            # output
-            # self.PF.GCUParams.Kgain_guidPursuit    =   u1[1]
-            self.PF.GCUParams.desSpd                =   u1_MPPI[0]
-            self.PF.GCUParams.lookAheadDist         =   u2_MPPI[0]
-            self.PF.GCUParams.reachDist             =   self.PF.GCUParams.lookAheadDist
-
-            self.MPPI.MPPIParams.count = self.MPPI.MPPIParams.count + 1
-            self.t.toc()
-            
-            
-        pass
-
-    ## GPR_Update_CallBack
-    def KAIST_GPR_Update_CallBack(self):
-        if self.InitialPositionFlag and self.OffboardCount > 0:
-            
-            x_new   =   self.PF.GCUTime
-            Y_new   =   self.NDO.outNDO
-            self.GPR.GPR_dataset(x_new,Y_new)
-
-            if self.GPR.count % self.GPR.EstimateCycle == 0:
-            #.. GPR Estimation
-                self.GPR.GPR_estimate(x_new,testSize=self.GPR.N,dt=self.GPR.dt_Est)
-
-            if self.GPR.count % self.GPR.UpdateCycle == 0:
-            #.. GPR Update
-                self.GPR.GPR_update()
-
-            self.GPR.count = self.GPR.count + 1
-            
-        pass
-    
+        
     def Quaternion2Euler(self, w, x, y, z):
 
         t0 = +2.0 * (w * x + y * z)

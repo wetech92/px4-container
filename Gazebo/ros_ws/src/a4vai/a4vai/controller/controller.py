@@ -116,6 +116,8 @@ class ControllerNode(Node):
         self.waypoint_x = []
         self.waypoint_y = []
                 
+#################################################################################################################
+                
     def TestCallback(self):
         self.get_logger().info("===== Test Timer On =====")
         
