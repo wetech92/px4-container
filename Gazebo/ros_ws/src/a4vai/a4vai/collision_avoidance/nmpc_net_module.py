@@ -1,0 +1,79 @@
+import numpy as np
+import math
+
+from dataclasses import dataclass
+import time
+
+
+import onnx
+import onnxruntime as ort
+import copy
+
+#   ROS2 python 
+import rclpy
+from rclpy.node import Node
+from rclpy.qos_event import SubscriptionEventCallbacks
+from rclpy.parameter import Parameter
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSHistoryPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
+from rclpy.qos import qos_profile_sensor_data
+
+
+from px4_msgs.msg import Timesync
+from msg_srv_act_interface.srv import CollisionAvoidanceSetpoint
+
+from .JBNU_Obs import JBNU_Collision
+
+# Opencv-ROS
+import cv2
+
+
+class NMPC_NET_Node(Node):
+    def __init__(self):
+        super().__init__('nmpc_net_module')
+        self.qosProfileGen()
+        self.requestFlag = False
+        self.response_timestamp = 0
+        self.TimesyncSubscriber_ = self.create_subscription(Timesync, '/fmu/time_sync/out', self.TimesyncCallback, self.QOS_Sub_Sensor)
+        self.requestFlag = False
+        self.JBNUmoduleService_ = self.create_service(CollisionAvoidanceSetpoint, 'collision_avoidance', self.CollisionAvoidanceCallback)
+    
+    def qosProfileGen(self):
+    #   Reliability : 데이터 전송에 있어 속도를 우선시 하는지 신뢰성을 우선시 하는지를 결정하는 QoS 옵션
+    #   History : 데이터를 몇 개나 보관할지를 결정하는 QoS 옵션
+    #   Durability : 데이터를 수신하는 서브스크라이버가 생성되기 전의 데이터를 사용할지 폐기할지에 대한 QoS 옵션
+        self.QOS_Sub_Sensor = QoSProfile(
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=5,
+            durability=QoSDurabilityPolicy.VOLATILE)
+        
+        self.QOS_Service = QoSProfile(
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=10,
+            durability=QoSDurabilityPolicy.VOLATILE)
+        
+    def CollisionAvoidanceCallback(self, request, response):
+        print("===== Request Coliision Avoidance Node =====")
+        self.requestFlag = request.request_collisionavoidance
+        self.requestTimestamp = request.request_timestamp
+        if self.requestFlag is True : 
+            
+            JBNU_Collision.CA(Image)
+            
+            print("===== Coliision Avoidance Complete!! =====")
+            
+            response.response_timestamp = self.response_timestamp
+            response.response_collisionavoidance = True
+            # response.waypoint_x = self.waypoint_x
+            # response.waypoint_y = self.waypoint_y
+            print("===== Response Coliision Avoidance Node =====")
+            return response
+        else : 
+            response.response_timestamp = self.response_timestamp
+            response.response_collisionavoidance = False
+            # response.waypoint_x = [0] * 5
+            # response.waypoint_y = [0] * 5

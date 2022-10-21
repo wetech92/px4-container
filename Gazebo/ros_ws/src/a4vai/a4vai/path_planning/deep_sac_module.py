@@ -37,8 +37,9 @@ class DeepSACNode(Node):
         super().__init__('SAC_module')
         self. qosProfileGen()
         self.response_timestamp = 0
+        self.requestFlag = False
         self.TimesyncSubscriber_ = self.create_subscription(Timesync, '/fmu/time_sync/out', self.TimesyncCallback, self.QOS_Sub_Sensor)
-        self.requestTimestamp = False
+        self.requestTimestamp = 0
         self.start_point = []
         self.goal_point = []
         self.waypoint_x = []
@@ -71,6 +72,7 @@ class DeepSACNode(Node):
             response.response_pathplanning = False
             response.waypoint_x = [0] * 5
             response.waypoint_y = [0] * 5
+            
     def qosProfileGen(self):
         #   Reliability : 데이터 전송에 있어 속도를 우선시 하는지 신뢰성을 우선시 하는지를 결정하는 QoS 옵션
         #   History : 데이터를 몇 개나 보관할지를 결정하는 QoS 옵션
@@ -405,16 +407,3 @@ class SAC:
         cv2.imwrite('TestResult_prunning0.png' ,imageLine)  ################################
 
         return path_x, path_y, len(pruned_wp)
-
-def main(args=None):
-    rclpy.init(args=args)
-
-    SAC_module = DeepSACNode()
-
-    rclpy.spin(SAC_module)
-
-    rclpy.shutdown()
-
-
-if __name__ == '__main__':
-    main()

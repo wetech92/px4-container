@@ -16,8 +16,7 @@ from rclpy.qos import QoSReliabilityPolicy
 from rclpy.qos import qos_profile_sensor_data
 
 from px4_msgs.msg import Timesync
-from msg_srv_act_interface.srv import PathPlanningSetpoint
-
+from msg_srv_act_interface.srv import PathFollowingSetpoint
 
 class PathPlanningService(Node):
     def __init__(self):
@@ -27,12 +26,9 @@ class PathPlanningService(Node):
         self.declare_service_client_custom()
         self.timestamp = 0
         
-        self.request_path_plnning_flag = False
-        self.response_path_plnning_flag = False
-        
     def declare_service_client_custom(self): 
-        self.PathPlanningServiceClient_ = self.create_client(PathPlanningSetpoint, 'path_planning')
-        while not self.PathPlanningServiceClient_.wait_for_service(timeout_sec=1.0):
+        self.PathFollowingServiceClient_ = self.create_client(PathFollowingSetpoint, 'path_following')
+        while not self.PathFollowingServiceClient_.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Path Planning not available, waiting again...') 
  
     def qosProfileGen(self):
@@ -52,12 +48,12 @@ class PathPlanningService(Node):
             durability=QoSDurabilityPolicy.VOLATILE)
         
     def RequestPathPlanning(self, start_point, goal_point):
-        self.path_planning_request = PathPlanningSetpoint.Request()
-        self.path_planning_request.request_timestamp = self.timestamp
-        self.path_planning_request.request_pathplanning = True
-        self.path_planning_request.start_point = start_point
-        self.path_planning_request.goal_point = goal_point
-        self.future = self.PathPlanningServiceClient_.call_async(self.path_planning_request)
+        self.path_following_request = PathFollowingSetpoint.Request()
+        self.path_following_request.request_timestamp = self.timestamp
+        self.path_following_request.request_pathfollowing = True
+        # self.path_following_request.start_point = start_point
+        # self.path_following_request.goal_point = goal_point
+        self.future = self.PathPlanningServiceClient_.call_async(self.path_following_request)
 
     def TimesyncCallback(self, msg):
         self.timestamp = msg.timestamp

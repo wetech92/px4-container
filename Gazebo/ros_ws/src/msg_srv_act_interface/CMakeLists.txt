@@ -34,6 +34,8 @@ set(msg_files
 set(srv_files
   "srv/MapInit.srv"
   "srv/PathPlanningSetpoint.srv"
+  "srv/PathFollowingSetpoin.srv"
+  "srv/CollisionAvoidanceSetpoint.srv"
 )
 
 set(action_files
