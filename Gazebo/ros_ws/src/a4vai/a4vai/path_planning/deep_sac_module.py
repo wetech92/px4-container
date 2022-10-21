@@ -58,9 +58,6 @@ class DeepSACNode(Node):
             self.goal_point = request.goal_point
             # self.waypoint_x, self.waypoint_y, self.waypoint_lenth = SAC.PathPlanning(self, self.Image, self.start_point, self.goal_point)
             print("===== PathPlanning Complete!! =====")
-            
-            self.waypoint_x = [0.03, 123.23, 334.232, 2312.1231, 342.3432]
-            self.waypoint_x = [3.03, 34.23, 2131.232, 27612.1231, 556.3432]
             response.response_timestamp = self.response_timestamp
             response.response_pathplanning = True
             response.waypoint_x = self.waypoint_x
@@ -72,6 +69,8 @@ class DeepSACNode(Node):
             response.response_pathplanning = False
             response.waypoint_x = [0] * 5
             response.waypoint_y = [0] * 5
+            print("===== Can't Response PathPlanning Node =====")
+            return response
             
     def qosProfileGen(self):
         #   Reliability : 데이터 전송에 있어 속도를 우선시 하는지 신뢰성을 우선시 하는지를 결정하는 QoS 옵션

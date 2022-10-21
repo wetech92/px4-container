@@ -37,7 +37,10 @@ class MapQueueNode(Node):
             response.map_sequence_init = True
             return response
         else : 
+            response.map_sequence_init = False
             print("===== Wait for Map Generation Flag =====")
+            return response
+            
             
     def TimerCallback(self):
         if self.mapgenflag is True : 

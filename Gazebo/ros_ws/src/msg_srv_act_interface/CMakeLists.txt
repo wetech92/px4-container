@@ -36,6 +36,8 @@ set(srv_files
   "srv/PathPlanningSetpoint.srv"
   "srv/PathFollowingSetpoin.srv"
   "srv/CollisionAvoidanceSetpoint.srv"
+  "srv/PathFollowingGuid.srv"
+  "srv/PathFollwoingGPR.srv"
 )
 
 set(action_files

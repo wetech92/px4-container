@@ -4,18 +4,18 @@ import rclpy
 
 # from rclpy.executors import MultiThreadedExecutor
 
-from a4vai.path_following.mppi_module import MPPINode
+from a4vai.path_following.pf_attitude_cmd_module import PFAttitudeCmdModule
 
 
 def main(args=None):
     rclpy.init(args=args)
-    mppi_module = MPPINode()
+    pf_attitude_cmd_module = PFAttitudeCmdModule()
     try:
-        rclpy.spin(mppi_module)
+        rclpy.spin(pf_attitude_cmd_module)
     except KeyboardInterrupt:
-        mppi_module.get_logger().info('Keyboard Interrupt (SIGINT)')
+        pf_attitude_cmd_module.get_logger().info('Keyboard Interrupt (SIGINT)')
     finally:
-        mppi_module.destroy_node()
+        pf_attitude_cmd_module.destroy_node()
         rclpy.shutdown()
 
 

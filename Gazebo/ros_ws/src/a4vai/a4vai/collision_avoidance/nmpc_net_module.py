@@ -61,19 +61,21 @@ class NMPC_NET_Node(Node):
         self.requestFlag = request.request_collisionavoidance
         self.requestTimestamp = request.request_timestamp
         if self.requestFlag is True : 
-            
-            JBNU_Collision.CA(Image)
-            
+            self.vel_cmd_x, self.vel_cmd_y, self.vel_cmd_z, self.vel_cmd_yaw = JBNU_Collision.CA(Image)
             print("===== Coliision Avoidance Complete!! =====")
-            
             response.response_timestamp = self.response_timestamp
             response.response_collisionavoidance = True
-            # response.waypoint_x = self.waypoint_x
-            # response.waypoint_y = self.waypoint_y
+            response.vel_cmd_x = self.vel_cmd_x
+            response.vel_cmd_y = self.vel_cmd_y
+            response.vel_cmd_z = self.vel_cmd_z
+            response.vel_cmd_yaw = self.vel_cmd_yaw
             print("===== Response Coliision Avoidance Node =====")
             return response
         else : 
             response.response_timestamp = self.response_timestamp
             response.response_collisionavoidance = False
-            # response.waypoint_x = [0] * 5
-            # response.waypoint_y = [0] * 5
+            response.vel_cmd_x = 0
+            response.vel_cmd_y = 0
+            response.vel_cmd_z = 0
+            response.vel_cmd_y = 0
+            return response
