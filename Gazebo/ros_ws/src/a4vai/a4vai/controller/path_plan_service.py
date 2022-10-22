@@ -27,9 +27,6 @@ class PathPlanningService(Node):
         self.declare_service_client_custom()
         self.timestamp = 0
         
-        self.request_path_plnning_flag = False
-        self.response_path_plnning_flag = False
-        
     def declare_service_client_custom(self): 
         self.PathPlanningServiceClient_ = self.create_client(PathPlanningSetpoint, 'path_planning')
         while not self.PathPlanningServiceClient_.wait_for_service(timeout_sec=1.0):
@@ -58,6 +55,7 @@ class PathPlanningService(Node):
         self.path_planning_request.start_point = start_point
         self.path_planning_request.goal_point = goal_point
         self.future = self.PathPlanningServiceClient_.call_async(self.path_planning_request)
+
 
     def TimesyncCallback(self, msg):
         self.timestamp = msg.timestamp
