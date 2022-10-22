@@ -35,21 +35,33 @@ import cv2
 class DeepSACNode(Node):
     def __init__(self):
         super().__init__('SAC_module')
-        self. qosProfileGen()
+        ##  Input
         self.response_timestamp = 0
         self.requestFlag = False
-        self.TimesyncSubscriber_ = self.create_subscription(Timesync, '/fmu/time_sync/out', self.TimesyncCallback, self.QOS_Sub_Sensor)
         self.requestTimestamp = 0
         self.start_point = []
         self.goal_point = []
+        ##  Output
+        self.response_timestamp = 0
+        self.response_pathplanning = False
         self.waypoint_x = []
         self.waypoint_y = []
+        self.waypoint_z = []
+        self.waypoint_index = 0
         self.waypoint_lenth = 0
+        self. qosProfileGen()
+        self.TimesyncSubscriber_ = self.create_subscription(Timesync, '/fmu/time_sync/out', self.TimesyncCallback, self.QOS_Sub_Sensor)
         self.SACmoduleService_ = self.create_service(PathPlanningSetpoint, 'path_planning', self.PathPlanningCallback)
         print("=== Path Planning Node is Running =====")
         
     def PathPlanningCallback(self, request, response):
         print("===== Request PathPlanning Node =====")
+        '''
+        uint64 request_timestamp	# time since system start (microseconds)
+        bool request_pathplanning
+        float64[] start_point
+        float64[] goal_point
+        '''
         self.requestFlag = request.request_pathplanning
         self.requestTimestamp = request.request_timestamp
         self.start_point = request.start_point
@@ -58,6 +70,14 @@ class DeepSACNode(Node):
         if self.requestFlag is True : 
             # self.waypoint_x, self.waypoint_y, self.waypoint_lenth = SAC.PathPlanning(self, self.Image, self.start_point, self.goal_point)
             print("===== PathPlanning Complete!! =====")
+            '''
+            uint64 response_timestamp	# time since system start (microseconds)
+            bool response_pathplanning
+            float64[] waypoint_x
+            float64[] waypoint_y
+            float64[] waypoint_z
+            uint32 waypoint_index
+            '''
             response.response_timestamp = self.response_timestamp
             response.response_pathplanning = True
             response.waypoint_x = self.waypoint_x

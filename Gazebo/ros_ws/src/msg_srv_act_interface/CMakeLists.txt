@@ -34,10 +34,10 @@ set(msg_files
 set(srv_files
   "srv/MapInit.srv"
   "srv/PathPlanningSetpoint.srv"
-  "srv/PathFollowingSetpoin.srv"
+  "srv/PathFollowingSetpoint.srv"
   "srv/CollisionAvoidanceSetpoint.srv"
   "srv/PathFollowingGuid.srv"
-  "srv/PathFollwoingGPR.srv"
+  "srv/PathFollowingGPR.srv"
 )
 
 set(action_files

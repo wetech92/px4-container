@@ -103,6 +103,7 @@ class ControllerNode(Node):
         self.InitialPositionFlag = False
         self.path_planning_flag = True
         self.path_planning_complete = False
+        self.path_following_flag = True
         
         self.start_point = [0.0, 0.0]
         self.goal_point = [4999.0, 4999.0]
@@ -171,10 +172,10 @@ class ControllerNode(Node):
                     planning_service.destroy_node()
         else : 
             pass
-        if self.path_planning_complete is True : 
-            print(self.waypoint_x[3])
-        else : 
-            pass
+        # if self.path_planning_complete is True : 
+        #     print(self.waypoint_x[3])
+        # else : 
+        #     pass
         
         
         
