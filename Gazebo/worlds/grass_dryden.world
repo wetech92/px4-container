@@ -12,8 +12,8 @@
     <plugin name='dryden_world' filename='libgazebo_dryden_plugin.so'>
       <frameId>base_link</frameId>
       <robotNamespace/>
-      <windVelocityMean>8.0</windVelocityMean>
-      <windVelocityMax>12.0</windVelocityMax>
+      <windVelocityMean>4.0</windVelocityMean>
+      <windVelocityMax>20.0</windVelocityMax>
       <windVelocityVariance>0</windVelocityVariance>
       <windDirectionMean>0 1 0</windDirectionMean>
       <windDirectionVariance>0</windDirectionVariance>
@@ -21,8 +21,8 @@
       <windGustDuration>100</windGustDuration>
       <windGustVelocityMean>0</windGustVelocityMean>
       <windGustVelocityMax>20.0</windGustVelocityMax>
-      <windGustVelocityVariance>0.5</windGustVelocityVariance>
-      <windGustDirectionMean>1 2 3</windGustDirectionMean>
+      <windGustVelocityVariance>0.1</windGustVelocityVariance>
+      <windGustDirectionMean>1 0 0</windGustDirectionMean>
       <windGustDirectionVariance>0.5</windGustDirectionVariance>
       <windPubTopic>world_wind</windPubTopic>
     </plugin>

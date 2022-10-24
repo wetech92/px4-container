@@ -35,7 +35,7 @@ setup(
     entry_points={
         'console_scripts': [
             'controller = a4vai.controller.main:main',
-            'nmpc_net_module = a4vai.collision_avoidnce.main:main',
+            'JBNU_module = a4vai.collision_avoidance.main:main',
             'path_following = a4vai.path_following.main:main',
             'deep_sac_module = a4vai.path_planning.main:main',
             'map_queue = a4vai.map_queue.map_queue:main',

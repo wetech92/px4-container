@@ -1,3 +1,4 @@
+uint64 request_init_timestamp   # time since system start (microseconds)
 uint64 request_timestamp	# time since system start (microseconds)
 bool request_pathfollowing
 float64[] waypoint_x

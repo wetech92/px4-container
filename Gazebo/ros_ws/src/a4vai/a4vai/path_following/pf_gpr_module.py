@@ -3,6 +3,8 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+from itertools import chain
+
 import time
 import onnx
 import onnxruntime as ort
@@ -17,11 +19,8 @@ from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
 from rclpy.qos import qos_profile_sensor_data
 
-# from .mppi.PF import PF
-# from .mppi.NDO import NDO
-# from .gpr.GPR import GPR
-# from .mppi.Guid_MPPI import MPPI
-# from .mppi.PF_Cost import Calc_PF_cost
+
+from .PathFollowing.PF_GPR import PF_GPR
 
 from px4_msgs.msg import Timesync
 from msg_srv_act_interface.srv import PathFollowingGPR
@@ -36,8 +35,9 @@ class PF_GPR_Module(Node):
         self.outNDO = []    #   double
         ##  Output
         self.response_timestamp = 0 #   uint
-        self.LAD = 0
-        self.SPDCMD = 0
+        self.gpr_output_data = []
+        self.gpr_output = []
+        self.gpr_output_index = 0
         ##  Function
         self.qosProfileGen()
         self.declare_subscriber_px4()
@@ -53,29 +53,40 @@ class PF_GPR_Module(Node):
         bool request_gpr
         float64[] out_ndo
         '''
-        self.requestFlag = request.request_guid
+        self.requestFlag = request.request_gpr
         self.requestTimestamp = request.request_timestamp
         self.outNDO = request.out_ndo
         
         if self.requestFlag is True : 
-            
+            ############# Algirithm Start - PF_GPR  #############
+            if self.InitFlag == 0:
+                self.InitTime  =   self.requestTimestamp * 10**(-6)
+                self.InitFlag   =   1
+            Time   =   self.requestTimestamp * 10**(-6) - self.InitTime
+            # function
+            GPR_out = self.PF_GPR_MOD.PF_GPR_Module(Time, self.outNDO)
+            # output
+            self.GPR_out = GPR_out.copy()
+            ############# Algirithm  End  - PF_GPR  #############
             print("===== Path Following Guidance Generation !! =====")
             '''
             uint64 response_timestamp	# time since system start (microseconds)
             bool response_gpr
-            float64[] gpr_output
+            float64[] gpr_output_data
+            uint32 gpr_output_index
             '''
+            self.gpr_output_data = list(chain.from_iterable(self.GPR_out))
+            self.gpr_output_index = 3
             response.response_timestamp = self.response_timestamp
-            response.response_guid = True
-            response.lad = self.LAD
-            response.spd_cmd = self.SPDCMD
+            response.response_gpr = True
+            response.gpr_output_data = self.gpr_output_data
+            response.gpr_output_index = self.gpr_output_index
             print("===== Response Path Following Guidance Node =====")
             return response
         else : 
             response.response_timestamp = self.response_timestamp
-            response.response_guid = False
-            response.lad = self.LAD
-            response.spd_cmd = self.SPDCMD
+            response.response_gpr = False
+            response.gpr_output = self.gpr_output
             print("===== Can't Response Path Following Guidance Node =====")
             return response
 

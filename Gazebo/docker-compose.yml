@@ -15,7 +15,7 @@ services:
       #  ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ 
       - PX4_SIM_HOST_ADDR=172.30.0.5
       - PX4_SIM_MODEL=typhoon_inha
-      - PX4_SIM_WOLRLD=grass
+      - PX4_SIM_WOLRLD=grass_dryden
       - NO_PXH=1
       # - sitl_gazebo_path=/root/PX4-Autopilot/Tools/sitl_gazebo
       # --------SET FOR DEVELOPMENT OR DEBUGGING---------

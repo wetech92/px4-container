@@ -9,7 +9,7 @@
  *
  * Model version                  : 1.1
  * Simulink Coder version         : 9.7 (R2022a) 13-Nov-2021
- * C/C++ source code generated on : Sat Oct  1 10:39:28 2022
+ * C/C++ source code generated on : Mon Oct 10 16:08:30 2022
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: Intel->x86-64 (Linux 64)
@@ -28,6 +28,7 @@
 
 #include "dryden_code_gen_types.h"
 #include <string.h>
+#include "rt_nonfinite.h"
 
 /* Macros for accessing real-time model data structure */
 #ifndef rtmGetErrorStatus
@@ -60,20 +61,17 @@
 
 /* Block signals (default storage) */
 typedef struct {
-  real_T LugV1[2];                     /* '<S20>/Lug//V1' */
+  real_T Product[4];                   /* '<S14>/Product' */
   real_T w[2];                         /* '<S20>/w' */
   real_T w_c[2];                       /* '<S20>/w ' */
   real_T LwgV1[2];                     /* '<S20>/Lwg//V 1' */
-  real_T LugV1_h[2];                   /* '<S19>/Lug//V1' */
   real_T w_e[2];                       /* '<S19>/w' */
   real_T w_i[2];                       /* '<S19>/w ' */
   real_T w1[2];                        /* '<S19>/w 1' */
-  real_T LugV1_e[2];                   /* '<S18>/Lug//V1' */
   real_T w_f[2];                       /* '<S18>/w' */
   real_T w1_p[2];                      /* '<S18>/w1' */
   real_T w_ic[2];                      /* '<S17>/w' */
   real_T w_p[2];                       /* '<S16>/w' */
-  real_T LugV1_k[2];                   /* '<S15>/Lug//V1' */
   real_T w_g[2];                       /* '<S15>/w' */
   real_T sigma_w[2];                   /* '<S15>/sigma_w' */
 } B_dryden_code_gen_T;
@@ -81,10 +79,10 @@ typedef struct {
 /* Block states (default storage) for system '<Root>' */
 typedef struct {
   real_T NextOutput[4];                /* '<S14>/White Noise' */
-  uint32_T PreLookUpIndexSearchaltitude_DW;
-                               /* '<S21>/PreLook-Up Index Search  (altitude)' */
   uint32_T PreLookUpIndexSearchprobofexcee;
                          /* '<S21>/PreLook-Up Index Search  (prob of exceed)' */
+  uint32_T PreLookUpIndexSearchaltitude_DW;
+                               /* '<S21>/PreLook-Up Index Search  (altitude)' */
   uint32_T RandSeed[4];                /* '<S14>/White Noise' */
   int8_T ifHeightMaxlowaltitudeelseifHei;
   /* '<S10>/if Height < Max low altitude  elseif Height > Min isotropic altitude ' */
@@ -137,88 +135,63 @@ typedef struct {
 /* Invariant block signals (default storage) */
 typedef struct {
   const real_T UnitConversion;         /* '<S3>/Unit Conversion' */
-  const real_T UnitConversion_a;       /* '<S6>/Unit Conversion' */
-  const real_T LimitFunction10ftto1000ft;
-                                     /* '<S39>/Limit Function 10ft to 1000ft' */
-  const real_T UnitConversion_h;       /* '<S41>/Unit Conversion' */
   const real_T UnitConversion_o;       /* '<S13>/Unit Conversion' */
   const real_T sigma_wg;               /* '<S22>/sigma_wg ' */
-  const real_T PreLookUpIndexSearchaltitud;
-                               /* '<S21>/PreLook-Up Index Search  (altitude)' */
+  const real_T UnitConversion_a;       /* '<S7>/Unit Conversion' */
+  const real_T UnitConversion_h;       /* '<S41>/Unit Conversion' */
   const real_T PreLookUpIndexSearchprobofe;
                          /* '<S21>/PreLook-Up Index Search  (prob of exceed)' */
-  const real_T MediumHighAltitudeIntensity;
-                                   /* '<S21>/Medium//High Altitude Intensity' */
-  const real_T UnitConversion_c;       /* '<S12>/Unit Conversion' */
-  const real_T UnitConversion_a5;      /* '<S7>/Unit Conversion' */
-  const real_T LowAltitudeScaleLength; /* '<S39>/Low Altitude Scale Length' */
-  const real_T LimitHeighth1000ft;     /* '<S22>/Limit Height h<1000ft' */
-  const real_T LowAltitudeIntensity;   /* '<S22>/Low Altitude Intensity' */
-  const real_T sigma_ugsigma_vg;       /* '<S22>/sigma_ug, sigma_vg' */
-  const real_T TmpSignalConversionAtsincos[3];
-  const real_T sincos_o1[3];           /* '<S2>/sincos' */
-  const real_T sincos_o2[3];           /* '<S2>/sincos' */
-  const real_T Fcn11;                  /* '<S2>/Fcn11' */
-  const real_T Fcn21;                  /* '<S2>/Fcn21' */
-  const real_T Fcn31;                  /* '<S2>/Fcn31' */
-  const real_T Fcn12;                  /* '<S2>/Fcn12' */
-  const real_T Fcn22;                  /* '<S2>/Fcn22' */
-  const real_T Fcn32;                  /* '<S2>/Fcn32' */
-  const real_T Fcn13;                  /* '<S2>/Fcn13' */
-  const real_T Fcn23;                  /* '<S2>/Fcn23' */
-  const real_T Fcn33;                  /* '<S2>/Fcn33' */
-  const real_T VectorConcatenate[9];   /* '<S42>/Vector Concatenate' */
   const real_T Sqrt[4];                /* '<S14>/Sqrt' */
   const real_T Sqrt1;                  /* '<S14>/Sqrt1' */
   const real_T Divide[4];              /* '<S14>/Divide' */
   const real_T Sum;                    /* '<S31>/Sum' */
-  const real_T Sum1;                   /* '<S31>/Sum1' */
-  const real_T TrigonometricFunction_o1;/* '<S36>/Trigonometric Function' */
-  const real_T TrigonometricFunction_o2;/* '<S36>/Trigonometric Function' */
-  const real_T TrigonometricFunction_o1_p;/* '<S38>/Trigonometric Function' */
-  const real_T TrigonometricFunction_o2_c;/* '<S38>/Trigonometric Function' */
   const real_T Sum_n;                  /* '<S23>/Sum' */
-  const real_T Sum1_g;                 /* '<S23>/Sum1' */
-  const real_T TrigonometricFunction_o1_px;/* '<S28>/Trigonometric Function' */
-  const real_T TrigonometricFunction_o2_e;/* '<S28>/Trigonometric Function' */
-  const real_T TrigonometricFunction1_o1;/* '<S30>/Trigonometric Function1' */
-  const real_T TrigonometricFunction1_o2;/* '<S30>/Trigonometric Function1' */
-  const real_T LwgV[2];                /* '<S20>/Lwg//V' */
-  const real_T upi[2];                 /* '<S20>/1//pi' */
   const real_T sqrt_o;                 /* '<S20>/sqrt' */
-  const real_T sqrt1[2];               /* '<S20>/sqrt1' */
-  const real_T LvgV[2];                /* '<S19>/Lvg//V' */
-  const real_T upi_i[2];               /* '<S19>/(1//pi)' */
-  const real_T sqrt_b[2];              /* '<S19>/sqrt' */
-  const real_T LugV[2];                /* '<S18>/Lug//V' */
-  const real_T upi_g[2];               /* '<S18>/(2//pi)' */
-  const real_T sqrt_n[2];              /* '<S18>/sqrt' */
-  const real_T pi3;                    /* '<S17>/pi//3' */
-  const real_T pi4;                    /* '<S16>/pi//4' */
-  const real_T TmpSignalConversionAtL13Inp[2];
-  const real_T L13[2];                 /* '<S15>/L^1//3' */
-  const real_T sqrt08V;                /* '<S15>/sqrt(0.8//V)' */
   const real_T w4;                     /* '<S15>/w4' */
   const real_T u16;                    /* '<S15>/u^1//6' */
-  const real_T w1[2];                  /* '<S15>/w1' */
-  const real_T w2[2];                  /* '<S15>/w2' */
-  const real_T w3;                     /* '<S15>/w3' */
-  const uint32_T PreLookUpIndexSearchaltit_i;
-                               /* '<S21>/PreLook-Up Index Search  (altitude)' */
   const uint32_T PreLookUpIndexSearchprobo_o;
                          /* '<S21>/PreLook-Up Index Search  (prob of exceed)' */
 } ConstB_dryden_code_gen_T;
 
-#ifndef ODE4_INTG
-#define ODE4_INTG
+#ifndef ODE8_INTG
+#define ODE8_INTG
 
-/* ODE4 Integration Data */
+/* ODE8 Integration Data */
 typedef struct {
-  real_T *y;                           /* output */
-  real_T *f[4];                        /* derivatives */
-} ODE4_IntgData;
+  real_T *deltaY;                      /* output diff */
+  real_T *f[13];                       /* derivatives */
+  real_T *x0;                          /* Initial State */
+} ODE8_IntgData;
 
 #endif
+
+/* Constant parameters (default storage) */
+typedef struct {
+  /* Expression: h_vec
+   * Referenced by: '<S21>/PreLook-Up Index Search  (altitude)'
+   */
+  real_T PreLookUpIndexSearchaltitude_Br[12];
+
+  /* Expression: sigma_vec'
+   * Referenced by: '<S21>/Medium//High Altitude Intensity'
+   */
+  real_T MediumHighAltitudeIntensity_Tab[84];
+
+  /* Computed Parameter: MediumHighAltitudeIntensity_max
+   * Referenced by: '<S21>/Medium//High Altitude Intensity'
+   */
+  uint32_T MediumHighAltitudeIntensity_max[2];
+} ConstP_dryden_code_gen_T;
+
+/* External inputs (root inport signals with default storage) */
+typedef struct {
+  real_T Altitude;                     /* '<Root>/Altitude' */
+  real_T Velocity;                     /* '<Root>/Velocity' */
+  real_T w;                            /* '<Root>/w' */
+  real_T x;                            /* '<Root>/x' */
+  real_T y;                            /* '<Root>/y' */
+  real_T z;                            /* '<Root>/z' */
+} ExtU_dryden_code_gen_T;
 
 /* External outputs (root outports fed by signals with default storage) */
 typedef struct {
@@ -238,9 +211,10 @@ struct tag_RTM_dryden_code_gen_T {
   boolean_T zCCacheNeedsReset;
   boolean_T derivCacheNeedsReset;
   boolean_T CTOutputIncnstWithState;
-  real_T odeY[16];
-  real_T odeF[4][16];
-  ODE4_IntgData intgData;
+  real_T OdeDeltaY[16];
+  real_T odeF[13][16];
+  real_T odeX0[16];
+  ODE8_IntgData intgData;
 
   /*
    * Sizes:
@@ -279,9 +253,15 @@ extern X_dryden_code_gen_T dryden_code_gen_X;
 /* Block states (default storage) */
 extern DW_dryden_code_gen_T dryden_code_gen_DW;
 
+/* External inputs (root inport signals with default storage) */
+extern ExtU_dryden_code_gen_T dryden_code_gen_U;
+
 /* External outputs (root outports fed by signals with default storage) */
 extern ExtY_dryden_code_gen_T dryden_code_gen_Y;
 extern const ConstB_dryden_code_gen_T dryden_code_gen_ConstB;/* constant block i/o */
+
+/* Constant parameters (default storage) */
+extern const ConstP_dryden_code_gen_T dryden_code_gen_ConstP;
 
 /* Model entry point functions */
 extern void dryden_code_gen_initialize(void);
@@ -294,8 +274,6 @@ extern RT_MODEL_dryden_code_gen_T *const dryden_code_gen_M;
 /*-
  * These blocks were eliminated from the model due to optimizations:
  *
- * Block '<Root>/Scope' : Unused code path elimination
- * Block '<Root>/Scope1' : Unused code path elimination
  * Block '<S1>/Cast' : Eliminate redundant data type conversion
  * Block '<S1>/Cast To Double' : Eliminate redundant data type conversion
  * Block '<S1>/Cast To Double1' : Eliminate redundant data type conversion
@@ -308,9 +286,7 @@ extern RT_MODEL_dryden_code_gen_T *const dryden_code_gen_M;
  * Block '<S35>/Reshape' : Reshape block reduction
  * Block '<S35>/Reshape1' : Reshape block reduction
  * Block '<S37>/Reshape' : Reshape block reduction
- * Block '<S11>/Lv' : Eliminated nontunable gain of 1
- * Block '<S11>/Lw' : Eliminated nontunable gain of 1
- * Block '<S42>/Reshape (9) to [3x3] column-major' : Reshape block reduction
+ * Block '<S51>/Reshape (9) to [3x3] column-major' : Reshape block reduction
  */
 
 /*-
@@ -329,7 +305,7 @@ extern RT_MODEL_dryden_code_gen_T *const dryden_code_gen_M;
  *
  * '<Root>' : 'dryden_code_gen'
  * '<S1>'   : 'dryden_code_gen/Dryden Wind Turbulence Model  (Continuous (+q +r))'
- * '<S2>'   : 'dryden_code_gen/Rotation Angles to Direction Cosine Matrix'
+ * '<S2>'   : 'dryden_code_gen/Quaternions to  Direction Cosine Matrix'
  * '<S3>'   : 'dryden_code_gen/Dryden Wind Turbulence Model  (Continuous (+q +r))/Angle Conversion'
  * '<S4>'   : 'dryden_code_gen/Dryden Wind Turbulence Model  (Continuous (+q +r))/Filters on angular rates'
  * '<S5>'   : 'dryden_code_gen/Dryden Wind Turbulence Model  (Continuous (+q +r))/Filters on velocities'
@@ -369,7 +345,19 @@ extern RT_MODEL_dryden_code_gen_T *const dryden_code_gen_M;
  * '<S39>'  : 'dryden_code_gen/Dryden Wind Turbulence Model  (Continuous (+q +r))/Turbulence scale lengths/Low altitude scale length'
  * '<S40>'  : 'dryden_code_gen/Dryden Wind Turbulence Model  (Continuous (+q +r))/Turbulence scale lengths/Medium//High altitude scale length'
  * '<S41>'  : 'dryden_code_gen/Dryden Wind Turbulence Model  (Continuous (+q +r))/Turbulence scale lengths/Medium//High altitude scale length/Length Conversion'
- * '<S42>'  : 'dryden_code_gen/Rotation Angles to Direction Cosine Matrix/Create 3x3 Matrix'
+ * '<S42>'  : 'dryden_code_gen/Quaternions to  Direction Cosine Matrix/A11'
+ * '<S43>'  : 'dryden_code_gen/Quaternions to  Direction Cosine Matrix/A12'
+ * '<S44>'  : 'dryden_code_gen/Quaternions to  Direction Cosine Matrix/A13'
+ * '<S45>'  : 'dryden_code_gen/Quaternions to  Direction Cosine Matrix/A21'
+ * '<S46>'  : 'dryden_code_gen/Quaternions to  Direction Cosine Matrix/A22'
+ * '<S47>'  : 'dryden_code_gen/Quaternions to  Direction Cosine Matrix/A23'
+ * '<S48>'  : 'dryden_code_gen/Quaternions to  Direction Cosine Matrix/A31'
+ * '<S49>'  : 'dryden_code_gen/Quaternions to  Direction Cosine Matrix/A32'
+ * '<S50>'  : 'dryden_code_gen/Quaternions to  Direction Cosine Matrix/A33'
+ * '<S51>'  : 'dryden_code_gen/Quaternions to  Direction Cosine Matrix/Create 3x3 Matrix'
+ * '<S52>'  : 'dryden_code_gen/Quaternions to  Direction Cosine Matrix/Quaternion Normalize'
+ * '<S53>'  : 'dryden_code_gen/Quaternions to  Direction Cosine Matrix/Quaternion Normalize/Quaternion Modulus'
+ * '<S54>'  : 'dryden_code_gen/Quaternions to  Direction Cosine Matrix/Quaternion Normalize/Quaternion Modulus/Quaternion Norm'
  */
 #endif                                 /* RTW_HEADER_dryden_code_gen_h_ */
 

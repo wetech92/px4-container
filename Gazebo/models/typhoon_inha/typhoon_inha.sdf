@@ -6,11 +6,11 @@
     </include>
     <include>
       <uri>model://realsense_d455</uri>
-      <pose>0.0 0.0 0.1 0 0 0</pose>
+      <pose>0.07 0.0 0.18 0 0 0</pose>
     </include>
     <joint name="realsenese_d455_joint" type="revolute">
       <child>realsense_d455::link</child>
-      <parent>typhoon_h480::cgo3_camera_link</parent>
+      <parent>typhoon_h480::base_link</parent>
       <axis>
         <xyz>0 0 1</xyz>
         <limit>

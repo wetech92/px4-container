@@ -27,11 +27,12 @@ class PathFollowingService(Node):
         self.TimesyncSubscriber_ = self.create_subscription(Timesync, '/fmu/time_sync/out', self.TimesyncCallback, self.QOS_Sub_Sensor)
         self.declare_service_client_custom()
         self.timestamp = 0
+        self.recordtimestamp = self.timestamp.copy()
         
     def declare_service_client_custom(self): 
-        self.PathFollowingServiceClient_ = self.create_client(PathFollowingSetpoint, 'path_following')
+        self.PathFollowingServiceClient_ = self.create_client(PathFollowingSetpoint, 'path_following_att_cmd')
         while not self.PathFollowingServiceClient_.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Path Planning not available, waiting again...') 
+            self.get_logger().info('Path Following Setpoint Service not available, waiting again...') 
  
     def qosProfileGen(self):
         #   Reliability : 데이터 전송에 있어 속도를 우선시 하는지 신뢰성을 우선시 하는지를 결정하는 QoS 옵션
@@ -51,6 +52,7 @@ class PathFollowingService(Node):
         
     def RequestPathFollowing(self, waypoint_x, waypoint_y, waypoint_z, waypoint_index, LAD, SPDCMD):
         self.path_following_request = PathFollowingSetpoint.Request()
+        self.path_following_request.request_init_timestamp = self.recordtimestamp * 10**(-6)
         self.path_following_request.request_timestamp = self.timestamp
         self.path_following_request.request_pathfollowing = True
         self.path_following_request.waypoint_x = waypoint_x
@@ -76,7 +78,7 @@ class PathFollowingGPRService(Node):
     def declare_service_client_custom(self): 
         self.PathFollowingGPRServiceClient_ = self.create_client(PathFollowingGPR, 'path_following_gpr')
         while not self.PathFollowingGPRServiceClient_.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Path Planning not available, waiting again...') 
+            self.get_logger().info('Path Following GPR Service not available, waiting again...') 
 
         
     def qosProfileGen(self):
@@ -97,10 +99,17 @@ class PathFollowingGPRService(Node):
 
     def RequestPathFollowingGPR(self, outNDO):
         self.path_following_gpr_request = PathFollowingGPR.Request()
+        self.path_following_gpr_request.request_init_timestamp = self.self.timestamp * 10**(-6)
         self.path_following_gpr_request.request_timestamp = self.timestamp
         self.path_following_gpr_request.request_gpr = True
         self.path_following_gpr_request.out_ndo = outNDO
         self.future_gpr = self.PathFollowingGPRServiceClient_.call_async(self.path_following_gpr_request)
+        
+    def TimesyncCallback(self, msg):
+        self.timestamp = msg.timestamp
+
+
+
 
 class PathFollowingGuidService(Node):
     def __init__(self):
@@ -113,7 +122,7 @@ class PathFollowingGuidService(Node):
     def declare_service_client_custom(self): 
         self.PathFollowingGuidServiceClient_ = self.create_client(PathFollowingGuid, 'path_following_guid')
         while not self.PathFollowingGuidServiceClient_.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Path Planning not available, waiting again...') 
+            self.get_logger().info('Path Following Guid Service not available, waiting again...') 
     
     def qosProfileGen(self):
         #   Reliability : 데이터 전송에 있어 속도를 우선시 하는지 신뢰성을 우선시 하는지를 결정하는 QoS 옵션
@@ -131,7 +140,7 @@ class PathFollowingGuidService(Node):
             depth=10,
             durability=QoSDurabilityPolicy.VOLATILE)
     
-    def RequestPathFollowingGuid(self, waypoint_x, waypoint_y, waypoint_z, waypoint_index, gpr_output, outNDO, flag_guid_param):
+    def RequestPathFollowingGuid(self, waypoint_x, waypoint_y, waypoint_z, waypoint_index, gpr_output_data, gpr_output_index, outNDO, flag_guid_param):
         self.path_following_guid_request = PathFollowingGuid.Request()
         self.path_following_guid_request.request_timestamp = self.timestamp
         self.path_following_guid_request.request_guid = True
@@ -139,7 +148,10 @@ class PathFollowingGuidService(Node):
         self.path_following_guid_request.waypoint_y = waypoint_y
         self.path_following_guid_request.waypoint_z = waypoint_z
         self.path_following_guid_request.waypoint_index = waypoint_index
-        self.path_following_guid_request.gpr_output = gpr_output
+        self.path_following_guid_request.gpr_output_data = gpr_output_data
+        self.path_following_guid_request.gpr_output_index = gpr_output_index
         self.path_following_guid_request.out_ndo = outNDO
         self.path_following_guid_request.flag_guid_param = flag_guid_param
         self.future_guid = self.PathFollowingGuidServiceClient_.call_async(self.path_following_guid_request)
+    def TimesyncCallback(self, msg):
+        self.timestamp = msg.timestamp

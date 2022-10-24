@@ -61,7 +61,6 @@ void GazeboDrydenPlugin::Load(physics::WorldPtr world, sdf::ElementPtr sdf) {
 
   if (sdf->HasElement("robotNamespace")) {
     namespace_ = sdf->GetElement("robotNamespace")->Get<std::string>();
-    std::cout << "asaas " << namespace_<< std::endl;
   } else {
     gzerr << "[gazebo_wind_plugin] Please spefcify a robotNamespace.\n";
   }
@@ -89,6 +88,12 @@ void GazeboDrydenPlugin::Load(physics::WorldPtr world, sdf::ElementPtr sdf) {
   getSdfParam<ignition::math::Vector3d>(sdf, "windGustDirectionMean", wind_gust_direction_mean_, wind_gust_direction_mean_);
   getSdfParam<double>(sdf, "windGustDirectionVariance", wind_gust_direction_variance_, wind_gust_direction_variance_);
 
+  dryden_code_gen_U.Altitude = 10.0;
+  dryden_code_gen_U.Velocity = 1.0;
+  dryden_code_gen_U.w  = 1.0;
+  dryden_code_gen_U.x  = 0.0;
+  dryden_code_gen_U.y  = 0.0;
+  dryden_code_gen_U.z  = 0.0;
   wind_direction_mean_.Normalize();
   wind_gust_direction_mean_.Normalize();
   wind_gust_start_ = common::Time(wind_gust_start);
@@ -157,6 +162,8 @@ void GazeboDrydenPlugin::OnUpdate(const common::UpdateInfo& _info) {
     wind_gust_direction.X() = wind_gust_direction_distribution_X_(wind_gust_direction_generator_);
     wind_gust_direction.Y() = wind_gust_direction_distribution_Y_(wind_gust_direction_generator_);
     wind_gust_direction.Z() = wind_gust_direction_distribution_Z_(wind_gust_direction_generator_);
+
+    
     rt_OneStep();
     //f1.open("/root/PX4-Autopilot/gust.txt ",std::ios::app);
     std::cout.precision(6);
@@ -169,7 +176,6 @@ void GazeboDrydenPlugin::OnUpdate(const common::UpdateInfo& _info) {
     wind_gustpqr.Y() = dryden_code_gen_Y.pqr_ptr[1];
     wind_gustpqr.Z() = dryden_code_gen_Y.pqr_ptr[2];
 
-
   }
 
   gazebo::msgs::Vector3d* wind_v = new gazebo::msgs::Vector3d();
@@ -181,7 +187,6 @@ void GazeboDrydenPlugin::OnUpdate(const common::UpdateInfo& _info) {
   wind_p->set_x(wind_gustpqr.X());
   wind_p->set_y(wind_gustpqr.Y());
   wind_p->set_z(wind_gustpqr.Z());
-  std::cout << "dry " << wind.X() + wind_gust.X()  << " " << wind_gustpqr.X()<< std::endl;
 
   wind_msg.set_frame_id(frame_id_);
   wind_msg.set_time_usec(now.Double() * 1e6);

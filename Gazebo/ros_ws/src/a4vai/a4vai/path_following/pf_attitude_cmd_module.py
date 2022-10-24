@@ -1,13 +1,7 @@
-import sys
-import time
+
 import matplotlib.pyplot as plt
-import numpy as np
 import math
-import time
 
-
-import onnx
-import onnxruntime as ort
 
 #   ROS2 python 
 import rclpy
@@ -20,11 +14,7 @@ from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
 from rclpy.qos import qos_profile_sensor_data
 
-# from .mppi.PF import PF
-# from .mppi.NDO import NDO
-# from .gpr.GPR import GPR
-# from .mppi.Guid_MPPI import MPPI
-# from .mppi.PF_Cost import Calc_PF_cost
+from .PathFollowing.PF_ATTITUDE_CMD import PF_ATTITUDE_CMD_MOD
 
 # from px4_msgs.msg import VehicleAngularVelocity
 from px4_msgs.msg import EstimatorStates
@@ -35,8 +25,26 @@ from msg_srv_act_interface.srv import PathFollowingSetpoint
 class PFAttitudeCmdModule(Node):
     def __init__(self):
         super().__init__('pf_attitude_cmd_module')
+        self.x = 0
+        self.y = 0
+        self.z = 0
+        self.vx = 0
+        self.vy = 0
+        self.vz = 0
+        self.phi = 0
+        self.theta = 0
+        self.psi = 0
+        
+        self.wn = 0
+        self.we = 0
+        
+        self.Pos = [self.x, self.y, self.z]
+        self.Vn = [self.vx, self.vy, self.vz]
+        self.AngEuler = [self.phi, self.theta, self.psi]
+        
         ##  Input
         self.requestFlag = False    #   bool
+        self.requestInitTimestamp = 0   #   uint
         self.requestTimestamp = 0   #   uint
         self.PlannedX = []  #   double
         self.PlannedY = []  #   double
@@ -74,7 +82,8 @@ class PFAttitudeCmdModule(Node):
     def PFAttitudeCmdCallback(self, request, response):
         print("===== Request Path Following Attitude Command Node =====")
         '''
-        uint64 request_timestamp	# time since system start (microseconds)
+        uint64 request_init_timestamp
+        uint64 request_timestamp
         bool request_pathfollowing
         float64[] waypoint_x
         float64[] waypoint_y
@@ -84,6 +93,7 @@ class PFAttitudeCmdModule(Node):
         float64 spd_cmd
         '''
         self.requestFlag = request.request_pathfollowing
+        self.requestInitTimestamp = request.request_init_timestamp
         self.requestTimestamp = request.request_timestamp
         self.PlannedX = request.waypoint_x
         self.PlannedY = request.waypoint_y
@@ -92,6 +102,17 @@ class PFAttitudeCmdModule(Node):
         self.LAD = request.lad
         self.SPDCMD = request.spd_cmd
         if self.requestFlag is True : 
+            ############# Algirithm Start - PF_ATTITUDE_CMD  #############
+            InitTime  =   self.requestInitTimestamp
+            Time   =   self.requestTimestamp * 10**(-6) - InitTime
+            Pos         =   [self.x, self.y, self.z]
+            Vn          =   [self.vx, self.vy, self.vz]
+            AngEuler    =   [self.roll * math.pi /180., self.pitch * math.pi /180., self.yaw * math.pi /180.]
+            Acc_disturb =   [0., 0., 0.]
+            # function
+            self.TargetThrust, self.TargetAttitude, self.TargetPosition, self.TargetYaw, self.outNDO = \
+                PF_ATTITUDE_CMD_MOD.PF_ATTITUDE_CMD_Module(Time, self.PlannedX, self.PlannedY, self.PlannedZ, self.PlannedIndex, Pos, Vn, AngEuler, Acc_disturb, self.LAD, self.SPDCMD)
+            ############# Algirithm  End  - PF_ATTITUDE_CMD  #############
             ##  Algorithm Function
             '''
             uint64 response_timestamp	# time since system start (microseconds)
@@ -104,7 +125,7 @@ class PFAttitudeCmdModule(Node):
             '''
             print("===== Path Following Attitude Command Generation !! =====")
             response.response_timestamp = self.response_timestamp
-            response.response_pathplanning = True
+            response.response_pathfollowing = True
             response.targetthrust = self.TargetThrust
             response.targetattitude = self.TargetAttitude
             response.targetposition = self.TargetPosition
@@ -114,7 +135,7 @@ class PFAttitudeCmdModule(Node):
             return response
         else : 
             response.response_timestamp = self.response_timestamp
-            response.response_pathplanning = True
+            response.response_pathfollowing = True
             response.targetthrust = self.TargetThrust
             response.targetattitude = self.TargetAttitude
             response.targetposition = self.TargetPosition
@@ -156,14 +177,14 @@ class PFAttitudeCmdModule(Node):
         self.vy = msg.states[5]
         self.vz = msg.states[6]
         #   Attitude
-        self.roll, self.pitch, self.yaw = self.Quaternion2Euler(msg.states[0], msg.states[1], msg.states[2], msg.states[3])
+        self.phi, self.theta, self.psi = self.Quaternion2Euler(msg.states[0], msg.states[1], msg.states[2], msg.states[3])
         #   Wind Velocity NE
         self.wn = msg.states[22]
         self.we = msg.states[23]
         
         self.Pos = [self.x, self.y, self.z]
         self.Vn = [self.vx, self.vy, self.vz]
-        self.AngEuler = [self.roll, self.theta, self.psi]
+        self.AngEuler = [self.phi, self.theta, self.psi]
     
     # # VehicleAngularVelocity
     # def VehicleAngularVelocityCallback(self, msg):

@@ -3,6 +3,7 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+from itertools import chain
 
 #   ROS2 python 
 import rclpy
@@ -43,6 +44,7 @@ from sensor_msgs.msg import LaserScan
 from .map_service import MapService
 from .path_plan_service import PathPlanningService
 from .path_follow_service import PathFollowingGPRService, PathFollowingService, PathFollowingGuidService
+from.collision_avoidance_service import CollisionAvoidanceService
 
 class ControllerNode(Node):
     def __init__(self):
@@ -73,16 +75,16 @@ class ControllerNode(Node):
         self.vy = 0.0
         self.vz = 0.0
 
-        self.roll = 0.0
-        self.pitch = 0.0
-        self.yaw = 0.0
+        self.phi = 0.0
+        self.theta = 0.0
+        self.psi = 0.0
 
         self.p = 0.0
         self.q = 0.0
         self.r = 0.0
         
         # Controller Period
-        self.AlgorithmPeriod = 1/30
+        self.AlgorithmPeriod = 1/50
         self.OffboardPeriod_AttCmd = 1/250
         self.OffboardPeriod_VelCmd = 1/50
         self.OffboardPeriod_PosCmd = 1/50
@@ -95,6 +97,16 @@ class ControllerNode(Node):
         self.VEHICLE_CMD_COMPONENT_ARM_DISARM = 400
         # Offboard Mode Command
         self.VEHICLE_CMD_DO_SET_MODE = 176
+        
+        
+        ## Controller Sample Variables
+        self.TargetPositionCmd = [0.0, 0.0, 0.0] # Meter
+        self.TargetVelocityCmd = [0.0, 0.0, 0.0] # Meter
+        self.TargetAttitudeCmd = [0.0, 0.0, 0.0, 0.0] # Quaternion w x y z
+        self.TargetRateCmd = [0.0, 0.0, 0.0] # Radian
+        self.TargetThrustCmd = 0.0
+        self.TargetBodyRateCmd = [np.NaN, np.NaN, np.NaN]
+        self.TargetYawRateCmd = 0.0
         
         #############################
         #####   Sequence Flag   #####
@@ -127,6 +139,9 @@ class ControllerNode(Node):
         # self.start_point = []
         # self.goal_point = []
         
+        self.collision_avoidance_flag = True
+        self.collision_avoidance_complete = False
+        
         self.OffboardCount = 0
         self.OffboardCounter = 100
         
@@ -137,79 +152,187 @@ class ControllerNode(Node):
         
         self.TargetThrust = []
         self.TargetPosition = []
-        self.TargetAttitude = []
-        self.TargetYaw = 0
+        # self.TargetAttitude = []
+        self.TargetYaw = 0.0
         
-        self.LAD = 0
-        self.SPDCMD = 0
+        self.LAD = 0.0
+        self.SPDCMD = 0.0
         self.outNDO = []
         self.gpr_output = []
-        self.flag_guid_param = 0
+        self.gpr_output_data = []
+        self.gpr_output_index = 0
+        self.flag_guid_param = 1
+        
+        
+        #################################
+        # self.waypoint_x = [194.50006744625216, 825.8771283644521, 1431.8613353993596, 2000.3352614176797, 2397.700009556139, 2730.8000037362776, 2706.3233754062016, 
+        #                    3225.794498676967, 3627.9853373120645, 4127.434997699735, 4470.346028786243]
+        # self.waypoint_y = [36.118291873152884, 144.17673246974937, 309.82613153979173, 537.4419799797172, 922.1794141237731, 1360.298574161542, 2178.636181251442,
+        #                    2407.6458042137847, 2782.003343801756, 3054.981891820806,  3482.83100675065]
+        # self.waypoint_z = [5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0]
+        # self.wapoint_index = 11
+        # self.gpr_output = [[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],
+        #                    [0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],
+        #                    [0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0]]
+        
+        # self.gpr_output_data = list(chain.from_iterable(self.gpr_output))
+        self.gpr_output_index = 3
+        self.outNDO = [0.0,0.0,0.0]
+        ######################################
+        
+        
 #################################################################################################################
-                
     def TestCallback(self):
         self.get_logger().info("===== Test Timer On =====")
         
-        if self.map_generation_flag is True :
-            print("===== Map generation Sequence =====")
-            map_service = MapService()
-            map_service.RequestMapGeneration(self.map_generation_flag)
-            rclpy.spin_once(map_service)
-            if map_service.future.done():
-                try : 
-                    map_service.result = map_service.future.result()
-                except Exception as e:
-                    map_service.get_logger().info(
-                        'Service call failed %r' % (e,))
-                else :
-                    map_service.get_logger().info( "Map Generation Complete!! ")
-                    print(map_service.result.map_sequence_init)
-                    if map_service.result.map_sequence_init is True :
-                        self.map_generation_flag = False
-                    else :
-                        pass    
-                finally : 
-                    map_service.destroy_node()
-        else : 
-            pass
-        
-        if self.path_planning_flag is True :
-            print("===== Path Planning Sequence =====")
-            planning_service = PathPlanningService()
-            planning_service.RequestPathPlanning(self.start_point, self.goal_point)
-            print("===== Debug point 1 =====")
-            rclpy.spin_once(planning_service)
-            if planning_service.future.done():
-                try : 
-                    planning_service.result = planning_service.future.result()
-                except Exception as e:
-                    planning_service.get_logger().info(
-                        'Service call failed %r' % (e,))
-                else :
-                    planning_service.get_logger().info( "Path Planning Complete!! ")
-                    print(planning_service.result.response_pathplanning)
-                    if planning_service.result.response_pathplanning is True :
-                        self.PP_response_timestamp = planning_service.result.response_timestamp
-                        self.waypoint_x = planning_service.result.waypoint_x
-                        self.waypoint_y = planning_service.result.waypoint_y
-                        self.waypoint_z = planning_service.result.waypoint_z
-                        self.waypoint_index = planning_service.result.waypoint_index
-                        self.path_planning_flag = False
-                        print(planning_service.result.response_timestamp)
-                        self.path_planning_complete = True
-                    else :
-                        pass    
-                finally : 
-                    planning_service.destroy_node()
-        else : 
-            pass
-        
-        if self.path_planning_complete is True : 
-            print(self.waypoint_x[3])
-        else : 
-            pass
+        # if self.map_generation_flag is True :
+        #     print("===== Map generation Sequence =====")
+        #     map_service = MapService()
+        #     map_service.RequestMapGeneration(self.map_generation_flag)
+        #     rclpy.spin_once(map_service)
+        #     if map_service.future.done():
+        #         try : 
+        #             map_service.result = map_service.future.result()
+        #         except Exception as e:
+        #             map_service.get_logger().info(
+        #                 'Service call failed %r' % (e,))
+        #         else :
+        #             map_service.get_logger().info( "Map Generation Complete!! ")
+        #             print(map_service.result.map_sequence_init)
+        #             if map_service.result.map_sequence_init is True :
+        #                 self.map_generation_flag = False
+        #             else :
+        #                 pass    
+        #         finally : 
+        #             map_service.destroy_node()
+        # else : 
+        #     pass
         
         
+        ###     Path Planning MODULE
+        # if self.path_planning_flag is True :
+        #     print("===== Path Planning Sequence =====")
+        #     planning_service = PathPlanningService()
+        #     planning_service.RequestPathPlanning(self.start_point, self.goal_point)
+        #     print("===== Debug point 1 =====")
+        #     rclpy.spin_once(planning_service)
+        #     if planning_service.future.done():
+        #         try : 
+        #             planning_service.result = planning_service.future.result()
+        #         except Exception as e:
+        #             planning_service.get_logger().info(
+        #                 'Path Planning Service call failed %r' % (e,))
+        #         else :
+        #             planning_service.get_logger().info( "Path Planning Complete!! ")
+        #             print(planning_service.result.response_pathplanning)
+        #             if planning_service.result.response_pathplanning is True :
+        #                 self.PP_response_timestamp = planning_service.result.response_timestamp
+        #                 self.waypoint_x = planning_service.result.waypoint_x
+        #                 self.waypoint_y = planning_service.result.waypoint_y
+        #                 self.waypoint_z = planning_service.result.waypoint_z
+        #                 self.waypoint_index = planning_service.result.waypoint_index
+        #                 self.path_planning_flag = False
+        #                 print(planning_service.result.response_timestamp)
+        #                 self.path_planning_complete = True
+        #             else :
+        #                 pass    
+        #         finally : 
+        #             planning_service.destroy_node()
+        # else : 
+        #     pass
+        
+        # if self.path_planning_complete is True : 
+        #     print(self.waypoint_x[3])
+        # else : 
+        #     pass
+        
+        
+        ###     PF GPR MODULE
+        # if self.path_following_gpr_flag is True :
+        #     print("===== Path Following GPR Sequence =====")
+        #     following_gpr_service = PathFollowingGPRService()
+        #     following_gpr_service.RequestPathFollowingGPR(self.outNDO)
+        #     print("===== Debug point 1 =====")
+
+        #     rclpy.spin_once(following_gpr_service)
+            
+        #     if following_gpr_service.future_gpr.done():
+        #         try : 
+        #             following_gpr_service.result = following_gpr_service.future_gpr.result()
+        #         except Exception as e:
+        #             following_gpr_service.get_logger().info(
+        #                 'Service call failed %r' % (e,))
+        #         else :
+        #             following_gpr_service.get_logger().info( "Path Following GPR Module Complete!! ")
+        #             print(following_gpr_service.result.response_gpr)
+        #             if following_gpr_service.result.response_gpr is True :
+        #                 self.PF_response_gpr_timestamp = following_gpr_service.result.response_timestamp
+        #                 self.gpr_output_data = following_gpr_service.result.gpr_output_data
+        #                 self.gpr_output_index = following_gpr_service.result.gpr_output_index
+        #                 self.gpr_output = [self.gpr_output_data[i * self.gpr_output_index:(i + 1) * self.gpr_output_index] for i in range((len(self.gpr_output_data) - 1 + self.gpr_output_index) // self.gpr_output_index )]
+        #                 self.path_following_gpr_flag = False
+        #                 print(following_gpr_service.result.response_timestamp)
+        #                 self.path_following_gpr_complete = True
+        #             else :
+        #                 pass    
+        #         finally : 
+        #             following_gpr_service.destroy_node()
+        #     else : 
+        #         self.get_logger().warn("===== Path Following GPR Module Can't Response =====")
+        # else : 
+        #     pass
+        
+        # if self.path_following_gpr_complete is True : 
+        #     print("gpr_output = ", str(self.gpr_output))
+        #     print("gpr_output_index = ", str(self.gpr_output_index))
+        #     self.path_following_gpr_complete = False
+        
+        
+        ###     PF GUID MODULE
+        # if self.path_following_guid_flag is True :
+        #     print("===== Path Following Guidance Sequence =====")
+        #     following_guid_service = PathFollowingGuidService()
+        #     following_guid_service.RequestPathFollowingGuid(self.waypoint_x, self.waypoint_y, self.waypoint_z, self.waypoint_index, self.gpr_output_data, self.gpr_output_index, self.outNDO, self.flag_guid_param)
+        #     print("===== Debug point 1 =====")
+
+        #     rclpy.spin_once(following_guid_service)
+        #     print("===== Debug point 2 =====")
+            
+        #     if following_guid_service.future_guid.done():
+        #         try : 
+        #             following_guid_service.result = following_guid_service.future_guid.result()
+        #             print("===== Debug point 3 =====")
+        #         except Exception as e:
+        #             following_guid_service.get_logger().info(
+        #                 'Service call failed %r' % (e,))
+        #         else :
+        #             print("===== Debug point 4 =====")
+        #             following_guid_service.get_logger().info( "Path Following Guid Module Complete!! ")
+        #             print(following_guid_service.result.response_guid)
+        #             if following_guid_service.result.response_guid is True :
+        #                 self.PF_response_guid_timestamp = following_guid_service.result.response_timestamp
+        #                 self.LAD = following_guid_service.result.lad
+        #                 self.SPDCMD = following_guid_service.result.spd_cmd
+        #                 self.path_following_guid_flag = False
+        #                 print(following_guid_service.result.response_timestamp)
+        #                 self.path_following_guid_complete = True
+        #             else :
+        #                 pass    
+        #         finally : 
+        #             following_guid_service.destroy_node()
+        #             print("===== Debug point 5 =====")
+        #     else :
+        #         self.get_logger().warn("===== Path Following Guid Module Can't Response =====")
+        # else : 
+        #     pass
+        
+        # if self.path_following_guid_complete is True : 
+        #     print("===== Debug point 6 =====")
+        #     self.get_logger().info("LAD = " + self.LAD + "\n")
+        #     self.get_logger().info("SPDCMD = " + self.SPDCMD + "\n")
+        
+        
+        ###  PF Attitude Command Module(Setpoint)
         if self.path_following_flag is True :
             print("===== Path Following Sequence =====")
             following_service = PathFollowingService()
@@ -230,10 +353,14 @@ class ControllerNode(Node):
                     if following_service.result.response_pathfollowing is True :
                         self.PF_response_setpoint_timestamp = following_service.result.response_timestamp
                         self.TargetThrust = following_service.result.targetthrust
+                        self.TargetThrustCmd = self.TargetThrust.copy()
                         self.TargetAttitude = following_service.result.targetattitude
+                        w, x, y, z  =   self.Euler2Quaternion(self.argetAttitude[0], self.TargetAttitude[1], self.TargetAttitude[2])
+                        self.TargetAttitudeCmd = np.array([w, x, y, z])
                         self.TargetPosition = following_service.result.targetposition
                         self.TargetYaw = following_service.result.targetyaw
                         self.outNDO = following_service.result.out_ndo
+                        self.path_following_flag = False
                         print(following_service.result.response_timestamp)
                         self.path_following_complete = True
                     else :
@@ -245,78 +372,53 @@ class ControllerNode(Node):
         else : 
             pass
         
+        if self.path_following_complete is True : 
+            print("TargetThrust = ", str(self.TargetThrust))
+            print("TargetAttitude = ", str(self.TargetAttitude))
+            print("TargetPosition = ", str(self.TargetPosition))
+            print("TargetYaw = ", str(self.TargetYaw))
+            print("outNDO = ", str(self.outNDO))
 
-
-        if self.path_following_gpr_flag is True :
-            print("===== Path Following GPR Sequence =====")
-            following_gpr_service = PathFollowingGPRService()
-            following_gpr_service.RequestPathFollowingGPR(self.outNDO)
+        ### Collision Avoidance Module
+        if self.collision_avoidance_flag is True :
+            print("===== Collision Avoidance Sequence =====")
+            collision_avoidance_service = CollisionAvoidanceService()
+            collision_avoidance_service.RequestCollisionAvoidance()
             print("===== Debug point 1 =====")
 
-            rclpy.spin_once(following_gpr_service)
+            rclpy.spin_once(collision_avoidance_service)
             
-            if following_gpr_service.future_gpr.done():
+            if collision_avoidance_service.future.done():
                 try : 
-                    following_gpr_service.result = following_gpr_service.future_gpr.result()
+                    collision_avoidance_service.result = collision_avoidance_service.future.result()
                 except Exception as e:
-                    following_gpr_service.get_logger().info(
+                    collision_avoidance_service.get_logger().info(
                         'Service call failed %r' % (e,))
                 else :
-                    following_gpr_service.get_logger().info( "Path Following GPR Module Complete!! ")
-                    print(following_gpr_service.result.response_gpr)
-                    if following_gpr_service.result.response_gpr is True :
-                        self.PF_response_gpr_timestamp = following_gpr_service.result.response_timestamp
-                        self.gpr_output = following_gpr_service.result.gpr_output
-                        self.path_following_gpr_flag = False
-                        print(following_gpr_service.result.response_timestamp)
-                        self.path_following_gpr_complete = True
+                    collision_avoidance_service.get_logger().info( "Collision Avoidance Module Complete!! ")
+                    print(collision_avoidance_service.result.response_collisionavoidance)
+                    if collision_avoidance_service.result.response_collisionavoidance is True :
+                        self.response_timestamp = collision_avoidance_service.result.response_timestamp
+                        
+                        self.collision_avoidance_flag = False
+        
+                        # print(collision_avoidance_service.result.response_timestamp)
+                        self.collision_avoidance_complete = True
                     else :
                         pass    
                 finally : 
-                    following_gpr_service.destroy_node()
-            else : 
-                self.get_logger().warn("===== Path Following GPR Module Can't Response =====")
+                    collision_avoidance_service.destroy_node()
+            else :
+                self.get_logger().warn("===== Collision Avoidance Module Can't Response =====")
         else : 
             pass
         
-        if self.path_following_guid_flag is True :
-            print("===== Path Following Guidance Sequence =====")
-            following_guid_service = PathFollowingGuidService()
-            following_guid_service.RequestPathFollowingGuid(self.waypoint_x, self.waypoint_y, self.waypoint_z, self.waypoint_index, self.gpr_output, self.outNDO, self.flag_guid_param)
-            print("===== Debug point 1 =====")
-
-            rclpy.spin_once(following_guid_service)
-            
-            if following_guid_service.future_guid.done():
-                try : 
-                    following_guid_service.result = following_guid_service.future_guid.result()
-                except Exception as e:
-                    following_guid_service.get_logger().info(
-                        'Service call failed %r' % (e,))
-                else :
-                    following_guid_service.get_logger().info( "Path Following Guid Module Complete!! ")
-                    print(following_guid_service.result.response_guid)
-                    if following_guid_service.result.response_guid is True :
-                        self.PF_response_guid_timestamp = following_gpr_service.result.response_timestamp
-                        self.LAD = following_guid_service.result.lad
-                        self.SPDCMD = following_guid_service.result.spd_cmd
-                        self.path_following_guid_flag = False
-                        print(following_guid_service.result.response_timestamp)
-                        self.path_following_guid_complete = True
-                    else :
-                        pass    
-                finally : 
-                    following_guid_service.destroy_node()
-            else :
-                self.get_logger().warn("===== Path Following Guid Module Can't Response =====")
-            
-        else : 
-            pass
+        
         
         
         
     def AlgorithmCallback(self):
-        # self.get_logger().info('Timer Check === Algorithm Timer')
+        self.get_logger().info("===== AlgorithmCallback Timer On =====")
         a=1
         # if self.map_generation_flag is True :
         #     if self.OffboardCount == self.OffboardCounter:
@@ -348,9 +450,9 @@ class ControllerNode(Node):
         #     pass
         
 
-        
     def OffboardControl_AttCmd(self):
-        # self.get_logger().info('Timer Check === AttCmd')
+        self.get_logger().info("===== Attitude Controller Timer On =====")
+        self.SetAttitude()
         self.OffboardTimer_velocity.destroy()
         b = 1
         
@@ -429,7 +531,7 @@ class ControllerNode(Node):
         self.vy = msg.states[5]
         self.vz = msg.states[6]
         #   Attitude
-        self.roll, self.pitch, self.yaw = self.Quaternion2Euler(msg.states[0], msg.states[1], msg.states[2], msg.states[3])
+        self.phi, self.theta, self.psi = self.Quaternion2Euler(msg.states[0], msg.states[1], msg.states[2], msg.states[3])
         #   Wind Velocity NE
         self.wn = msg.states[22]
         self.we = msg.states[23]
@@ -445,11 +547,11 @@ class ControllerNode(Node):
     def OffboardControlModeCallback(self):
         msg = OffboardControlMode()
         msg.timestamp = self.timestamp_offboard
-        msg.position = True
+        msg.position = False
         msg.velocity = True
-        msg.acceleration = True
+        msg.acceleration = False
         msg.attitude = True
-        msg.body_rate = True
+        msg.body_rate = False
         self.OffboardControlModePublisher_.publish(msg)
 
     ## Vehicle Mode
@@ -531,3 +633,52 @@ class ControllerNode(Node):
         Yaw = math.atan2(t3, t4) * 57.2958
 
         return Roll, Pitch, Yaw
+    
+    # Euler to Quaternion
+    def Euler2Quaternion(self, Roll, Pitch, Yaw):
+        CosYaw = math.cos(Yaw * 0.5)
+        SinYaw = math.sin(Yaw * 0.5)
+        CosPitch = math.cos(Pitch * 0.5)
+        SinPitch = math.sin(Pitch * 0.5)
+        CosRoll = math.cos(Roll * 0.5)
+        SinRoll= math.sin(Roll * 0.5)
+        
+        w = CosRoll * CosPitch * CosYaw + SinRoll * SinPitch * SinYaw
+        x = SinRoll * CosPitch * CosYaw - CosRoll * SinPitch * SinYaw
+        y = CosRoll * SinPitch * CosYaw + SinRoll * CosPitch * SinYaw
+        z = CosRoll * CosPitch * SinYaw - SinRoll * CosPitch * CosYaw
+        
+        return w, x, y, z
+    
+    # VehicleAttitudeSetpoint
+    def VehicleAttitudeSetpointCallback(self, SetQuaternion, BodyRate, SetThrust, SetYawRate):
+        msg = VehicleAttitudeSetpoint()
+        msg.timestamp = self.timestamp2
+
+        msg.roll_body = BodyRate[0]
+        msg.pitch_body = BodyRate[1]
+        msg.yaw_body = BodyRate[2]
+        
+        msg.q_d[0] = SetQuaternion[0]
+        msg.q_d[1] = SetQuaternion[1]
+        msg.q_d[2] = SetQuaternion[2]
+        msg.q_d[3] = SetQuaternion[3]
+        msg.thrust_body[0] = 0.0
+        msg.thrust_body[1] = 0.0
+        msg.thrust_body[2] = -SetThrust
+        msg.yaw_sp_move_rate = SetYawRate
+        
+        self.VehicleAttitudeSetpointPublisher_.publish(msg)
+        
+    def TrajectorySetpointCallback(self, SetPosition, SetVelocity, SetYaw):
+        msg = TrajectorySetpoint()
+        msg.timestamp = self.timestamp2
+        msg.x = SetPosition[0]
+        msg.y = SetPosition[1]
+        msg.z = SetPosition[2]
+        msg.vx = SetVelocity[0]
+        msg.vy = SetVelocity[1]
+        msg.vz = SetVelocity[2]
+        msg.yaw = SetYaw
+
+        self.TrajectorySetpointPublisher_.publish(msg)
