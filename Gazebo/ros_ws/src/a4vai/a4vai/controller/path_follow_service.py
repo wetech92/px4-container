@@ -27,7 +27,6 @@ class PathFollowingService(Node):
         self.TimesyncSubscriber_ = self.create_subscription(Timesync, '/fmu/time_sync/out', self.TimesyncCallback, self.QOS_Sub_Sensor)
         self.declare_service_client_custom()
         self.timestamp = 0
-        self.recordtimestamp = self.timestamp.copy()
         
     def declare_service_client_custom(self): 
         self.PathFollowingServiceClient_ = self.create_client(PathFollowingSetpoint, 'path_following_att_cmd')
@@ -50,9 +49,9 @@ class PathFollowingService(Node):
             depth=10,
             durability=QoSDurabilityPolicy.VOLATILE)
         
-    def RequestPathFollowing(self, waypoint_x, waypoint_y, waypoint_z, waypoint_index, LAD, SPDCMD):
+    def RequestPathFollowing(self, waypoint_x, waypoint_y, waypoint_z, waypoint_index, LAD, SPDCMD, initTimeStamp):
         self.path_following_request = PathFollowingSetpoint.Request()
-        self.path_following_request.request_init_timestamp = self.recordtimestamp * 10**(-6)
+        self.path_following_request.request_init_timestamp = initTimeStamp
         self.path_following_request.request_timestamp = self.timestamp
         self.path_following_request.request_pathfollowing = True
         self.path_following_request.waypoint_x = waypoint_x
@@ -97,9 +96,9 @@ class PathFollowingGPRService(Node):
             depth=10,
             durability=QoSDurabilityPolicy.VOLATILE)
 
-    def RequestPathFollowingGPR(self, outNDO):
+    def RequestPathFollowingGPR(self, outNDO, initTimeStamp):
         self.path_following_gpr_request = PathFollowingGPR.Request()
-        self.path_following_gpr_request.request_init_timestamp = self.self.timestamp * 10**(-6)
+        self.path_following_gpr_request.request_init_timestamp = initTimeStamp
         self.path_following_gpr_request.request_timestamp = self.timestamp
         self.path_following_gpr_request.request_gpr = True
         self.path_following_gpr_request.out_ndo = outNDO
