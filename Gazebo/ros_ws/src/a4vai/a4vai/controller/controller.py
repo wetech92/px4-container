@@ -189,71 +189,70 @@ class ControllerNode(Node):
     def TestCallback(self):
         self.get_logger().info("===== Test Timer On =====")
         
-        # if self.map_generation_flag is True :
-        #     print("===== Map generation Sequence =====")
-        #     map_service = MapService()
-        #     map_service.RequestMapGeneration(self.map_generation_flag)
-        #     rclpy.spin_once(map_service)
-        #     if map_service.future.done():
-        #         try : 
-        #             map_service.result = map_service.future.result()
-        #         except Exception as e:
-        #             map_service.get_logger().info(
-        #                 'Service call failed %r' % (e,))
-        #         else :
-        #             map_service.get_logger().info( "Map Generation Complete!! ")
-        #             print(map_service.result.map_sequence_init)
-        #             if map_service.result.map_sequence_init is True :
-        #                 self.map_generation_flag = False
-        #             else :
-        #                 pass    
-        #         finally : 
-        #             map_service.destroy_node()
-        # else : 
-        #     pass
+        if self.map_generation_flag is True :
+            print("===== Map generation Sequence =====")
+            map_service = MapService()
+            map_service.RequestMapGeneration(self.map_generation_flag)
+            rclpy.spin_once(map_service)
+            if map_service.future.done():
+                try : 
+                    map_service.result = map_service.future.result()
+                except Exception as e:
+                    map_service.get_logger().info(
+                        'Service call failed %r' % (e,))
+                else :
+                    map_service.get_logger().info( "Map Generation Complete!! ")
+                    print(map_service.result.map_sequence_init)
+                    if map_service.result.map_sequence_init is True :
+                        self.map_generation_flag = False
+                    else :
+                        pass    
+                finally : 
+                    map_service.destroy_node()
+        else : 
+            pass
         
         
-        ###     Path Planning MODULE
-        # if self.path_planning_flag is True :
-        #     print("===== Path Planning Sequence =====")
-        #     planning_service = PathPlanningService()
-        #     planning_service.RequestPathPlanning(self.start_point, self.goal_point)
-        #     print("===== Debug point 1 =====")
-        #     rclpy.spin_once(planning_service)
-        #     if planning_service.future.done():
-        #         try : 
-        #             planning_service.result = planning_service.future.result()
-        #         except Exception as e:
-        #             planning_service.get_logger().info(
-        #                 'Path Planning Service call failed %r' % (e,))
-        #         else :
-        #             planning_service.get_logger().info( "Path Planning Complete!! ")
-        #             print(planning_service.result.response_pathplanning)
-        #             if planning_service.result.response_pathplanning is True :
-        #                 self.PP_response_timestamp = planning_service.result.response_timestamp
-        #                 self.waypoint_x = planning_service.result.waypoint_x
-        #                 self.waypoint_y = planning_service.result.waypoint_y
-        #                 self.waypoint_z = planning_service.result.waypoint_z
-        #                 self.waypoint_index = planning_service.result.waypoint_index
-        #                 self.path_planning_flag = False
-        #                 print(planning_service.result.response_timestamp)
-        #                 self.path_planning_complete = True
-        #             else :
-        #                 pass    
-        #         finally : 
-        #             planning_service.destroy_node()
-        # else : 
-        #     pass
+        ##     Path Planning MODULE
+        if self.path_planning_flag is True :
+            print("===== Path Planning Sequence =====")
+            planning_service = PathPlanningService()
+            planning_service.RequestPathPlanning(self.start_point, self.goal_point)
+            print("===== Debug point 1 =====")
+            rclpy.spin_once(planning_service)
+            if planning_service.future.done():
+                try : 
+                    planning_service.result = planning_service.future.result()
+                except Exception as e:
+                    planning_service.get_logger().info(
+                        'Path Planning Service call failed %r' % (e,))
+                else :
+                    planning_service.get_logger().info( "Path Planning Complete!! ")
+                    print(planning_service.result.response_pathplanning)
+                    if planning_service.result.response_pathplanning is True :
+                        self.PP_response_timestamp = planning_service.result.response_timestamp
+                        self.waypoint_x = planning_service.result.waypoint_x
+                        self.waypoint_y = planning_service.result.waypoint_y
+                        self.waypoint_z = planning_service.result.waypoint_z
+                        self.path_planning_flag = False
+                        print(planning_service.result.response_timestamp)
+                        self.path_planning_complete = True
+                    else :
+                        pass    
+                finally : 
+                    planning_service.destroy_node()
+        else : 
+            pass
         
-        # if self.path_planning_complete is True : 
-        #     print(self.waypoint_x[3])
-        # else : 
-        #     pass
+        if self.path_planning_complete is True : 
+            print(self.waypoint_x[3])
+        else : 
+            pass
         
         
         ###     PF GPR MODULE
         if self.path_following_gpr_flag is True :
-            if initFlag_GPR is True : 
+            if self.initFlag_GPR is True : 
                 self.initTimeStamp_GPR = self.timestamp_offboard
                 self.initFlag_GPR = False
             print("===== Path Following GPR Sequence =====")
@@ -341,15 +340,13 @@ class ControllerNode(Node):
         
         ###  PF Attitude Command Module(Setpoint)
         if self.path_following_flag is True :
-            if initFlag_PF_Att_Cmd is True :
+            if self.initFlag_PF_Att_Cmd is True :
                 self.initTimeStamp_PF_Att_Cmd = self.timestamp_offboard
                 self.initFlag_PF_Att_Cmd = False
             print("===== Path Following Sequence =====")
             following_service = PathFollowingService()
             following_service.RequestPathFollowing(self.waypoint_x, self.waypoint_y, self.waypoint_z, self.waypoint_index, self.LAD, self.SPDCMD, self.initTimeStamp_PF_Att_Cmd)
-            print("===== Debug point 1 =====")
             rclpy.spin_once(following_service)
-
 
             if following_service.future_setpoint.done():
                 try : 
@@ -389,6 +386,8 @@ class ControllerNode(Node):
             print("TargetYaw = ", str(self.TargetYaw))
             print("outNDO = ", str(self.outNDO))
 
+
+
         ### Collision Avoidance Module
         if self.collision_avoidance_flag is True :
             print("===== Collision Avoidance Sequence =====")
@@ -397,7 +396,6 @@ class ControllerNode(Node):
             print("===== Debug point 1 =====")
 
             rclpy.spin_once(collision_avoidance_service)
-            
             if collision_avoidance_service.future.done():
                 try : 
                     collision_avoidance_service.result = collision_avoidance_service.future.result()
@@ -409,10 +407,7 @@ class ControllerNode(Node):
                     print(collision_avoidance_service.result.response_collisionavoidance)
                     if collision_avoidance_service.result.response_collisionavoidance is True :
                         self.response_timestamp = collision_avoidance_service.result.response_timestamp
-                        
                         self.collision_avoidance_flag = False
-        
-                        # print(collision_avoidance_service.result.response_timestamp)
                         self.collision_avoidance_complete = True
                     else :
                         pass    

@@ -72,7 +72,7 @@ source /usr/share/gazebo-11/setup.sh
 
 # Run MAVLink Router for Communication with QGC
 echo ">>>>>>>>>>>>>INITIALIZEING MAVLINK ROUTER FOR QGC CONNECTION<<<<<<<<<<<"
-nohup mavlink-routerd -e 172.30.0.7:14550 127.0.0.1:14550 &
+nohup mavlink-routerd -e 172.50.0.7:14550 127.0.0.1:14550 &
 sleep 3s
 
 # Run microRTPS bridge for Communication in ROS2 msg
