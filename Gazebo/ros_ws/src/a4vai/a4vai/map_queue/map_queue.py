@@ -76,8 +76,8 @@ class MapGenerationNode(Node):
         self.map_generation_request.world_generation_request = True
         self.futures = self.MapGenerationServiceClient_.call_async(self.map_generation_request)
         # rclpy.spin_until_future_complete(self, futures)
-        # if self.result.map_generation is True : 
-            # print("Map Generation Complete!!")
+        # if self.result.world_generation_request is True : 
+        #     print("Map Generation Complete!!")
             
     def declare_service_client_custom(self):
         self.MapGenerationServiceClient_ = self.create_client(MapGeneration, 'map_generation')

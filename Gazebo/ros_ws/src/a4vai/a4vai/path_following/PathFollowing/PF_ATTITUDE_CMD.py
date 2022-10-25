@@ -34,18 +34,22 @@ class PF_ATTITUDE_CMD_MOD():
         pass
 
     def PF_ATTITUDE_CMD_Module(self, timestemp, PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, Acc_disturb, LAD=2., SPDCMD=2.):
+        print("###########11111!!!!###########")
         outNDO = self.NDO_main(self.GCUParams.dt_GCU, Vn, self.FbCmd, AngEuler, self.GCUParams.Mass, \
             self.GCUParams.rho, self.GCUParams.Sref, self.GCUParams.CD, self.GCUParams.g0)
+        print("###########2222222###########")
         if Acc_disturb[0] == 0.:
             Acc_disturb =   self.outNDO + self.a_drag_n
         TargetThrust, TargetAttitude, TargetPosition, TargetYaw = \
             self.PF_main(timestemp, PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, Acc_disturb, LAD, SPDCMD)
+        print("##########333333###########")
 
         return TargetThrust, TargetAttitude.tolist(), TargetPosition.tolist(), TargetYaw, outNDO.tolist()
 
     def PF_main(self, timestemp, PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, Acc_disturb, LAD=2., SPDCMD=2.):
         #.. Guid. Params.
             self.GCUParams.lookAheadDist    =      LAD
+            print("##########444444###########")
             self.GCUParams.desSpd       =   SPDCMD
             # self.GCUParamsreachDist     =   self.GCUParams.lookAheadDist
             self.GCUParamsreachDist     =   3.

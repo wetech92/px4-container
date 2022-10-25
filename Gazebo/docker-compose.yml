@@ -34,11 +34,11 @@ services:
       - /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json
       # --------SET FOR DEVELOPMENT OR DEBUGGING---------
       # ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ 
-      # - ${HOME}/workspace/git/px4-container/Gazebo/entrypoint.sh:/usr/local/bin/entrypoint.sh
-      # - ${HOME}/workspace/git/px4-container/Gazebo/ros_ws/src:/root/ros_ws/src
-      # - ${HOME}/workspace/git/px4-container/Gazebo/gazebo_ros/src:/root/gazebo_ros/src
-      # - ${HOME}/workspace/git/px4-container/Gazebo/models:/root/PX4-Autopilot/Tools/sitl_gazebo/models
-      # - ${HOME}/workspace/git/px4-container/Gazebo/worlds:/root/PX4-Autopilot/Tools/sitl_gazebo/worlds
+      - ${HOME}/workspace/git/px4-container/Gazebo/entrypoint.sh:/usr/local/bin/entrypoint.sh
+      - ${HOME}/workspace/git/px4-container/Gazebo/ros_ws/src:/root/ros_ws/src
+      - ${HOME}/workspace/git/px4-container/Gazebo/gazebo_ros/src:/root/gazebo_ros/src
+      - ${HOME}/workspace/git/px4-container/Gazebo/models:/root/PX4-Autopilot/Tools/sitl_gazebo/models
+      - ${HOME}/workspace/git/px4-container/Gazebo/worlds:/root/PX4-Autopilot/Tools/sitl_gazebo/worlds
       # ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ 
       # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
       # - /mnt/wslg:/mnt/wslg

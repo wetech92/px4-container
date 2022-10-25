@@ -4,20 +4,22 @@ import rclpy
 
 # from rclpy.executors import MultiThreadedExecutor
 
-from a4vai.collision_avoidance.nmpc_net_module import NMPC_NET_Node
-
+from a4vai.collision_avoidance.CollisionAvoidance import Collision_Avoidance
 
 def main(args=None):
     rclpy.init(args=args)
-    JBNU_module = NMPC_NET_Node()
+    collision_avoidance_module = Collision_Avoidance()
+    
     try:
-        rclpy.spin(JBNU_module)
+        rclpy.spin(collision_avoidance_module)
+        
     except KeyboardInterrupt:
-        JBNU_module.get_logger().info('Keyboard Interrupt (SIGINT)')
+        collision_avoidance_module.get_logger().info('Keyboard Interrupt (SIGINT)')
+       
     finally:
-        JBNU_module.destroy_node()
+        collision_avoidance_module.destroy_node()
+        
         rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()

@@ -74,6 +74,7 @@ class PFAttitudeCmdModule(Node):
     def declare_subscriber_px4(self):
         #   init PX4 MSG Subscriber
         self.TimesyncSubscriber_ = self.create_subscription(Timesync, '/fmu/time_sync/out', self.TimesyncCallback, self.QOS_Sub_Sensor)
+        print("######### att sub ###########")
         self.EstimatorStatesSubscriber_ = self.create_subscription(EstimatorStates, '/fmu/estimator_states/out', self.EstimatorStatesCallback, self.QOS_Sub_Sensor)
         # self.VehicleAngularVelocitySubscriber_ = self.create_subscription(VehicleAngularVelocity, '/fmu/vehicle_angular_velocity/out', self.VehicleAngularVelocityCallback, self.QOS_Sub_Sensor)
         print("====== px4 Subscriber Open ======")
@@ -107,7 +108,7 @@ class PFAttitudeCmdModule(Node):
             Time   =   self.requestTimestamp * 10**(-6) - InitTime
             Pos         =   [self.x, self.y, self.z]
             Vn          =   [self.vx, self.vy, self.vz]
-            AngEuler    =   [self.roll * math.pi /180., self.pitch * math.pi /180., self.yaw * math.pi /180.]
+            AngEuler    =   [self.phi * math.pi /180., self.theta * math.pi /180., self.psi * math.pi /180.]
             Acc_disturb =   [0., 0., 0.]
             # function
             self.TargetThrust, self.TargetAttitude, self.TargetPosition, self.TargetYaw, self.outNDO = \
@@ -209,3 +210,24 @@ class PFAttitudeCmdModule(Node):
         Yaw = math.atan2(t3, t4) * 57.2958
 
         return Roll, Pitch, Yaw
+    
+
+def main(args=None):
+    rclpy.init(args=args)
+    
+    pf_attitude_cmd_module = PFAttitudeCmdModule()
+
+
+    try : 
+        rclpy.spin(pf_attitude_cmd_module)
+    except Exception as e:
+                    pf_attitude_cmd_module.get_logger().info(
+                        'MPPI module Start failed %r' % (e,))
+    finally :
+        pf_attitude_cmd_module.destroy_node()
+
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()

@@ -1,16 +1,18 @@
-import cv2
-import numpy as np
 from random import *
 #import airsim
 # from tensorflow.keras.models import load_model
 import onnx
 import onnxruntime as ort
+import cv2
+import numpy as np
+# import torch
+
 
 class JBNU_Collision():
     def __init__(self):
         print("initialJBNU")
         
-    def CA(self, Image, model):
+    def CA(self, img2d):
         """
         responses = self.client.simGetImages([airsim.ImageRequest("", airsim.ImageType.DepthPerspective,  True,False)]) 
         response = responses[0]
@@ -21,18 +23,22 @@ class JBNU_Collision():
             print("Something bad happened! Restting AirSim!")
             img2d = np.ones(640, 480)
         """
-        img2d = Image
+        Image = img2d
         
+        Image = cv2.resize(Image, (200,200), cv2.INTER_AREA)
+        Image = np.expand_dims(Image, axis=0)
         
-        
-        depth_8bit_lerped = np.interp(img2d, (0.0, 10), (0, 255))
-        image=cv2.applyColorMap(cv2.convertScaleAbs(depth_8bit_lerped,alpha=1),cv2.COLORMAP_JET)
-        image=cv2.resize(image,(200,200),cv2.INTER_AREA)
-        infer = model.predict(image, batch_size=1)
-        vx = infer[0][0]
+        onnx_model = onnx.load("C:/Users/hyeeun/Desktop/temp/221025/feedforward.onnx")
+        onnx.checker.check_model(onnx_model)
+        ort_session = ort.InferenceSession("C:/Users/hyeeun/Desktop/temp/221025/feedforward.onnx")
+        # print(onnx.helper.printable_graph(onnx_model.graph))
+        input_name = ort_session.get_inputs()[0].name
+        Act = ort_session.run(None, {input_name:Image.astype(np.float32)})
+        vx = Act[0][0][0]
         vy = 0.0
-        vz = infer[0][1]
-        vyaw = infer[0][2]
+        vz = Act[0][0][1]
+        vyaw = -Act[0][0][2]
+        
         return vx,vy,vz,vyaw
 
         

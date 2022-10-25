@@ -47,6 +47,13 @@ class MapService(Node):
             durability=QoSDurabilityPolicy.VOLATILE)
         
     def RequestMapGeneration(self,flag):
+        # print("---- Debug ----")
+        '''
+        bool request_init_map
+        ---
+        bool map_sequence_init
+
+        '''
         self.map_sequence_request = MapInit.Request()
         self.map_sequence_request.request_init_map = flag
         self.future = self.MapSequenceServiceClient_.call_async(self.map_sequence_request)

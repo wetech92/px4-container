@@ -36,9 +36,12 @@ setup(
         'console_scripts': [
             'controller = a4vai.controller.main:main',
             'JBNU_module = a4vai.collision_avoidance.main:main',
-            'path_following = a4vai.path_following.main:main',
+            'path_following_gpr = a4vai.path_following.pf_gpr_module:main',
+            'path_following_att = a4vai.path_following.pf_attitude_cmd_module:main',
+            'path_following_guid = a4vai.path_following.pf_guid_param_module:main',
             'deep_sac_module = a4vai.path_planning.main:main',
             'map_queue = a4vai.map_queue.map_queue:main',
+            'LOSCA_module = a4vai.collision_avoidance.main:main',
         ],
     },
 )

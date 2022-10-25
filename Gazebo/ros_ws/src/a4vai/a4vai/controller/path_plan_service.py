@@ -55,6 +55,7 @@ class PathPlanningService(Node):
         self.path_planning_request.start_point = start_point
         self.path_planning_request.goal_point = goal_point
         self.future = self.PathPlanningServiceClient_.call_async(self.path_planning_request)
+        # rclpy.spin_until_future_complete(self, self.future)
 
 
     def TimesyncCallback(self, msg):

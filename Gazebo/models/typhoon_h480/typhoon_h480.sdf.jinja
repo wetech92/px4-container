@@ -9,7 +9,7 @@
         <!-- rear reference point X: -100.044mm, CAD offset: 1001.049mm -->
         <!-- top reference point Z: 33.8663mm, CAD offset: 42.8698mm -->
         <pose>0.001005 0 -0.0090035 0 0 0</pose>
-        <mass>1.02</mass>
+        <mass>2.02</mass>
         <inertia>
           <ixx>0.011</ixx>
           <ixy>0</ixy>
@@ -26,6 +26,17 @@
             <size>0.67 0.67 0.15</size>
           </box>
         </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
       </collision>
       <visual name='base_link_visual'>
         <pose>0 0 0 0 0 3.141592</pose>
@@ -42,14 +53,108 @@
           </script>
         </material>
       </visual>
+      <!--
+      <visual name='rotor_0_prop_guard_jybhz'>
+        <pose>0 0 0 0 0 3.14159265359</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://typhoon_h480/meshes/prop_guard_jybhz.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='rotor_1_prop_guard_jybhz'>
+        <pose>0 0 0 0 0 -1.0471975512</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://typhoon_h480/meshes/prop_guard_jybhz.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='rotor_2_prop_guard_jybhz'>
+        <pose>0 0 0 0 0 -2.09439510239</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://typhoon_h480/meshes/prop_guard_jybhz.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='rotor_3_prop_guard_jybhz'>
+        <pose>0 0 0 0 0 2.09439510239</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://typhoon_h480/meshes/prop_guard_jybhz.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='rotor_4_prop_guard_jybhz'>
+        <pose>0 0 0 0 0 1.0471975512</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://typhoon_h480/meshes/prop_guard_jybhz.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='rotor_5_prop_guard_jybhz'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://typhoon_h480/meshes/prop_guard_jybhz.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      -->
       <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
     </link>
 
     <link name="left_leg">
       <inertial>
         <!-- place holder -->
         <pose>0 -0.14314 -0.207252 0 0 0</pose>
-        <mass>0.5</mass>
+        <mass>0.1</mass>
         <inertia>
           <ixx>0.001</ixx>
           <ixy>0</ixy>
@@ -63,8 +168,17 @@
         <pose>-0.005 -0.14314 -0.207252 0 1.56893 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.052209</radius>
-            <length>0.25</length>
+            <radius>0.012209</radius>
+            <length>0.3</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name='collision_bar'>
+        <pose>0.00052 -0.08503 -0.121187 -0.501318 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.00914984</radius>
+            <length>0.176893</length>
           </cylinder>
         </geometry>
       </collision>
@@ -94,6 +208,7 @@
           <lower>0</lower>
           <upper>0</upper>
         </limit>
+        <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
     </joint>
 
@@ -102,7 +217,7 @@
       <inertial>
         <!-- place holder -->
         <pose>0 0.14314 -0.207252 0 0 0</pose>
-        <mass>0.5</mass>
+        <mass>0.1</mass>
         <inertia>
           <ixx>0.001</ixx>
           <ixy>0</ixy>
@@ -116,8 +231,17 @@
         <pose>-0.005 0.14314 -0.207252 0 1.56893 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.052209</radius>
-            <length>0.25</length>
+            <radius>0.012209</radius>
+            <length>0.3</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name='collision_bar'>
+        <pose>0.00052 0.08503 -0.121187 0.501318 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.00914984</radius>
+            <length>0.176893</length>
           </cylinder>
         </geometry>
       </collision>
@@ -147,9 +271,9 @@
           <lower>0</lower>
           <upper>0</upper>
         </limit>
+        <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
     </joint>
-    
 
     <link name='typhoon_h480/imu_link'>
       <pose>0 0 0 0 0 0</pose>
@@ -177,7 +301,12 @@
           <effort>0</effort>
           <velocity>0</velocity>
         </limit>
-        </axis>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
     </joint>
     <link name='rotor_3'>
       <pose>0.211396 0.119762 0.082219 0 0 0</pose>
@@ -238,7 +367,12 @@
           <lower>-1e+16</lower>
           <upper>1e+16</upper>
         </limit>
-        </axis>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
     </joint>
     <link name='rotor_0'>
       <pose>-0.209396 0.122762 0.082219 0 0 2.09439510239</pose>
@@ -299,7 +433,12 @@
           <lower>-1e+16</lower>
           <upper>1e+16</upper>
         </limit>
-        </axis>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
     </joint>
     <link name='rotor_4'>
       <pose>-0.00187896 0.242705 0.0822169 0 0 0</pose>
@@ -360,7 +499,12 @@
           <lower>-1e+16</lower>
           <upper>1e+16</upper>
         </limit>
-        </axis>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
     </joint>
     <link name='rotor_1'>
       <pose>0.211396 -0.119762 0.082219 0 0 -2.09439510239</pose>
@@ -421,7 +565,12 @@
           <lower>-1e+16</lower>
           <upper>1e+16</upper>
         </limit>
-        </axis>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
     </joint>
 
     <link name='rotor_5'>
@@ -483,7 +632,12 @@
           <lower>-1e+16</lower>
           <upper>1e+16</upper>
         </limit>
-        </axis>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
     </joint>
     <link name='rotor_2'>
       <pose>-0.209396 -0.122762 0.082219 0 0 2.09439510239</pose>
@@ -544,7 +698,12 @@
           <lower>-1e+16</lower>
           <upper>1e+16</upper>
         </limit>
-        </axis>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
     </joint>
 
 

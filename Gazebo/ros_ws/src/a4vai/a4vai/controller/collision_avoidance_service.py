@@ -30,7 +30,7 @@ class CollisionAvoidanceService(Node):
     def declare_service_client_custom(self): 
         self.CollisionAvoidanceServiceClient_ = self.create_client(CollisionAvoidanceSetpoint, 'collision_avoidance')
         while not self.CollisionAvoidanceServiceClient_.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Path Planning not available, waiting again...') 
+            self.get_logger().info('Collision Avoidance not available, waiting again...') 
  
     def qosProfileGen(self):
         #   Reliability : 데이터 전송에 있어 속도를 우선시 하는지 신뢰성을 우선시 하는지를 결정하는 QoS 옵션
@@ -49,7 +49,7 @@ class CollisionAvoidanceService(Node):
             durability=QoSDurabilityPolicy.VOLATILE)
         
     def RequestCollisionAvoidance(self):
-        print(" Request Collision service ")
+        print(" Request Collision service in ")
         self.collision_avoidance_request = CollisionAvoidanceSetpoint.Request()
         self.collision_avoidance_request.request_timestamp = self.timestamp
         self.collision_avoidance_request.request_collisionavoidance = True

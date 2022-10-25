@@ -57,16 +57,18 @@ class DeepSACNode(Node):
         self.requestTimestamp = request.request_timestamp
         self.start_point = request.start_point
         self.goal_point = request.goal_point
-        # self.Image = (cv2.imread("/root/ros_ws/src/a4vai/a4vai/path_planning/Map/RawImage.png"), cv2.IMREAD_GRAYSCALE)
         if self.requestFlag is True : 
             self.LenRRT = RRT.PathPlanning(self, self.start_point, self.goal_point)
-            self.waypoint_x, self.waypoint_y, self.waypoint_z = SAC.PathPlanning(self, self.start_point, self.goal_point, self.LenRRT)
+            waypoint_x, waypoint_y, waypoint_z = SAC.PathPlanning(self, self.start_point, self.goal_point, self.LenRRT)
             print("===== PathPlanning Complete!! =====")
             response.response_timestamp = self.response_timestamp
             response.response_pathplanning = True
-            response.waypoint_x = self.waypoint_x
-            response.waypoint_y = self.waypoint_y
-            response.waypoint_z = self.waypoint_z
+            response.waypoint_x = waypoint_x
+            response.waypoint_y = waypoint_y
+            response.waypoint_z = waypoint_z
+            # response.waypoint_x = [5.2, 3.4, 7.6, 851.3, 450.5]
+            # response.waypoint_y = [5.2, 3.4, 7.6, 851.3, 450.5]
+            # response.waypoint_z = [5.2, 3.4, 7.6, 851.3, 450.5]
             print("===== Response PathPlanning Node =====")
             return response
         else : 
@@ -397,6 +399,7 @@ class SAC:
         
         print("SAC-Pruning x-waypoints", pruned_x_points)
         print("SAC-Pruning y-waypoints", pruned_y_points)
+        print("SAC-Pruning z-waypoints", pruned_z_points)
 
         return pruned_x_points, pruned_y_points, pruned_z_points
     

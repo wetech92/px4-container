@@ -240,4 +240,23 @@ class PFGuidModule(Node):
         Yaw = m.atan2(t3, t4) * 57.2958
 
         return Roll, Pitch, Yaw
-        
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    
+    pf_guid_module = PFGuidModule()
+
+    try :       
+        rclpy.spin(pf_guid_module)
+    except Exception as e:
+                    pf_guid_module.get_logger().info(
+                        'MPPI module Start failed %r' % (e,))
+    finally :
+
+        pf_guid_module.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
