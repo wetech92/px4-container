@@ -79,7 +79,7 @@
       <self_collide>false</self_collide>
       <velocity_decay/>
 
-      <pose>0.229809703885628 -0.22980970388562796 0.06 0 0 0</pose>
+      <pose>0.22980970388562796 -0.22980970388562794 0.06 0 0 0</pose>
       <inertial>
           <mass>0.019</mass>
           <inertia>
@@ -218,7 +218,7 @@
       <self_collide>false</self_collide>
       <velocity_decay/>
 
-      <pose>-0.22980970388562794 0.229809703885628 0.06 0 0 0</pose>
+      <pose>-0.22980970388562794 0.22980970388562796 0.06 0 0 0</pose>
       <inertial>
           <mass>0.019</mass>
           <inertia>
@@ -357,7 +357,7 @@
       <self_collide>false</self_collide>
       <velocity_decay/>
 
-      <pose>0.229809703885628 0.22980970388562796 0.06 0 0 0</pose>
+      <pose>0.22980970388562796 0.22980970388562794 0.06 0 0 0</pose>
       <inertial>
           <mass>0.019</mass>
           <inertia>
@@ -496,7 +496,7 @@
       <self_collide>false</self_collide>
       <velocity_decay/>
 
-      <pose>-0.22980970388562794 -0.229809703885628 0.06 0 0 0</pose>
+      <pose>-0.22980970388562794 -0.22980970388562796 0.06 0 0 0</pose>
       <inertial>
           <mass>0.019</mass>
           <inertia>

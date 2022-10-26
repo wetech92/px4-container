@@ -21,22 +21,37 @@ class PF_ATTITUDE_CMD_MOD():
     #.. NDO variables
         self.FbCmd      =   np.array([0., 0., -self.GCUParams.Mass * self.GCUParams.g0])
         self.z_NDO      =   np.zeros(3)
+        self.z_NDO_in = [0.0, 0.0, 0.0]
         self.lx_NDO     =   4.
         self.ly_NDO     =   4.
         self.lz_NDO     =   0.2
         self.outNDO     =   np.zeros(3)
         self.a_drag_n   =   np.zeros(3)
+        self.firstTime = True
 
     #.. temp
         self.Flag_Write =   False # True
         self.total_cost =   0.
-        self.datalogFile    =   open("/root/ros_ws/src/a4vai/a4vai/path_following/sharedir/datalog.txt",'w')
+        #self.datalogFile    =   open("/root/ros_ws/src/a4vai/a4vai/path_following/sharedir/datalog.txt",'w')
         pass
 
-    def PF_ATTITUDE_CMD_Module(self, timestemp, PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, Acc_disturb, LAD=2., SPDCMD=2.):
+    def PF_ATTITUDE_CMD_Module(self, timestemp, PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, Acc_disturb, z_NDO_past, LAD=2., SPDCMD=2.):
         print("###########11111!!!!###########")
-        outNDO = self.NDO_main(self.GCUParams.dt_GCU, Vn, self.FbCmd, AngEuler, self.GCUParams.Mass, \
-            self.GCUParams.rho, self.GCUParams.Sref, self.GCUParams.CD, self.GCUParams.g0)
+
+        # self.GCUParams.dt_GCU = 1.
+        # Vn = np.zeros(3)
+        # self.FbCmd = np.zeros(3)
+        # AngEuler = np.zeros(3)
+        # self.GCUParams.Mass = 1.
+        # self.GCUParams.rho = 1.
+        # self.GCUParams.Sref = 1.
+        # self.GCUParams.CD = 1.
+        # self.GCUParams.g0 = 1.
+        # z_NDO_past = np.zeros(3)
+
+
+        outNDO, z_NDO_out = self.NDO_main(self.GCUParams.dt_GCU, Vn, self.FbCmd, AngEuler, self.GCUParams.Mass, \
+            self.GCUParams.rho, self.GCUParams.Sref, self.GCUParams.CD, self.GCUParams.g0, z_NDO_past)
         print("###########2222222###########")
         if Acc_disturb[0] == 0.:
             Acc_disturb =   self.outNDO + self.a_drag_n
@@ -44,7 +59,7 @@ class PF_ATTITUDE_CMD_MOD():
             self.PF_main(timestemp, PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, Acc_disturb, LAD, SPDCMD)
         print("##########333333###########")
 
-        return TargetThrust, TargetAttitude.tolist(), TargetPosition.tolist(), TargetYaw, outNDO.tolist()
+        return TargetThrust, TargetAttitude.tolist(), TargetPosition.tolist(), TargetYaw, outNDO.tolist(), z_NDO_out.tolist()
 
     def PF_main(self, timestemp, PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, Acc_disturb, LAD=2., SPDCMD=2.):
         #.. Guid. Params.
@@ -61,16 +76,19 @@ class PF_ATTITUDE_CMD_MOD():
             Vn          =   np.array(Vn)
             AngEuler    =   np.array(AngEuler)
             Acc_disturb =   np.array(Acc_disturb)
+            print("##########55555###########")
 
         #.. Virtual Target
             # function & output
             tgPos       =   Calc_VirTgPos(Pos, nextWPidx, WPs, LAD)
+            print("##########666###########")
 
         #.. Kinematics
             # input
             tgVn        =   np.array([0., 0., 0.])
             # function & output
             LOSazim, LOSelev, dLOSvec, reldist, tgo  =   Kinematics(tgPos, tgVn, Pos, Vn)
+            print("##########666###########")
 
         #.. Guidance
             Kgain           =   self.GCUParams.Kgain_guidPursuit
@@ -78,6 +96,7 @@ class PF_ATTITUDE_CMD_MOD():
             # function & output
             AccCmdw_Lat     =   Guid_pursuit(Kgain, tgo, LOSazim, LOSelev, Vn, AccLim)
             AccCmdw         =   AccCmdw_Lat
+            print("##########666###########")
 
         #.. speed control module
             # vars. for inputs
@@ -154,9 +173,10 @@ class PF_ATTITUDE_CMD_MOD():
 
 
             return ThrustCmd, AttCmd, tgPos, LOSazim
-            
-    def NDO_main(self, dt, Vn, FbCmd, AngEuler, mass, rho, Sref, CD, g):
+        
 
+    def NDO_main(self, dt, Vn, FbCmd, AngEuler, mass, rho, Sref, CD, g, z_NDO_past):
+        print("-------- 111111111111111111---------------------")
         # Calc. Aero. Force
         psi, gam        =   Get_Vec2AzimElev(Vn)
         angI2W          =   np.array([0., -gam, psi])
@@ -172,8 +192,12 @@ class PF_ATTITUDE_CMD_MOD():
         cI_B            =   Get_Euler2DCM(AngEuler)
         cB_I            =   np.transpose(cI_B)
         Acmdn           =   np.dot(cB_I, FbCmd / mass) + np.array([0., 0., g]) + self.a_drag_n 
-
+        print("-------- 2222222222222222---------------------")
         dz_NDO      =   np.zeros(3)
+        if self.firstTime is True :
+            pass
+        else : 
+            self.z_NDO = z_NDO_past
         dz_NDO[0]   =   -self.lx_NDO*self.z_NDO[0] - self.lx_NDO * \
             (self.lx_NDO*Vn[0] + Acmdn[0])
         dz_NDO[1]   =   -self.ly_NDO*self.z_NDO[1] - self.ly_NDO * \
@@ -187,4 +211,4 @@ class PF_ATTITUDE_CMD_MOD():
 
         self.z_NDO  =   self.z_NDO + dz_NDO*dt
 
-        return self.outNDO
+        return self.outNDO, self.z_NDO

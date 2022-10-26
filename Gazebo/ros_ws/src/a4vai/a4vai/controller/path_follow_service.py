@@ -49,7 +49,7 @@ class PathFollowingService(Node):
             depth=10,
             durability=QoSDurabilityPolicy.VOLATILE)
         
-    def RequestPathFollowing(self, waypoint_x, waypoint_y, waypoint_z, waypoint_index, LAD, SPDCMD, initTimeStamp):
+    def RequestPathFollowing(self, waypoint_x, waypoint_y, waypoint_z, waypoint_index, LAD, SPDCMD, initTimeStamp, z_NDO_past):
         self.path_following_request = PathFollowingSetpoint.Request()
         self.path_following_request.request_init_timestamp = initTimeStamp
         self.path_following_request.request_timestamp = self.timestamp
@@ -60,6 +60,7 @@ class PathFollowingService(Node):
         self.path_following_request.waypoint_index = waypoint_index
         self.path_following_request.lad = LAD
         self.path_following_request.spd_cmd = SPDCMD
+        self.path_following_request.z_ndo_past = z_NDO_past
         self.future_setpoint = self.PathFollowingServiceClient_.call_async(self.path_following_request)
         
     def TimesyncCallback(self, msg):

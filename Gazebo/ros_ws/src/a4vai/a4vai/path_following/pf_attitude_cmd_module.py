@@ -56,17 +56,20 @@ class PFAttitudeCmdModule(Node):
         self.Acc_disturb = []   #   double
         self.LAD = 0    #   double      Least absolute deviation ???
         self.SPDCMD = 0 #   double
+        self.z_NDO_past = []
         ##  Output
         self.response_timestamp = 0 #   uint
         self.TargetThrust = 0   #   
         self.TargetAttitude = []    #   double
         self.TargetPosition = []    #   double
         self.TargetYaw = 0
-        self.outNDO = []    #   double
+        self.outNDO = [0.0, 0.0, 0.0]    #   double
+        self.z_NDO = []
         ##  Function
         self.qosProfileGen()
         self.declare_subscriber_px4()
         self.PFAttitudeCmdService_ = self.create_service(PathFollowingSetpoint, 'path_following_att_cmd', self.PFAttitudeCmdCallback)
+        self.PF_ATTITUDE_CMD_MOD_ = PF_ATTITUDE_CMD_MOD(0.004)
         print("===== Path Following Attitude Command Node is Initialize =====")
 
 #################################################################################################################
@@ -102,6 +105,7 @@ class PFAttitudeCmdModule(Node):
         self.PlannedIndex = request.waypoint_index
         self.LAD = request.lad
         self.SPDCMD = request.spd_cmd
+        self.z_NDO_past = request.z_ndo_past
         if self.requestFlag is True : 
             ############# Algirithm Start - PF_ATTITUDE_CMD  #############
             InitTime  =   self.requestInitTimestamp
@@ -111,8 +115,8 @@ class PFAttitudeCmdModule(Node):
             AngEuler    =   [self.phi * math.pi /180., self.theta * math.pi /180., self.psi * math.pi /180.]
             Acc_disturb =   [0., 0., 0.]
             # function
-            self.TargetThrust, self.TargetAttitude, self.TargetPosition, self.TargetYaw, self.outNDO = \
-                PF_ATTITUDE_CMD_MOD.PF_ATTITUDE_CMD_Module(Time, self.PlannedX, self.PlannedY, self.PlannedZ, self.PlannedIndex, Pos, Vn, AngEuler, Acc_disturb, self.LAD, self.SPDCMD)
+            self.TargetThrust, self.TargetAttitude, self.TargetPosition, self.TargetYaw, self.outNDO, self.z_NDO = \
+                self.PF_ATTITUDE_CMD_MOD_.PF_ATTITUDE_CMD_Module(Time, self.PlannedX, self.PlannedY, self.PlannedZ, self.PlannedIndex, Pos, Vn, AngEuler, Acc_disturb, self.z_NDO_past, self.LAD, self.SPDCMD)
             ############# Algirithm  End  - PF_ATTITUDE_CMD  #############
             ##  Algorithm Function
             '''
@@ -132,6 +136,7 @@ class PFAttitudeCmdModule(Node):
             response.targetposition = self.TargetPosition
             response.targetyaw = self.TargetYaw
             response.out_ndo = self.outNDO
+            response.z_ndo = self.z_NDO
             print("===== Response Path Following Attitude Command Node =====")
             return response
         else : 
@@ -142,6 +147,7 @@ class PFAttitudeCmdModule(Node):
             response.targetposition = self.TargetPosition
             response.targetyaw = self.TargetYaw
             response.out_ndo = self.outNDO
+            response.z_ndo = self.z_NDO
             print("===== Can't Response Path Following Attitude Command Node =====")
             return response
         

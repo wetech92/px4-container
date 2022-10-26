@@ -28,9 +28,9 @@ class JBNU_Collision():
         Image = cv2.resize(Image, (200,200), cv2.INTER_AREA)
         Image = np.expand_dims(Image, axis=0)
         
-        onnx_model = onnx.load("C:/Users/hyeeun/Desktop/temp/221025/feedforward.onnx")
+        onnx_model = onnx.load("/root/ros_ws/src/a4vai/a4vai/collision_avoidance/feedforward.onnx")
         onnx.checker.check_model(onnx_model)
-        ort_session = ort.InferenceSession("C:/Users/hyeeun/Desktop/temp/221025/feedforward.onnx")
+        ort_session = ort.InferenceSession("/root/ros_ws/src/a4vai/a4vai/collision_avoidance/feedforward.onnx")
         # print(onnx.helper.printable_graph(onnx_model.graph))
         input_name = ort_session.get_inputs()[0].name
         Act = ort_session.run(None, {input_name:Image.astype(np.float32)})
@@ -38,8 +38,8 @@ class JBNU_Collision():
         vy = 0.0
         vz = Act[0][0][1]
         vyaw = -Act[0][0][2]
-        
-        return vx,vy,vz,vyaw
+        print(type(vx))
+        return float(vx),float(vy),float(vz), -float(vyaw)
 
         
 

@@ -15,6 +15,11 @@ from rclpy.qos import QoSHistoryPolicy
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
 from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import ReliabilityPolicy, QoSProfile, LivelinessPolicy, DurabilityPolicy, HistoryPolicy
+from sensor_msgs.msg import Image
+import cv2
+
+from cv_bridge import CvBridge
 
 
 from pytictoc import TicToc
@@ -32,12 +37,7 @@ from px4_msgs.msg import OffboardControlMode
 from px4_msgs.msg import TrajectorySetpoint
 from px4_msgs.msg import Timesync
 from px4_msgs.msg import VehicleAttitudeSetpoint
-from px4_msgs.msg import VehicleRatesSetpoint
-
-
-#   Gazebo Image sensor msg
-from sensor_msgs.msg import Image
-#   Gazebo Lidar sensor msg
+from rclpy.qos import ReliabilityPolicy, QoSProfile, LivelinessPolicy, DurabilityPolicy, HistoryPolicy
 from sensor_msgs.msg import LaserScan
 
 
@@ -71,6 +71,8 @@ class ControllerNode(Node):
         self.initFlag_GPR = True
         self.initFlag_PF_Att_Cmd = True
 
+
+        self.requestFlag = False
         # Vehicle States Variables
         self.x = 0.0
         self.y = 0.0
@@ -90,6 +92,7 @@ class ControllerNode(Node):
         
         self.ObsAngle = 0.0
         self.ObsSize  = 0.0
+        self.ObsPos = [0.0, 0.0]
         
         ############# vel cmd ###################
         self.vel_cmd_x = 0.0
@@ -97,12 +100,15 @@ class ControllerNode(Node):
         self.vel_cmd_z = 0.0
         self.vel_cmd_yaw = 0.0
         
+        self.z_NDO_past = []
+
+
         # Controller Period
         self.AlgorithmPeriod = 1/50
         self.OffboardPeriod_AttCmd = 1/250
         self.OffboardPeriod_VelCmd = 1/50
         self.OffboardPeriod_PosCmd = 1/50
-        self.TestPeriod = 1
+        self.TestPeriod = 1/100
         
         # Armming Flag
         self.ArmmingCounter = 100
@@ -127,24 +133,26 @@ class ControllerNode(Node):
         #############################
         self.map_generation_flag = True
         self.path_planning_complete = False
-        self.InitialPositionFlag = True
+        self.InitialPositionFlag = False
+        self.InitialPosition = [0.0, 0.0, -5.0]
+
         
         self.start_point = [0.0, 0.0]
         self.goal_point = [4999.0, 4999.0]
         
         self.PP_response_timestamp = 0
         
-        self.path_planning_flag = True
-        self.path_planning_complete = True
+        self.path_planning_flag = False
+        self.path_planning_complete = False
         
-        self.path_following_flag = True
-        self.path_following_complete = True
+        self.path_following_flag = False
+        self.path_following_complete = False
 
-        self.path_following_gpr_flag = True
-        self.path_following_gpr_complete = True
+        self.path_following_gpr_flag = False
+        self.path_following_gpr_complete = False
         
-        self.path_following_guid_flag = True
-        self.path_following_guid_complete = True
+        self.path_following_guid_flag = False
+        self.path_following_guid_complete = False
         
         
         self.PF_response_setpoint_timestamp = 0
@@ -158,7 +166,7 @@ class ControllerNode(Node):
         self.collision_avoidance_complete = False
         
         self.OffboardCount = 0
-        self.OffboardCounter = 100
+        self.OffboardCounter = 1000
         
         self.waypoint_x = []
         self.waypoint_y = []
@@ -172,7 +180,7 @@ class ControllerNode(Node):
         
         self.LAD = 0.0
         self.SPDCMD = 0.0
-        self.outNDO = []
+        self.outNDO = [0.0, 0.0, 0.0]
         self.gpr_output = []
         self.gpr_output_data = []
         self.gpr_output_index = 0
@@ -182,12 +190,12 @@ class ControllerNode(Node):
         
         self.declare_subscriber_gazebo()
         
-        #################################
-        # self.waypoint_x = [194.50006744625216, 825.8771283644521, 1431.8613353993596, 2000.3352614176797, 2397.700009556139, 2730.8000037362776, 2706.3233754062016, 
-        #                    3225.794498676967, 3627.9853373120645, 4127.434997699735, 4470.346028786243]
-        # self.waypoint_y = [36.118291873152884, 144.17673246974937, 309.82613153979173, 537.4419799797172, 922.1794141237731, 1360.298574161542, 2178.636181251442,
-        #                    2407.6458042137847, 2782.003343801756, 3054.981891820806,  3482.83100675065]
-        # self.waypoint_z = [5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0]
+        ################################
+        self.waypoint_x = [194.50006744625216, 825.8771283644521, 1431.8613353993596, 2000.3352614176797, 2397.700009556139, 2730.8000037362776, 2706.3233754062016, 
+                           3225.794498676967, 3627.9853373120645, 4127.434997699735, 4470.346028786243]
+        self.waypoint_y = [36.118291873152884, 144.17673246974937, 309.82613153979173, 537.4419799797172, 922.1794141237731, 1360.298574161542, 2178.636181251442,
+                           2407.6458042137847, 2782.003343801756, 3054.981891820806,  3482.83100675065]
+        self.waypoint_z = [5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0]
         # self.wapoint_index = 11
         self.gpr_output = [[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],
                            [0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],
@@ -196,73 +204,84 @@ class ControllerNode(Node):
         # self.gpr_output_data = list(chain.from_iterable(self.gpr_output))
         self.gpr_output_index = 3
         self.outNDO = [0.0,0.0,0.0]
+
         ######################################
         
         
 #################################################################################################################
     def TestCallback(self):
-        self.get_logger().info("===== Test Timer On =====")
-        
-        if self.map_generation_flag is True :
-            map_service = MapService()
-            map_service.RequestMapGeneration(self.map_generation_flag)
-            rclpy.spin_once(map_service)
-            if map_service.future.done():
-                try : 
-                    map_service.result = map_service.future.result()
-                except Exception as e:
-                    map_service.get_logger().info(
-                        'Service call failed %r' % (e,))
-                else :
-                    map_service.get_logger().info( "Map Generation Complete!! ")
-                    print(map_service.result.map_sequence_init)
-                    if map_service.result.map_sequence_init is True :
-                        self.map_generation_flag = False
-                        self.path_planning_complete = True
-                    else :
-                        pass    
-                finally : 
-                    map_service.destroy_node()
-        else : 
-            pass
-        
-        ##     Path Planning MODULE
-        if self.path_planning_flag is True :
+        if self.OffboardCount == self.OffboardCounter:
+            self.offboard()
+            self.arm()
+                
+        self.OffboardControlModeCallback()
+
+        if self.InitialPositionFlag == True:
+            self.get_logger().info("===== Test Timer On =====")
             
-            planning_service = PathPlanningService()
-            planning_service.RequestPathPlanning(self.start_point, self.goal_point)
-            rclpy.spin_until_future_complete(planning_service, planning_service.future)
-            if planning_service.future.done():
-                try : 
-                    planning_service.result = planning_service.future.result()
-                except Exception as e:
-                    planning_service.get_logger().info(
-                        'Path Planning Service call failed %r' % (e,))
-                else :
-                    planning_service.get_logger().info( "Path Planning Complete!! ")
-                    if planning_service.result.response_pathplanning is True :
-                        self.PP_response_timestamp = planning_service.result.response_timestamp
-                        self.waypoint_x = planning_service.result.waypoint_x
-                        self.waypoint_y = planning_service.result.waypoint_y
-                        self.waypoint_z = planning_service.result.waypoint_z
-                        self.path_planning_flag = False
-                        self.path_planning_complete = True
+            if self.map_generation_flag is True :
+                map_service = MapService()
+                map_service.RequestMapGeneration(self.map_generation_flag)
+                rclpy.spin_once(map_service)
+                if map_service.future.done():
+                    try : 
+                        map_service.result = map_service.future.result()
+                    except Exception as e:
+                        map_service.get_logger().info(
+                            'Service call failed %r' % (e,))
                     else :
-                        pass
-                finally : 
-                    planning_service.destroy_node()
+                        map_service.get_logger().info( "Map Generation Complete!! ")
+                        print(map_service.result.map_sequence_init)
+                        if map_service.result.map_sequence_init is True :
+                            self.map_generation_flag = False
+                            self.path_planning_flag = True
+                        else :
+                            pass    
+                    finally : 
+                        map_service.destroy_node()
             else : 
-                print("Can't Path plan")
-        else : 
-            pass
-       
-        
-        
-        if np.sqrt((self.x - self.waypoint_x[self.waypoint_index])**2 + (self.y - self.waypoint_y[self.waypoint_index]) ** 2) < 3.0:
-            self.waypoint_index += 1
-            print("waypoint_index", str(self.waypoint_index))
-        else : 
-            print("else function-----------------------------------")
+                pass
+            ##     Path Planning MODULE
+            if self.path_planning_flag is True :
+                
+                planning_service = PathPlanningService()
+                planning_service.RequestPathPlanning(self.start_point, self.goal_point)
+                rclpy.spin_until_future_complete(planning_service, planning_service.future)
+                if planning_service.future.done():
+                    try : 
+                        planning_service.result = planning_service.future.result()
+                    except Exception as e:
+                        planning_service.get_logger().info(
+                            'Path Planning Service call failed %r' % (e,))
+                    else :
+                        planning_service.get_logger().info( "Path Planning Complete!! ")
+                        if planning_service.result.response_pathplanning is True :
+                            self.PP_response_timestamp = planning_service.result.response_timestamp
+                            self.waypoint_x = planning_service.result.waypoint_x
+                            self.waypoint_y = planning_service.result.waypoint_y
+                            self.waypoint_z = planning_service.result.waypoint_z
+                            self.path_planning_flag = False
+                            self.path_planning_complete = True
+                            self.path_following_guid_flag = True
+                        else :
+                            pass
+                    finally : 
+                        planning_service.destroy_node()
+                else : 
+                    print("Can't Path plan")
+            else : 
+                pass
+            
+            if np.sqrt((self.x - self.waypoint_x[self.waypoint_index])**2 + (self.y - self.waypoint_y[self.waypoint_index]) ** 2) < 3.0:
+                self.waypoint_index += 1
+                print("waypoint_index", str(self.waypoint_index))
+            else : 
+                print("else function-----------------------------------")
+        else:
+            self.Takeoff()
+            
+        if self.OffboardCount < self.OffboardCounter:
+            self.OffboardCount = self.OffboardCount + 1
 
         # ###     PF GPR MODULE
         # if self.path_following_gpr_flag is True :
@@ -307,7 +326,16 @@ class ControllerNode(Node):
         #     print("gpr_output_index = ", str(self.gpr_output_index))
         #     self.path_following_gpr_complete = False
         
+       
         
+        
+        
+        
+        
+    def AlgorithmCallback(self):
+    
+            
+        self.get_logger().info("===== AlgorithmCallback Timer On =====")
         ##     PF GUID MODULE
         if self.path_following_guid_flag is True :
             following_guid_service = PathFollowingGuidService()
@@ -328,9 +356,10 @@ class ControllerNode(Node):
                         self.PF_response_guid_timestamp = following_guid_service.result.response_timestamp
                         self.LAD = following_guid_service.result.lad
                         self.SPDCMD = following_guid_service.result.spd_cmd
-                        self.path_following_guid_flag = False
+                        # self.path_following_guid_flag = False
                         print(following_guid_service.result.response_timestamp)
                         self.path_following_guid_complete = True
+                        self.path_following_flag = True
                     else :
                         pass    
                 finally : 
@@ -343,150 +372,118 @@ class ControllerNode(Node):
         if self.path_following_guid_complete is True : 
             print("LAD = ",str(self.LAD))
             print("SPDCMD = ", str(self.SPDCMD))
-        
-        
-        ###  PF Attitude Command Module(Setpoint)
-        if self.path_following_flag is True :
-            if self.initFlag_PF_Att_Cmd is True :
-                self.initTimeStamp_PF_Att_Cmd = self.timestamp_offboard
-                print("test")
-                self.initFlag_PF_Att_Cmd = False
-                
-            following_service = PathFollowingService()
-            print("initTimeStamp = ", str(self.initTimeStamp_PF_Att_Cmd))
-            following_service.RequestPathFollowing(self.waypoint_x, self.waypoint_y, self.waypoint_z, self.waypoint_index, self.LAD, self.SPDCMD, self.initTimeStamp_PF_Att_Cmd)
-            # rclpy.spin_once(following_service)
-            rclpy.spin_until_future_complete(following_service, following_service.future_setpoint)
-            if following_service.future_setpoint.done():
-                try : 
-                    following_service.result = following_service.future_setpoint.result()
-                except Exception as e:
-                    following_service.get_logger().info(
-                        'Service call failed %r' % (e,))
-                else :
-                    following_service.get_logger().info( "Path Following Setpoint Module Complete!! ")
-                    print(following_service.result.response_pathfollowing)
-                    if following_service.result.response_pathfollowing is True :
-                        self.PF_response_setpoint_timestamp = following_service.result.response_timestamp
-                        self.TargetThrust = following_service.result.targetthrust
-                        self.TargetThrustCmd = self.TargetThrust.copy()
-                        self.TargetAttitude = following_service.result.targetattitude
-                        w, x, y, z  =   self.Euler2Quaternion(self.argetAttitude[0], self.TargetAttitude[1], self.TargetAttitude[2])
-                        self.TargetAttitudeCmd = np.array([w, x, y, z])
-                        self.TargetPosition = following_service.result.targetposition
-                        self.TargetYaw = following_service.result.targetyaw
-                        self.outNDO = following_service.result.out_ndo
-                        self.path_following_flag = False
-                        print(following_service.result.response_timestamp)
-                        self.path_following_complete = True
-                    else :
-                        pass    
-                finally : 
-                    following_service.destroy_node()
-            else : 
-                self.get_logger().warn("===== Path Following Setpoint Module Can't Response =====")
-        else : 
-            pass
-        
-        if self.path_following_complete is True : 
-            print("TargetThrust = ", str(self.TargetThrust))
-            print("TargetAttitude = ", str(self.TargetAttitude))
-            print("TargetPosition = ", str(self.TargetPosition))
-            print("TargetYaw = ", str(self.TargetYaw))
-            print("outNDO = ", str(self.outNDO))
-            
-            
-            
-        ### Collision Avoidance Module
-        if self.collision_avoidance_flag is True :
-            print("===== Collision Avoidance Sequence =====")
-            collision_avoidance_service = CollisionAvoidanceService()
-            collision_avoidance_service.RequestCollisionAvoidance()
-            print("===== Debug point 1 =====")
 
-            rclpy.spin_once(collision_avoidance_service)
-            print("===== Debug point 2=====")
-            
-            if collision_avoidance_service.future.done():
-                print("===== Debug point 3 =====")
-                try : 
-                    collision_avoidance_service.result = collision_avoidance_service.future.result()
-                except Exception as e:
-                    collision_avoidance_service.get_logger().info(
-                        'Service call failed %r' % (e,))
-                else :
-                    collision_avoidance_service.get_logger().info( "Collision Avoidance Module Complete!! ")
-                    print(collision_avoidance_service.result.response_collisionavoidance)
-                    if collision_avoidance_service.result.response_collisionavoidance is True :
-                        self.response_timestamp = collision_avoidance_service.result.response_timestamp
-                        self.vel_cmd_x = collision_avoidance_service.result.vel_cmd_x
-                        self.vel_cmd_y = collision_avoidance_service.result.vel_cmd_y
-                        self.vel_cmd_yaw = collision_avoidance_service.result.vel_cmd_yaw
-                        
-                        self.collision_avoidance_flag = False
-        
-                        # print(collision_avoidance_service.result.response_timestamp)
-                        self.collision_avoidance_complete = True
-                        print("vel_cmd_x = ", str(self.vel_cmd_x))
-                        print("vel_cmd_y = ", str(self.vel_cmd_y))
-                        print("vel_cmd_yaw = ", str(self.vel_cmd_yaw))
-                    else :
-                        pass    
-                finally : 
-                    collision_avoidance_service.destroy_node()
-            else :
-                self.get_logger().warn("===== Collision Avoidance Module Can't Response =====")
-        else : 
-            pass
-        
-        
-        
-        
-        
-    def AlgorithmCallback(self):
-        # self.get_logger().info("===== AlgorithmCallback Timer On =====")
-        a=1
-        # if self.map_generation_flag is True :
-        #     if self.OffboardCount == self.OffboardCounter:
-        #         print('===== Ready to Arming =====')
-        #         self.offboard()
-        #         self.arm()
-        #         self.OffboardControlModeCallback()
-        #         print('===== Armed =====')
-        #     else : 
-        #         self.get_logger().warn('----- Disarmeing -----')
-        #     if self.InitialPositionFlag is True :
-        #         if self.request_path_plnning_flag is True :
-        #             print(a)
-        #             #self.RequestPathPlanning()
-        #         else :
-        #             pass
-        #         a = 1
-        #         b = 2
-        #         c = 3
-        #     else :
-        #         self.Takeoff()
-        #         print("===== TakeOff =====")
-        # else : 
-        #     print("a")
-        #     #self.RequestMapGeneration()
 
         
-        # if self.OffboardCount < self.OffboardCounter:
-        #     self.OffboardCount = self.OffboardCount + 1
-        # else : 
-        #     pass
         
 
     def OffboardControl_AttCmd(self):
-        # self.get_logger().info("===== Attitude Controller Timer On =====")
-        # self.SetAttitude(self.TargetAttitudeCmd, self.TargetRateCmd, self.TargetThrustCmd, self.TargetYawRateCmd)
-        # self.OffboardTimer_velocity.destroy()
-        b = 1
-        
+         if self.requestFlag == False :
+            # OffboardTimer_velocity.destory()
+            self.get_logger().info("===== Attitude Cmd Timer On =====")
+            ###  PF Attitude Command Module(Setpoint)
+            if self.path_following_flag is True :
+                if self.initFlag_PF_Att_Cmd is True :
+                    self.initTimeStamp_PF_Att_Cmd = self.timestamp_offboard
+                    print("test")
+                    self.initFlag_PF_Att_Cmd = False
+                    
+                following_service = PathFollowingService()
+                print("initTimeStamp = ", str(self.initTimeStamp_PF_Att_Cmd))
+                following_service.RequestPathFollowing(self.waypoint_x, self.waypoint_y, self.waypoint_z, self.waypoint_index, self.LAD, self.SPDCMD, self.initTimeStamp_PF_Att_Cmd, self.z_NDO_past)
+                # rclpy.spin_once(following_service)
+                rclpy.spin_until_future_complete(following_service, following_service.future_setpoint)
+                if following_service.future_setpoint.done():
+                    try : 
+                        following_service.result = following_service.future_setpoint.result()
+                    except Exception as e:
+                        following_service.get_logger().info(
+                            'Service call failed %r' % (e,))
+                    else :
+                        following_service.get_logger().info( "Path Following Setpoint Module Complete!! ")
+                        print(following_service.result.response_pathfollowing)
+                        if following_service.result.response_pathfollowing is True :
+                            self.PF_response_setpoint_timestamp = following_service.result.response_timestamp
+                            self.TargetThrust = following_service.result.targetthrust
+                            self.TargetThrustCmd = self.TargetThrust
+                            self.TargetAttitude = following_service.result.targetattitude
+                            w, x, y, z  =   self.Euler2Quaternion(self.TargetAttitude[0], self.TargetAttitude[1], self.TargetAttitude[2])
+                            self.TargetAttitudeCmd = np.array([w, x, y, z])
+                            self.TargetPosition = following_service.result.targetposition
+                            self.TargetYaw = following_service.result.targetyaw
+                            self.outNDO = following_service.result.out_ndo
+                            self.z_NDO_past = following_service.result.z_ndo
+                            # self.path_following_flag = False
+                            # print(following_service.result.response_timestamp)
+                            self.path_following_complete = True
+                        else :
+                            pass    
+                    finally : 
+                        pass
+                        #following_service.destroy_node()
+                else : 
+                    self.get_logger().warn("===== Path Following Setpoint Module Can't Response =====")
+            else : 
+                pass
+            
+            if self.path_following_complete is True : 
+                print("TargetThrust = ", str(self.TargetThrust))
+                print("TargetAttitude = ", str(self.TargetAttitude))
+                print("TargetPosition = ", str(self.TargetPosition))
+                print("TargetYaw = ", str(self.TargetYaw))
+                print("outNDO = ", str(self.outNDO))
+                self.SetAttitude([w, x, y, z], [0.0,0.0,0.0], self.TargetThrust, self.TargetYaw)
+
+            
     def OffboardControl_VelCmd(self):
-        # self.get_logger().info('Timer Check === VelCmd')
-        c = 1
+         if self.requestFlag == True :
+            OffboardTimer_attitude.destroy()
+
+            self.get_logger().info("===== Velocity Cmd Timer On =====")
+            ### Collision Avoidance Module
+            if self.collision_avoidance_flag is True :
+                print("===== Collision Avoidance Sequence =====")
+                collision_avoidance_service = CollisionAvoidanceService()
+                collision_avoidance_service.RequestCollisionAvoidance()
+                print("===== Debug point 1 =====")
+                rclpy.spin_until_future_complete(collision_avoidance_service, collision_avoidance_service.future)
+
+                print("===== Debug point 2=====")
+                if collision_avoidance_service.future.done():
+                    print("===== Debug point 3 =====")
+                    try : 
+                        collision_avoidance_service.result = collision_avoidance_service.future.result()
+                    except Exception as e:
+                        collision_avoidance_service.get_logger().info(
+                            'Service call failed %r' % (e,))
+                    else :
+                        collision_avoidance_service.get_logger().info( "Collision Avoidance Module Complete!! ")
+                        print(collision_avoidance_service.result.response_collisionavoidance)
+                        if collision_avoidance_service.result.response_collisionavoidance is True :
+                            self.response_timestamp = collision_avoidance_service.result.response_timestamp
+                            self.vel_cmd_x = collision_avoidance_service.result.vel_cmd_x
+                            self.vel_cmd_z = collision_avoidance_service.result.vel_cmd_z
+                            self.vel_cmd_yaw = collision_avoidance_service.result.vel_cmd_yaw
+                            
+                            #self.collision_avoidance_flag = True
+            
+                            # print(collision_avoidance_service.result.response_timestamp)
+                            self.collision_avoidance_complete = True
+                            print("vel_cmd_x = ", str(self.vel_cmd_x))
+                            print("vel_cmd_z = ", str(self.vel_cmd_z))
+                            print("vel_cmd_yaw = ", str(self.vel_cmd_yaw))
+                            self.SetVelocity([self.vel_cmd_x, 0.0, self.vel_cmd_z], self.vel_cmd_yaw)
+                        else :
+                            pass    
+                    finally : 
+                        pass
+                        #collision_avoidance_service.destroy_node()
+                else :
+                    self.get_logger().warn("===== Collision Avoidance Module Can't Response =====")
+            else : 
+                pass
+        
+
         
     def qosProfileGen(self):
         #   Reliability : 데이터 전송에 있어 속도를 우선시 하는지 신뢰성을 우선시 하는지를 결정하는 QoS 옵션
@@ -502,7 +499,7 @@ class ControllerNode(Node):
             reliability=QoSReliabilityPolicy.RELIABLE,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=10,
-            durability=QoSDurabilityPolicy.BEST_EFFORT)
+            durability=QoSDurabilityPolicy.VOLATILE)
         
         #   센서와 같이 지속성이 높으며 데이터 유실의 문제보다는 순간적인 데이터를 가장 빠르게 전달해야하는 sensor data의 경우에는 아래와 같이 설정
         self.QOS_Pub_FastCmd = qos_profile_sensor_data
@@ -510,11 +507,11 @@ class ControllerNode(Node):
         
     def declare_publisher_px4(self):
         #   init PX4 MSG Publisher
-        self.VehicleCommandPublisher_ = self.create_publisher(VehicleCommand, '/fmu/vehicle_command/in', self.QOS_Pub_FastCmd)
-        self.OffboardControlModePublisher_ = self.create_publisher(OffboardControlMode, '/fmu/offboard_control_mode/in', self.QOS_Pub_FastCmd)
-        self.TrajectorySetpointPublisher_ = self.create_publisher(TrajectorySetpoint, '/fmu/trajectory_setpoint/in', self.QOS_Pub_FastCmd)
-        self.VehicleAttitudeSetpointPublisher_ = self.create_publisher(VehicleAttitudeSetpoint, '/fmu/vehicle_attitude_setpoint/in', self.QOS_Pub_FastCmd)
-        self.VehicleRatesSetpointPublisher_ = self.create_publisher(VehicleRatesSetpoint, '/fmu/vehicle_rates_setpoint/in', self.QOS_Pub_FastCmd)
+        self.VehicleCommandPublisher_ = self.create_publisher(VehicleCommand, '/fmu/vehicle_command/in', self.QOS_Sub_Sensor)
+        self.OffboardControlModePublisher_ = self.create_publisher(OffboardControlMode, '/fmu/offboard_control_mode/in', self.QOS_Sub_Sensor)
+        self.TrajectorySetpointPublisher_ = self.create_publisher(TrajectorySetpoint, '/fmu/trajectory_setpoint/in', self.QOS_Sub_Sensor)
+        self.VehicleAttitudeSetpointPublisher_ = self.create_publisher(VehicleAttitudeSetpoint, '/fmu/vehicle_attitude_setpoint/in', self.QOS_Sub_Sensor)
+        #self.VehicleRatesSetpointPublisher_ = self.create_publisher(VehicleRatesSetpoint, '/fmu/vehicle_rates_setpoint/in', self.QOS_Sub_Sensor)
         print("====== px4 Publisher Open ======")
         
     def declare_subscriber_px4(self):
@@ -575,11 +572,11 @@ class ControllerNode(Node):
     def OffboardControlModeCallback(self):
         msg = OffboardControlMode()
         msg.timestamp = self.timestamp_offboard
-        msg.position = False
+        msg.position = True
         msg.velocity = True
-        msg.acceleration = False
+        msg.acceleration = True
         msg.attitude = True
-        msg.body_rate = False
+        msg.body_rate = True
         self.OffboardControlModePublisher_.publish(msg)
 
     ## Vehicle Mode
@@ -594,6 +591,18 @@ class ControllerNode(Node):
     # Offboard
     def offboard(self):
         self.VehicleCommandCallback(self.VEHICLE_CMD_DO_SET_MODE, 1.0, 6.0)
+
+    def VehicleCommandCallback(self, command, param1, param2):
+        msg = VehicleCommand()
+        msg.timestamp = self.timestamp_offboard
+        msg.param1 = param1
+        msg.param2 = param2
+        msg.command = command
+        msg.target_system = 1
+        msg.target_component = 1
+        msg.source_system = 1
+        msg.source_component = 1
+        self.VehicleCommandPublisher_.publish(msg)
     
     ##  Gazebo Client
     #   Empty
@@ -642,8 +651,8 @@ class ControllerNode(Node):
         self.VehicleAttitudeSetpointCallback(SetQuaternion, BodyRate, SetThrust, SetYawRate)
     
     # Set Rate
-    def SetRate(self, SetRate, SetThrust):
-        self.VehicleRatesSetpointCallback(SetRate, SetThrust)
+    #def SetRate(self, SetRate, SetThrust):
+    #    self.VehicleRatesSetpointCallback(SetRate, SetThrust)
         
     def Quaternion2Euler(self, w, x, y, z):
 
@@ -683,9 +692,9 @@ class ControllerNode(Node):
         msg = VehicleAttitudeSetpoint()
         msg.timestamp = self.timestamp_offboard
 
-        msg.roll_body = BodyRate[0]
-        msg.pitch_body = BodyRate[1]
-        msg.yaw_body = BodyRate[2]
+        msg.roll_body = 0.0
+        msg.pitch_body = 0.0
+        msg.yaw_body = 0.0
         
         msg.q_d[0] = SetQuaternion[0]
         msg.q_d[1] = SetQuaternion[1]
@@ -714,11 +723,11 @@ class ControllerNode(Node):
     def LidarCallback(self, msg):
         ObsDist = min(msg.ranges)
         ObsDist2 = max(msg.ranges)
-        ObsPos[0] = ObsDist * math.cos(self.ObsAngle * math.pi / 180)
-        ObsPos[1] = ObsDist * math.sin(self.ObsAngle * math.pi / 180)
-        self.ObsAngle = 3.6 * argmin(msg.ranges)
+        self.ObsPos[0] = ObsDist * math.cos(self.ObsAngle * math.pi / 180)
+        self.ObsPos[1] = ObsDist * math.sin(self.ObsAngle * math.pi / 180)
+        self.ObsAngle = 3.6 * np.argmin(msg.ranges)
         ObsSizeAngle = (3.6 * (100 - msg.ranges.count(math.inf))) / 2
-        self.ObsSize = 2 * (self.ObsDist * math.tan(self.ObsSizeAngle * self.R2D))
+        self.ObsSize = 2 * (ObsDist * math.tan(ObsSizeAngle * np.pi / 180))
         self.requestFlag = False
         # print(" min Distance : %f"%self.ObsDist)
         # print("Angle : %f"%self.ObsAngle)
@@ -728,6 +737,6 @@ class ControllerNode(Node):
         #print("X : %f"%self.ObsPos[0],"Y : %f"%self.ObsPos[1])
         # print(" ObsSize : %f"%self.ObsSize )
         # print(" ObsSizeAngle : %f"%self.ObsSizeAngle )
-        
-        if self.ObsDist < 6.0:
-            self.requestFlag = True
+        if self.z <-4.0:
+            if ObsDist < 2.5:
+                self.requestFlag = True

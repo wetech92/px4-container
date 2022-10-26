@@ -21,7 +21,7 @@ services:
       # --------SET FOR DEVELOPMENT OR DEBUGGING---------
       # ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ 
       # - HEADLESS=1
-      - DEBUG_ENTRYPOINT=1
+      # - DEBUG_ENTRYPOINT=1
       # - PX4_SITL_DEBUGGER=ide
       # - REBUILD_RPKG_INTEGRATION=1
       # - REBUILD_RPKG_GAZEBO=1

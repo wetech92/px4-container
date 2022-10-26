@@ -117,6 +117,7 @@ class ModelSpawnClass(Node):
         #self.GoalSpawn()
         self.UnknownObsSpawn()
         self.KnownObsSpawn()
+        time.sleep(10)
         # self.RequestMakeWorldDone()
         self.mapGeneration = True
 
@@ -209,7 +210,6 @@ def main(args=None):
     ModelSpawn.destroy_node()
 
     rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()
