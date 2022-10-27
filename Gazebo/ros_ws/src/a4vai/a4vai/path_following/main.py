@@ -13,7 +13,7 @@ def main(args=None):
     rclpy.init(args=args)
     
     pf_attitude_cmd_module = PFAttitudeCmdModule()
-    # pf_gpr_module = PF_GPR_Module()
+    pf_gpr_module = PF_GPR_Module()
     pf_guid_module = PFGuidModule()
 
     try : 
@@ -21,11 +21,11 @@ def main(args=None):
     except Exception as e:
                     pf_attitude_cmd_module.get_logger().info(
                         'MPPI module Start failed %r' % (e,))
-    # try : 
-    #     rclpy.spin(pf_gpr_module)
-    # except Exception as e:
-    #                 pf_gpr_module.get_logger().info(
-    #                     'MPPI module Start failed %r' % (e,))
+    try : 
+        rclpy.spin(pf_gpr_module)
+    except Exception as e:
+                    pf_gpr_module.get_logger().info(
+                        'MPPI module Start failed %r' % (e,))
     try :       
         rclpy.spin(pf_guid_module)
     except Exception as e:

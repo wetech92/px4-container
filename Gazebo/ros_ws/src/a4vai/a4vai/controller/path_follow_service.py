@@ -49,18 +49,13 @@ class PathFollowingService(Node):
             depth=10,
             durability=QoSDurabilityPolicy.VOLATILE)
         
-    def RequestPathFollowing(self, waypoint_x, waypoint_y, waypoint_z, waypoint_index, LAD, SPDCMD, initTimeStamp, z_NDO_past):
+    def RequestPathFollowing(self, waypoint_x, waypoint_y, waypoint_z):
         self.path_following_request = PathFollowingSetpoint.Request()
-        self.path_following_request.request_init_timestamp = initTimeStamp
         self.path_following_request.request_timestamp = self.timestamp
         self.path_following_request.request_pathfollowing = True
         self.path_following_request.waypoint_x = waypoint_x
         self.path_following_request.waypoint_y = waypoint_y
         self.path_following_request.waypoint_z = waypoint_z
-        self.path_following_request.waypoint_index = waypoint_index
-        self.path_following_request.lad = LAD
-        self.path_following_request.spd_cmd = SPDCMD
-        self.path_following_request.z_ndo_past = z_NDO_past
         self.future_setpoint = self.PathFollowingServiceClient_.call_async(self.path_following_request)
         
     def TimesyncCallback(self, msg):
@@ -97,12 +92,10 @@ class PathFollowingGPRService(Node):
             depth=10,
             durability=QoSDurabilityPolicy.VOLATILE)
 
-    def RequestPathFollowingGPR(self, outNDO, initTimeStamp):
+    def RequestPathFollowingGPR(self):
         self.path_following_gpr_request = PathFollowingGPR.Request()
-        self.path_following_gpr_request.request_init_timestamp = initTimeStamp
         self.path_following_gpr_request.request_timestamp = self.timestamp
         self.path_following_gpr_request.request_gpr = True
-        self.path_following_gpr_request.out_ndo = outNDO
         self.future_gpr = self.PathFollowingGPRServiceClient_.call_async(self.path_following_gpr_request)
         
     def TimesyncCallback(self, msg):
@@ -140,17 +133,13 @@ class PathFollowingGuidService(Node):
             depth=10,
             durability=QoSDurabilityPolicy.VOLATILE)
     
-    def RequestPathFollowingGuid(self, waypoint_x, waypoint_y, waypoint_z, waypoint_index, gpr_output_data, gpr_output_index, outNDO, flag_guid_param):
+    def RequestPathFollowingGuid(self, waypoint_x, waypoint_y, waypoint_z, flag_guid_param):
         self.path_following_guid_request = PathFollowingGuid.Request()
         self.path_following_guid_request.request_timestamp = self.timestamp
         self.path_following_guid_request.request_guid = True
         self.path_following_guid_request.waypoint_x = waypoint_x
         self.path_following_guid_request.waypoint_y = waypoint_y
         self.path_following_guid_request.waypoint_z = waypoint_z
-        self.path_following_guid_request.waypoint_index = waypoint_index
-        self.path_following_guid_request.gpr_output_data = gpr_output_data
-        self.path_following_guid_request.gpr_output_index = gpr_output_index
-        self.path_following_guid_request.out_ndo = outNDO
         self.path_following_guid_request.flag_guid_param = flag_guid_param
         self.future_guid = self.PathFollowingGuidServiceClient_.call_async(self.path_following_guid_request)
     def TimesyncCallback(self, msg):

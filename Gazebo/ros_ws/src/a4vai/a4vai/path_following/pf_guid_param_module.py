@@ -30,27 +30,28 @@ from .PathFollowing.PF_GUID_PARAM import PF_GUID_PARAM
 from px4_msgs.msg import EstimatorStates
 from px4_msgs.msg import Timesync
 from msg_srv_act_interface.srv import PathFollowingGuid
+from msg_srv_act_interface.msg import WayPointIndex
+from msg_srv_act_interface.msg import PFGuid2PFAtt
+from msg_srv_act_interface.msg import PFAtt2PFGuid
+from msg_srv_act_interface.msg import PFGpr2PFGuid
 
 class PFGuidModule(Node):
     def __init__(self):
         super().__init__('pf_guid_module')
+        ## Input
+        self.EstimatorStatesTime = 0
+        self.x = 0.0
+        self.y = 0.0
+        self.z = 0.0
+        self.vx = 0.0
+        self.vy = 0.0
+        self.vz = 0.0
+        self.phi = 0.0
+        self.theta = 0.0
+        self.psi = 0.0
         
-        device = cuda.Device(0)
-        ctx = device.make_context()
-        ctx.pop()
-        ##
-        self.x = 0
-        self.y = 0
-        self.z = 0
-        self.vx = 0
-        self.vy = 0
-        self.vz = 0
-        self.phi = 0
-        self.theta = 0
-        self.psi = 0
-        
-        self.wn = 0
-        self.we = 0
+        self.wn = 0.0
+        self.we = 0.0
         
         self.Pos = [self.x, self.y, self.z]
         self.Vn = [self.vx, self.vy, self.vz]
@@ -75,105 +76,116 @@ class PFGuidModule(Node):
         self.response_timestamp = 0 #   uint
         self.LAD = 0.0    #   double
         self.SPDCMD = 0.0 #   double
+        
+        self.PF_GUID_Period = 8/100
         ############# Variables Start - PF_GUID_PARAM  #############
         # Parameter Decision of the Guidance Law - Flag 0 : MPPI / Flag 1 : NM / Flag 2 : Constant Parameter
-        self.PF_GUID_PARAM_MOD   =   PF_GUID_PARAM(0)
-        self.InitFlag   =   0
+        # self.PF_GUID_PARAM_MOD   =   PF_GUID_PARAM(0)
+        self.InitFlag   =   True
         ############# Variables  End  - PF_GUID_PARAM  #############
 
+        
         ##  Function
         self.qosProfileGen()
         self.declare_subscriber_px4()
-        self.PFGuidService_ = self.create_service(PathFollowingGuid, 'path_following_guid', self.PFGuidCallback)
+        self.PFGuidService_ = self.create_service(PathFollowingGuid, 'path_following_guid', self.PFGuidSRVCallback)
+        ######  PUB
+        self.Waypoint_Indx_Publisher_ = self.create_publisher(WayPointIndex, '/waypoint_indx', self.QOS_Sub_Sensor)
+        self.PF_Guid2PF_Att_Publisher_ = self.create_publisher(PFGuid2PFAtt, '/pf_guid_2_pf_att', self.QOS_Sub_Sensor)
+        ######
+        self.PF_Att2PF_GuidSubscriber_ = self.create_subscription(PFAtt2PFGuid, '/pf_att_2_pf_guid', self.PF_Att2PF_Guid_callback, self.QOS_Sub_Sensor)
+        self.PF_Gpr2PF_GuidSubscriber_ = self.create_subscription(PFGpr2PFGuid, '/pf_gpr_2_pf_guid', self.PF_GPR2PF_Guid_callback, self.QOS_Sub_Sensor)
         print("===== Path Following Guidance Node is Initialize =====")
         
 #################################################################################################################
 
-    def PFGuidCallback(self, request, response):
-        print("===== Request Path Following Guidance Node =====")
-        '''
-        uint64 request_timestamp	# time since system start (microseconds)
-        bool request_guid
-        float64[] waypoint_x
-        float64[] waypoint_y
-        float64[] waypoint_z
-        uint32 waypoint_index
-        float64[] gpr_output_data
-        uint32 gpr_output_index
-        float64[] out_ndo
-        int32 flag_guid_param
-        '''
-        self.requestFlag = request.request_guid
-        self.requestTimestamp = request.request_timestamp
-        self.PlannedX = request.waypoint_x
-        self.PlannedY = request.waypoint_y
-        self.PlannedZ = request.waypoint_z
-        self.PlannedIndex = request.waypoint_index
-        self.GPR_output_data = request.gpr_output_data
-        self.GPR_output_index = request.gpr_output_index
-        self.outNDO = request.out_ndo
-        self.Flag_Guid_Param = request.flag_guid_param
-        print("===== Request data receive =====")
+    def waypoint_index_calculator(self):
+        if np.sqrt((self.x - self.waypoint_x[self.waypoint_index])**2 + (self.y - self.waypoint_y[self.waypoint_index]) ** 2) < 3.0:
+            self.waypoint_index += 1
+        else : 
+            pass
         
-        print(self.Flag_Guid_Param)
-        self.GPR_output = [self.GPR_output_data[i * self.GPR_output_index:(i + 1) * self.GPR_output_index] for i in range((len(self.GPR_output_data) - 1 + self.GPR_output_index) // self.GPR_output_index )]
+    def Waypoint_indexPublisher(self):
+        msg = WayPointIndex()
+        msg.timestamp = self.response_timestamp
+        msg.waypoint_index = self.waypoint_index
+        self.Waypoint_Indx_Publisher_.publish(msg)
         
-        if self.requestFlag is True : 
-            ############# Algirithm Start - PF_GUID_PARAM  #############
-            print("===== request Flag True =====")
-            if self.InitFlag == 0:
-                print("===== InitFlag = 0 =====")
+    def PF_GUID_2_PF_ATT_Publisher(self):
+        msg = PFGuid2PFAtt()
+        msg.timestamp = self.response_timestamp
+        msg.lad = self.LAD
+        msg.spd_cmd =self.SPDCMD
+        self.PF_Guid2PF_Att_Publisher_.publish(msg)
+        
+    def PF_Att2PF_Guid_callback(self, msg):
+        self.outNDO = msg.out_ndo
+        
+    def PF_GPR2PF_Guid_callback(self, msg):
+        self.GPR_output_data = msg.gpr_output_data
+        self.GPR_output_index = msg.gpr_output_index
+        
+    def PFGuidCallback(self):
+        if self.requestFlag is True :
+            self.waypoint_index_calculator()
+            self.GPR_output = [self.GPR_output_data[i * self.GPR_output_index:(i + 1) * self.GPR_output_index] for i in range((len(self.GPR_output_data) - 1 + self.GPR_output_index) // self.GPR_output_index )]
+            if self.InitFlag is True:
                 self.PF_GUID_PARAM_MOD   =   PF_GUID_PARAM(self.Flag_Guid_Param)
-                print("===== Load GUID PARAM =====")
-                self.InitFlag   =   1
-            # input
-            
-            self.x = 30.0
-            self.y = 20.0
-            self.z = -3.0
-            
-            self.vx = 1.1
-            self.vy = 1.2
-            self.vz = 0.0
-            
-            self.phi = 5.0
-            self.theta = -10.0
-            self.psi = 2.0
-            
+                self.InitFlag = False
+            else : 
+                pass
             Pos         =   [self.x, self.y, self.z]
             Vn          =   [self.vx, self.vy, self.vz]
             AngEuler    =   [self.phi * m.pi /180., self.theta * m.pi /180., self.psi * m.pi /180.]
             # function
             LAD, SPDCMD = self.PF_GUID_PARAM_MOD.PF_GUID_PARAM_Module(
                 self.PlannedX, self.PlannedY, self.PlannedZ, self.PlannedIndex, Pos, Vn, AngEuler, self.GPR_output, self.outNDO, self.Flag_Guid_Param)
-            print("Running Function Module ")
             # output
-            self.LAD    =   LAD.tolist()
-            self.SPDCMD =   SPDCMD.tolist()
+            self.LAD    =   LAD
+            self.SPDCMD =   SPDCMD
+        else : 
+            pass
+        
+    def PFGuidSRVCallback(self, request, response):
+        print("===== Request Path Following Guidance Node =====")
+        '''
+        ####    SRV
+        uint64 request_timestamp	# time since system start (microseconds)
+        bool request_guid
+        float64[] waypoint_x
+        float64[] waypoint_y
+        float64[] waypoint_z
+        int32 flag_guid_param
+        ####    MSG
+        float64[] gpr_output_data
+        uint32 gpr_output_index
+        
+        float64[] out_ndo
+        '''
+        self.requestFlag = request.request_guid
+        self.requestTimestamp = request.request_timestamp
+        self.PlannedX = request.waypoint_x
+        self.PlannedY = request.waypoint_y
+        self.PlannedZ = request.waypoint_z
+        self.Flag_Guid_Param = request.flag_guid_param
+        if self.requestFlag is True : 
+            self.PF_GUID_TIMER = self.create_timer(self.PF_GUID_Period, self.PFGuidCallback)
             ############# Algirithm  End  - PF_GUID_PARAM  #############
             print("===== Path Following Guidance Generation !! =====")
             '''
+            ####    SRV
             uint64 response_timestamp	# time since system start (microseconds)
             bool response_guid
+            ####    MSG
             float64 lad
             float64 spd_cmd
             '''
             response.response_timestamp = self.response_timestamp
             response.response_guid = True
-            print(response.response_timestamp)
-            print("Debug......")
-            # self.LAD = 0.1
-            response.lad = self.LAD
-            response.spd_cmd = self.SPDCMD
-            print("===== Response Path Following Guidance Node =====")
             return response
         else : 
-            print("===== request Flag False =====")
             response.response_timestamp = self.response_timestamp
             response.response_guid = False
-            response.lad = self.LAD
-            response.spd_cmd = self.SPDCMD
-            print("===== Can't Response Path Following Guidance Node =====")
             return response
         
     def declare_subscriber_px4(self):

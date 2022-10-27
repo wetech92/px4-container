@@ -19,6 +19,7 @@ from px4_msgs.msg import Timesync
 from msg_srv_act_interface.srv import CollisionAvoidanceSetpoint
 
 
+
 class CollisionAvoidanceService(Node):
     def __init__(self):
         super().__init__('collision_avoidance_service')

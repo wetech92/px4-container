@@ -1,7 +1,7 @@
 
 import matplotlib.pyplot as plt
 import math
-
+import numpy as np
 
 #   ROS2 python 
 import rclpy
@@ -14,33 +14,39 @@ from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
 from rclpy.qos import qos_profile_sensor_data
 
-from .PathFollowing.PF_ATTITUDE_CMD import PF_ATTITUDE_CMD_MOD
+from .PathFollowing.PF_ATTITUDE_CMD import PF_ATTITUDE_CMD
 
 # from px4_msgs.msg import VehicleAngularVelocity
 from px4_msgs.msg import EstimatorStates
 from px4_msgs.msg import Timesync
 from msg_srv_act_interface.srv import PathFollowingSetpoint
-
+from msg_srv_act_interface.msg import PFAtt2Control
+from msg_srv_act_interface.msg import PFGuid2PFAtt
+from msg_srv_act_interface.msg import PFAtt2PFGuid
+from msg_srv_act_interface.msg import WayPointIndex
 
 class PFAttitudeCmdModule(Node):
     def __init__(self):
         super().__init__('pf_attitude_cmd_module')
-        self.x = 0
-        self.y = 0
-        self.z = 0
-        self.vx = 0
-        self.vy = 0
-        self.vz = 0
-        self.phi = 0
-        self.theta = 0
-        self.psi = 0
+        self.EstimatorStatesTime = 0
+        self.x = 0.0
+        self.y = 0.0
+        self.z = 0.0
+        self.vx = 0.0
+        self.vy = 0.0
+        self.vz = 0.0
+        self.phi = 0.0
+        self.theta = 0.0
+        self.psi = 0.0
         
-        self.wn = 0
-        self.we = 0
+        self.wn = 0.0
+        self.we = 0.0
         
         self.Pos = [self.x, self.y, self.z]
         self.Vn = [self.vx, self.vy, self.vz]
         self.AngEuler = [self.phi, self.theta, self.psi]
+        
+        self.waypoint_index = 0
         
         ##  Input
         self.requestFlag = False    #   bool
@@ -54,101 +60,122 @@ class PFAttitudeCmdModule(Node):
         self.Vn = []    #   double
         self.AngEuler = []  #   double
         self.Acc_disturb = []   #   double
-        self.LAD = 0    #   double      Least absolute deviation ???
-        self.SPDCMD = 0 #   double
+        self.LAD = 0.0    #   double      Least absolute deviation ???
+        self.SPDCMD = 0.0 #   double
         self.z_NDO_past = []
         ##  Output
         self.response_timestamp = 0 #   uint
-        self.TargetThrust = 0   #   
+        self.TargetThrust = 0.0   #   
         self.TargetAttitude = []    #   double
         self.TargetPosition = []    #   double
-        self.TargetYaw = 0
+        self.TargetYaw = 0.0
         self.outNDO = [0.0, 0.0, 0.0]    #   double
         self.z_NDO = []
+        ##
+        self.PF_ATT_Period = 1/250
+        
         ##  Function
         self.qosProfileGen()
         self.declare_subscriber_px4()
-        self.PFAttitudeCmdService_ = self.create_service(PathFollowingSetpoint, 'path_following_att_cmd', self.PFAttitudeCmdCallback)
-        self.PF_ATTITUDE_CMD_MOD_ = PF_ATTITUDE_CMD_MOD(0.004)
+        self.PFAttitudeCmdService_ = self.create_service(PathFollowingSetpoint, 'path_following_att_cmd', self.PF_ATT_SRV_Callback)
+        self.PF_ATTITUDE_CMD_ = PF_ATTITUDE_CMD(0.004)
+        
+        self.First_Flag = True
+        self.InitTime = 0
+        ######  PUB
+        self.PFAttToControlPublisher_ = self.create_publisher(PFAtt2Control, '/pf_att_2_control', self.QOS_Sub_Sensor)
+        self.PFAttToPFGuidPublisher_ = self.create_publisher(PFAtt2PFGuid, '/pf_att_2_pf_guid', self.QOS_Sub_Sensor)
+        ######  SUB
+        self.PFGuidToPFAttSubscriber_ = self.create_subscription(PFGuid2PFAtt, '/pf_guid_2_pf_att', self.PF_Guid2PF_AttSubscribe, self.QOS_Sub_Sensor)
+        self.WaypointIndexSubscriber_ = self.create_subscription(WayPointIndex, '/waypoint_indx', self.Waypoint_index_callback, self.QOS_Sub_Sensor)
         print("===== Path Following Attitude Command Node is Initialize =====")
 
 #################################################################################################################
 
+
     def declare_subscriber_px4(self):
         #   init PX4 MSG Subscriber
         self.TimesyncSubscriber_ = self.create_subscription(Timesync, '/fmu/time_sync/out', self.TimesyncCallback, self.QOS_Sub_Sensor)
-        print("######### att sub ###########")
         self.EstimatorStatesSubscriber_ = self.create_subscription(EstimatorStates, '/fmu/estimator_states/out', self.EstimatorStatesCallback, self.QOS_Sub_Sensor)
-        # self.VehicleAngularVelocitySubscriber_ = self.create_subscription(VehicleAngularVelocity, '/fmu/vehicle_angular_velocity/out', self.VehicleAngularVelocityCallback, self.QOS_Sub_Sensor)
         print("====== px4 Subscriber Open ======")
         
+    def PFAttitudeCmdCallback(self):
+        if self.requestFlag is True :
+            if self.First_Flag is True :
+                self.InitTime  =   self.EstimatorStatesTime
+                self.First_Flag = False
+            else : 
+                Time   =   self.EstimatorStatesTime * 10**(-6) - self.InitTime
+                Pos         =   [self.x, self.y, self.z]
+                Vn          =   [self.vx, self.vy, self.vz]
+                AngEuler    =   [self.phi * math.pi /180., self.theta * math.pi /180., self.psi * math.pi /180.]
+                Acc_disturb =   [0., 0., 0.]
+                self.TargetThrust, self.TargetAttitude, self.TargetPosition, self.TargetYaw, self.outNDO = \
+                    self.PF_ATTITUDE_CMD_.PF_ATTITUDE_CMD_Module(Time, self.PlannedX, self.PlannedY, self.PlannedZ, self.PlannedIndex, Pos, Vn, AngEuler, Acc_disturb, self.LAD, self.SPDCMD)
+        else : 
+            pass
+                
+    def Waypoint_index_callback(self, msg):
+        self.waypoint_index = msg.waypoint_index
+    
+    def PFAtt2GuidPublisher(self):
+        msg = PFAtt2PFGuid()
+        msg.out_ndo = self.outNDO
+        self.PFAttToPFGuidPublisher_.publish(msg)
         
-    def PFAttitudeCmdCallback(self, request, response):
-        print("===== Request Path Following Attitude Command Node =====")
+    
+    def PFAtt2ControlPublisher(self):
+        msg = PFAtt2Control()
+        msg.timestamp = self.response_timestamp
+        msg.targetattitude = self.TargetAttitude
+        msg.targetposition = self.TargetPosition
+        msg.targetthrust = self.TargetThrust
+        msg.targetyaw = self.TargetYaw
+        self.PFAttToControlPublisher_.publish(msg)
+    
+    def PF_Guid2PF_AttSubscribe(self, msg):
+        self.LAD = msg.lad
+        self.SPDCMD = msg.spd_cmd
+        
+    def PF_ATT_SRV_Callback(self, request, response):
+        # print("===== Request Path Following Attitude Command Node =====")
         '''
-        uint64 request_init_timestamp
+        ####    SRV INPUT
         uint64 request_timestamp
         bool request_pathfollowing
         float64[] waypoint_x
         float64[] waypoint_y
         float64[] waypoint_z
+        ####    MSG INPUT
         uint32 waypoint_index
         float64 lad
         float64 spd_cmd
+        uint32 waypoint_index
         '''
         self.requestFlag = request.request_pathfollowing
-        self.requestInitTimestamp = request.request_init_timestamp
         self.requestTimestamp = request.request_timestamp
         self.PlannedX = request.waypoint_x
         self.PlannedY = request.waypoint_y
         self.PlannedZ = request.waypoint_z
-        self.PlannedIndex = request.waypoint_index
-        self.LAD = request.lad
-        self.SPDCMD = request.spd_cmd
-        self.z_NDO_past = request.z_ndo_past
-        if self.requestFlag is True : 
-            ############# Algirithm Start - PF_ATTITUDE_CMD  #############
-            InitTime  =   self.requestInitTimestamp
-            Time   =   self.requestTimestamp * 10**(-6) - InitTime
-            Pos         =   [self.x, self.y, self.z]
-            Vn          =   [self.vx, self.vy, self.vz]
-            AngEuler    =   [self.phi * math.pi /180., self.theta * math.pi /180., self.psi * math.pi /180.]
-            Acc_disturb =   [0., 0., 0.]
-            # function
-            self.TargetThrust, self.TargetAttitude, self.TargetPosition, self.TargetYaw, self.outNDO, self.z_NDO = \
-                self.PF_ATTITUDE_CMD_MOD_.PF_ATTITUDE_CMD_Module(Time, self.PlannedX, self.PlannedY, self.PlannedZ, self.PlannedIndex, Pos, Vn, AngEuler, Acc_disturb, self.z_NDO_past, self.LAD, self.SPDCMD)
-            ############# Algirithm  End  - PF_ATTITUDE_CMD  #############
-            ##  Algorithm Function
+        if self.requestFlag is True :
+            self.PF_ATT_TIMER = self.create_timer(self.PF_ATT_Period, self.PFAttitudeCmdCallback)
             '''
+            ####    SRV OUTPUT
             uint64 response_timestamp	# time since system start (microseconds)
             bool response_pathfollowing
+            ####    MSG OUTPUT
             float64 targetthrust
             float64[] targetattitude
             float64[] targetposition
             float64 targetyaw
             float64[] outndo
             '''
-            print("===== Path Following Attitude Command Generation !! =====")
             response.response_timestamp = self.response_timestamp
             response.response_pathfollowing = True
-            response.targetthrust = self.TargetThrust
-            response.targetattitude = self.TargetAttitude
-            response.targetposition = self.TargetPosition
-            response.targetyaw = self.TargetYaw
-            response.out_ndo = self.outNDO
-            response.z_ndo = self.z_NDO
-            print("===== Response Path Following Attitude Command Node =====")
             return response
         else : 
             response.response_timestamp = self.response_timestamp
-            response.response_pathfollowing = True
-            response.targetthrust = self.TargetThrust
-            response.targetattitude = self.TargetAttitude
-            response.targetposition = self.TargetPosition
-            response.targetyaw = self.TargetYaw
-            response.out_ndo = self.outNDO
-            response.z_ndo = self.z_NDO
-            print("===== Can't Response Path Following Attitude Command Node =====")
+            response.response_pathfollowing = False
             return response
         
         

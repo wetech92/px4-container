@@ -35,6 +35,7 @@ from msg_srv_act_interface.srv import CollisionAvoidanceSetpoint
 
 from sensor_msgs.msg import LaserScan
 from sensor_msgs.msg import Image
+from msg_srv_act_interface.msg import CA2Control
 
 from .losca import CollisionAvoidance_jy
 from .JBNU_Obs import JBNU_Collision
@@ -57,6 +58,7 @@ class Collision_Avoidance(Node):
         # self.JYCollision = CollisionAvoidance_jy()
         self.JBNUCollision = JBNU_Collision()
         self.current_frame = []
+        
         ##  Output
         self.vel_cmd_x = 0.0
         self.vel_cmd_y = 0.0
@@ -64,14 +66,27 @@ class Collision_Avoidance(Node):
         self.vel_cmd_yaw = 0.0
         self.qosProfileGen()
         self.requestFlag = False
+        self.CAPeriod = 1/50
         self.response_timestamp = 0
         self.TimesyncSubscriber_ = self.create_subscription(Timesync, '/fmu/time_sync/out', self.TimesyncCallback, self.QOS_Sub_Sensor)
         self.EstimatorStatesSubscriber_ = self.create_subscription(EstimatorStates, '/fmu/estimator_states/out', self.EstimatorStatesCallback, self.QOS_Sub_Sensor)
         self.LidarSubscriber_ = self.create_subscription(LaserScan, '/rplidar_a3/laserscan', self.LidarCallback, QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT))
         self.CollisionAvoidanceService_ = self.create_service(CollisionAvoidanceSetpoint, 'collision_avoidance', self.CollisionAvoidanceCallback)
         self.CameraSubscriber_ = self.create_subscription(Image, '/realsense_d455_depth/realsense_d455_depth/depth/image_raw', self.CameraCallback, QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT))
+        
+        
+        self.CAToControlPublisher_ = self.create_publisher(CA2Control, '/ca_2_control', self.QOS_Sub_Sensor)
+        
+    def CAToControlPublisher(self):
+        msg = CA2Control()
+        msg.vel_cmd_x = self.vel_cmd_x
+        msg.vel_cmd_y = self.vel_cmd_y
+        msg.vel_cmd_z = self.vel_cmd_z
+        msg.vel_cmd_yaw = self.vel_cmd_yaw
+        self.CAToControlPublisher_.publish(msg)
 
-
+    def CACallback(self):
+        self.vel_cmd_x, self.vel_cmd_y, self.vel_cmd_z, self.vel_cmd_yaw = self.JBNUCollision.CA(self.current_frame)
         
     def qosProfileGen(self):
     #   Reliability : 데이터 전송에 있어 속도를 우선시 하는지 신뢰성을 우선시 하는지를 결정하는 QoS 옵션
@@ -93,25 +108,14 @@ class Collision_Avoidance(Node):
         print("===== Request Coliision Avoidance Node =====")
         self.requestTimestamp = request.request_timestamp
         if request.request_collisionavoidance is True : 
-            print(type(self.requestFlag))
-            # self.vel_cmd_x, self.vel_cmd_y, self.vel_cmd_z, self.vel_cmd_yaw = self.JYCollision.CA(self.x, self.y, self.ObsAngle, self.ObsSize, self.requestFlag)
-            vel_cmd_x, vel_cmd_y, vel_cmd_z, vel_cmd_yaw = self.JBNUCollision.CA(self.current_frame)
+            self.CATimer = self.create_timer(self.CAPeriod, self.CACallback)
             print("===== Coliision Avoidance Complete!! =====")
             response.response_timestamp = self.response_timestamp
             response.response_collisionavoidance = True
-            response.vel_cmd_x = vel_cmd_x
-            response.vel_cmd_y = vel_cmd_y
-            response.vel_cmd_z = vel_cmd_z
-            response.vel_cmd_yaw = vel_cmd_yaw
-            print("===== Response Coliision Avoidance Node =====")
             return response
         else : 
             response.response_timestamp = self.response_timestamp
             response.response_collisionavoidance = False
-            response.vel_cmd_x = 0.0
-            response.vel_cmd_y = 0.0
-            response.vel_cmd_z = 0.0
-            response.vel_cmd_yaw = 0.0
             return response
         
     def TimesyncCallback(self, msg):
@@ -143,24 +147,16 @@ class Collision_Avoidance(Node):
         
     def LidarCallback(self, msg):
         ObsDist = min(msg.ranges)
-        ObsDist2 = max(msg.ranges)
-        self.ObsPos[0] = ObsDist * math.cos(self.ObsAngle * math.pi / 180)
-        self.ObsPos[1] = ObsDist * math.sin(self.ObsAngle * math.pi / 180)
-        self.ObsAngle = 3.6 * np.argmin(msg.ranges)
-        ObsSizeAngle = (3.6 * (100 - msg.ranges.count(math.inf))) / 2
-        self.ObsSize = 2 * (ObsDist * math.tan(ObsSizeAngle * np.pi / 180))
-        self.requestFlag = False
-        # print(" min Distance : %f"%self.ObsDist)
-        # print("Angle : %f"%self.ObsAngle)
-        # print("max Distance : %f"%self.ObsDist2)
-        #print("Position X : %f"%self.ObsPos[0])
-        #print("Position Y : %f"%self.ObsPos[1])
-        #print("X : %f"%self.ObsPos[0],"Y : %f"%self.ObsPos[1])
-        # print(" ObsSize : %f"%self.ObsSize )
-        # print(" ObsSizeAngle : %f"%self.ObsSizeAngle )
+        # ObsDist2 = max(msg.ranges)
+        # self.ObsPos[0] = ObsDist * math.cos(self.ObsAngle * math.pi / 180)
+        # self.ObsPos[1] = ObsDist * math.sin(self.ObsAngle * math.pi / 180)
+        # self.ObsAngle = 3.6 * np.argmin(msg.ranges)
+        # ObsSizeAngle = (3.6 * (100 - msg.ranges.count(math.inf))) / 2
+        # self.ObsSize = 2 * (ObsDist * math.tan(ObsSizeAngle * np.pi / 180))
+        # self.requestFlag = False
         
-        if ObsDist < 6.0:
-            requestFlag = True
+        # if ObsDist < 6.0:
+        #     requestFlag = True
             
     def CameraCallback(self, msg):
 
@@ -169,6 +165,5 @@ class Collision_Avoidance(Node):
         current_frame = np.interp(current_frame, (0.0, 6.0), (0, 255))
         self.current_frame = cv2.applyColorMap(cv2.convertScaleAbs(current_frame,alpha=1),cv2.COLORMAP_JET)
         cv2.imshow("depth_camera_rgb", self.current_frame)
-        
         # cv2.imshow("depth", current_frame)
         cv2.waitKey(1)

@@ -28,16 +28,22 @@ find_package(rosidl_default_generators REQUIRED)
 # Declare ROS messages, services and actions
 ################################################################################
 set(msg_files
+  "msg/CA2Control.msg"
+  "msg/PFAtt2Control.msg"
+  "msg/PFAtt2PFGuid.msg"
+  "msg/PFGpr2PFGuid.msg"
+  "msg/PFGuid2PFAtt.msg"
   "msg/Test.msg"
+  "msg/WayPointIndex.msg"
 )
 
 set(srv_files
-  "srv/MapInit.srv"
-  "srv/PathPlanningSetpoint.srv"
-  "srv/PathFollowingSetpoint.srv"
   "srv/CollisionAvoidanceSetpoint.srv"
-  "srv/PathFollowingGuid.srv"
+  "srv/MapInit.srv"
   "srv/PathFollowingGPR.srv"
+  "srv/PathFollowingGuid.srv"
+  "srv/PathFollowingSetpoint.srv"
+  "srv/PathPlanningSetpoint.srv"
 )
 
 set(action_files

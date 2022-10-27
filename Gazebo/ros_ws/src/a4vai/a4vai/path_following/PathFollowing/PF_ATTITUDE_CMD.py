@@ -13,7 +13,7 @@ from .BaseModules.GCU_Main import Guid_pursuit, SpdCtrller, AccCmdToCtrlCmd
 # temp
 from .PF_Cost import Calc_PF_cost
 
-class PF_ATTITUDE_CMD_MOD():
+class PF_ATTITUDE_CMD():
     def __init__(self, dt) -> None:
     #.. Parameters
         self.GCUParams  =   DataGCU(dt)
@@ -21,13 +21,11 @@ class PF_ATTITUDE_CMD_MOD():
     #.. NDO variables
         self.FbCmd      =   np.array([0., 0., -self.GCUParams.Mass * self.GCUParams.g0])
         self.z_NDO      =   np.zeros(3)
-        self.z_NDO_in = [0.0, 0.0, 0.0]
         self.lx_NDO     =   4.
         self.ly_NDO     =   4.
         self.lz_NDO     =   0.2
         self.outNDO     =   np.zeros(3)
         self.a_drag_n   =   np.zeros(3)
-        self.firstTime = True
 
     #.. temp
         self.Flag_Write =   False # True
@@ -35,36 +33,19 @@ class PF_ATTITUDE_CMD_MOD():
         #self.datalogFile    =   open("/root/ros_ws/src/a4vai/a4vai/path_following/sharedir/datalog.txt",'w')
         pass
 
-    def PF_ATTITUDE_CMD_Module(self, timestemp, PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, Acc_disturb, z_NDO_past, LAD=2., SPDCMD=2.):
-        print("###########11111!!!!###########")
-
-        # self.GCUParams.dt_GCU = 1.
-        # Vn = np.zeros(3)
-        # self.FbCmd = np.zeros(3)
-        # AngEuler = np.zeros(3)
-        # self.GCUParams.Mass = 1.
-        # self.GCUParams.rho = 1.
-        # self.GCUParams.Sref = 1.
-        # self.GCUParams.CD = 1.
-        # self.GCUParams.g0 = 1.
-        # z_NDO_past = np.zeros(3)
-
-
-        outNDO, z_NDO_out = self.NDO_main(self.GCUParams.dt_GCU, Vn, self.FbCmd, AngEuler, self.GCUParams.Mass, \
-            self.GCUParams.rho, self.GCUParams.Sref, self.GCUParams.CD, self.GCUParams.g0, z_NDO_past)
-        print("###########2222222###########")
+    def PF_ATTITUDE_CMD_Module(self, timestemp, PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, Acc_disturb, LAD=2., SPDCMD=2.):
+        outNDO = self.NDO_main(self.GCUParams.dt_GCU, Vn, self.FbCmd, AngEuler, self.GCUParams.Mass, \
+            self.GCUParams.rho, self.GCUParams.Sref, self.GCUParams.CD, self.GCUParams.g0)
         if Acc_disturb[0] == 0.:
             Acc_disturb =   self.outNDO + self.a_drag_n
         TargetThrust, TargetAttitude, TargetPosition, TargetYaw = \
             self.PF_main(timestemp, PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, Acc_disturb, LAD, SPDCMD)
-        print("##########333333###########")
 
-        return TargetThrust, TargetAttitude.tolist(), TargetPosition.tolist(), TargetYaw, outNDO.tolist(), z_NDO_out.tolist()
+        return TargetThrust, TargetAttitude.tolist(), TargetPosition.tolist(), TargetYaw, outNDO.tolist()
 
     def PF_main(self, timestemp, PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, Acc_disturb, LAD=2., SPDCMD=2.):
         #.. Guid. Params.
             self.GCUParams.lookAheadDist    =      LAD
-            print("##########444444###########")
             self.GCUParams.desSpd       =   SPDCMD
             # self.GCUParamsreachDist     =   self.GCUParams.lookAheadDist
             self.GCUParamsreachDist     =   3.
@@ -175,7 +156,7 @@ class PF_ATTITUDE_CMD_MOD():
             return ThrustCmd, AttCmd, tgPos, LOSazim
         
 
-    def NDO_main(self, dt, Vn, FbCmd, AngEuler, mass, rho, Sref, CD, g, z_NDO_past):
+    def NDO_main(self, dt, Vn, FbCmd, AngEuler, mass, rho, Sref, CD, g):
         print("-------- 111111111111111111---------------------")
         # Calc. Aero. Force
         psi, gam        =   Get_Vec2AzimElev(Vn)
@@ -192,12 +173,7 @@ class PF_ATTITUDE_CMD_MOD():
         cI_B            =   Get_Euler2DCM(AngEuler)
         cB_I            =   np.transpose(cI_B)
         Acmdn           =   np.dot(cB_I, FbCmd / mass) + np.array([0., 0., g]) + self.a_drag_n 
-        print("-------- 2222222222222222---------------------")
-        dz_NDO      =   np.zeros(3)
-        if self.firstTime is True :
-            pass
-        else : 
-            self.z_NDO = z_NDO_past
+        dz_NDO      =   np.zeros(3)           
         dz_NDO[0]   =   -self.lx_NDO*self.z_NDO[0] - self.lx_NDO * \
             (self.lx_NDO*Vn[0] + Acmdn[0])
         dz_NDO[1]   =   -self.ly_NDO*self.z_NDO[1] - self.ly_NDO * \
@@ -211,4 +187,4 @@ class PF_ATTITUDE_CMD_MOD():
 
         self.z_NDO  =   self.z_NDO + dz_NDO*dt
 
-        return self.outNDO, self.z_NDO
+        return self.outNDO
