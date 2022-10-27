@@ -110,13 +110,25 @@ class PFAttitudeCmdModule(Node):
                 Vn          =   [self.vx, self.vy, self.vz]
                 AngEuler    =   [self.phi * math.pi /180., self.theta * math.pi /180., self.psi * math.pi /180.]
                 Acc_disturb =   [0., 0., 0.]
+                # self.LAD = 1.5
+                # self.SPDCMD = 2.0
+                # self.PlannedIndex = 1
+                self.PlannedX[0] = 0.0
+                self.PlannedY[0] = 0.0
                 self.TargetThrust, self.TargetAttitude, self.TargetPosition, self.TargetYaw, self.outNDO = \
                     self.PF_ATTITUDE_CMD_.PF_ATTITUDE_CMD_Module(Time, self.PlannedX, self.PlannedY, self.PlannedZ, self.PlannedIndex, Pos, Vn, AngEuler, Acc_disturb, self.LAD, self.SPDCMD)
+                    
+                self.PFAtt2GuidPublisher()
+                self.PFAtt2ControlPublisher()
+
+                print("Target Thrust = ", str(self.TargetThrust))
+                print("self.TargetAttitude = ", str( self.TargetAttitude))
+                
         else : 
             pass
                 
     def Waypoint_index_callback(self, msg):
-        self.waypoint_index = msg.waypoint_index
+        self.PlannedIndex = msg.waypoint_index
     
     def PFAtt2GuidPublisher(self):
         msg = PFAtt2PFGuid()
@@ -127,10 +139,10 @@ class PFAttitudeCmdModule(Node):
     def PFAtt2ControlPublisher(self):
         msg = PFAtt2Control()
         msg.timestamp = self.response_timestamp
-        msg.targetattitude = self.TargetAttitude
-        msg.targetposition = self.TargetPosition
-        msg.targetthrust = self.TargetThrust
-        msg.targetyaw = self.TargetYaw
+        msg.target_attitude = self.TargetAttitude
+        msg.target_position = self.TargetPosition
+        msg.target_thrust = self.TargetThrust
+        msg.target_yaw = self.TargetYaw
         self.PFAttToControlPublisher_.publish(msg)
     
     def PF_Guid2PF_AttSubscribe(self, msg):

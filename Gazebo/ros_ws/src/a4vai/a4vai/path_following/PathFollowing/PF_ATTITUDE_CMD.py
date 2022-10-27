@@ -34,6 +34,8 @@ class PF_ATTITUDE_CMD():
         pass
 
     def PF_ATTITUDE_CMD_Module(self, timestemp, PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, Acc_disturb, LAD=2., SPDCMD=2.):
+        print("index = " , str(PlannnedIndex))
+        print("X = ", str(PlannedX[PlannnedIndex]), "    Y = ", str(PlannedY[PlannnedIndex]), "  Z = ", str(PlannedZ[PlannnedIndex]))
         outNDO = self.NDO_main(self.GCUParams.dt_GCU, Vn, self.FbCmd, AngEuler, self.GCUParams.Mass, \
             self.GCUParams.rho, self.GCUParams.Sref, self.GCUParams.CD, self.GCUParams.g0)
         if Acc_disturb[0] == 0.:
@@ -57,19 +59,16 @@ class PF_ATTITUDE_CMD():
             Vn          =   np.array(Vn)
             AngEuler    =   np.array(AngEuler)
             Acc_disturb =   np.array(Acc_disturb)
-            print("##########55555###########")
 
         #.. Virtual Target
             # function & output
             tgPos       =   Calc_VirTgPos(Pos, nextWPidx, WPs, LAD)
-            print("##########666###########")
 
         #.. Kinematics
             # input
             tgVn        =   np.array([0., 0., 0.])
             # function & output
             LOSazim, LOSelev, dLOSvec, reldist, tgo  =   Kinematics(tgPos, tgVn, Pos, Vn)
-            print("##########666###########")
 
         #.. Guidance
             Kgain           =   self.GCUParams.Kgain_guidPursuit
@@ -77,7 +76,6 @@ class PF_ATTITUDE_CMD():
             # function & output
             AccCmdw_Lat     =   Guid_pursuit(Kgain, tgo, LOSazim, LOSelev, Vn, AccLim)
             AccCmdw         =   AccCmdw_Lat
-            print("##########666###########")
 
         #.. speed control module
             # vars. for inputs
@@ -157,7 +155,6 @@ class PF_ATTITUDE_CMD():
         
 
     def NDO_main(self, dt, Vn, FbCmd, AngEuler, mass, rho, Sref, CD, g):
-        print("-------- 111111111111111111---------------------")
         # Calc. Aero. Force
         psi, gam        =   Get_Vec2AzimElev(Vn)
         angI2W          =   np.array([0., -gam, psi])

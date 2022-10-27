@@ -128,7 +128,7 @@ class ControllerNode(Node):
         self.TargetVelYawCmd = 0.0
         self.TargetQuaternionCmd = [0.0, 0.0, 0.0, 0.0] # Quaternion w x y z
         self.TargetRateCmd = [0.0, 0.0, 0.0] # Radian
-        self.TargetThrustCmd = 0.0
+        self.TargetThrustCmd = 0.36
         self.TargetBodyRateCmd = [np.NaN, np.NaN, np.NaN]
         self.TargetYawRateCmd = 0.0
         
@@ -179,7 +179,7 @@ class ControllerNode(Node):
         
         self.TargetThrust = []
         self.TargetPosition = []
-        # self.TargetAttitude = []
+        self.TargetAttitude = [0.0,0.0,0.0]
         self.TargetYaw = 0.0
         
         self.LAD = 0.0
@@ -264,7 +264,9 @@ class ControllerNode(Node):
                             self.path_planning_flag = False
                             self.path_planning_complete = True
                             self.path_following_gpr_flag = True
+                            # self.path_following_guid_flag = True
                             self.collision_avoidance_flag = True
+                            # self.path_following_flag =True
                         else :
                             pass
                     finally : 
@@ -292,6 +294,7 @@ class ControllerNode(Node):
                             #########################################################################################
                             self.path_following_gpr_flag = False
                             self.path_following_gpr_complete = True
+                            self.path_following_guid_flag = True
                         else :
                             pass    
                     finally : 
@@ -409,14 +412,17 @@ class ControllerNode(Node):
     def OffboardControl_AttCmd(self):
         if self.path_following_complete is True :
             if self.ObstacleFlag is False :
-                w, x, y, z = self.Euler2Quaternion(self.TargetAttitude[0])
+                w, x, y, z = self.Euler2Quaternion(self.TargetAttitude[0],self.TargetAttitude[1],self.TargetAttitude[2])
                 self.TargetQuaternionCmd = [w, x, y, z]
                 self.SetAttitude(self.TargetQuaternionCmd, [0.0, 0.0, 0.0], self.TargetThrustCmd, 0.0)
+                print("Attitude = ", str(np.array(self.TargetAttitude) * 57.3))
+                print("Thrust = ", str(self.TargetThrustCmd))
+                # self.SetAttitude(self.TargetQuaternionCmd, [0.0, 0.0, 0.0], 0.36, 0.0)
                 pass
             else : 
                 pass
         else : 
-            self.get_logger().warn("===== Can't Open Attitude Command =====")
+            self.get_logger().info("===== Can't Open Attitude Command =====")
             
     def OffboardControl_VelCmd(self):
         if self.collision_avoidance_complete is True : 
@@ -439,6 +445,7 @@ class ControllerNode(Node):
         self.TargetAttitude = msg.target_attitude
         self.TargetPosition = msg.target_position
         self.TargetThrust = msg.target_thrust
+        self.TargetThrustCmd = self.TargetThrust
         self.TargetYaw = msg.target_yaw
         
     def qosProfileGen(self):

@@ -87,6 +87,7 @@ class Collision_Avoidance(Node):
 
     def CACallback(self):
         self.vel_cmd_x, self.vel_cmd_y, self.vel_cmd_z, self.vel_cmd_yaw = self.JBNUCollision.CA(self.current_frame)
+        self.CAToControlPublisher()
         
     def qosProfileGen(self):
     #   Reliability : 데이터 전송에 있어 속도를 우선시 하는지 신뢰성을 우선시 하는지를 결정하는 QoS 옵션
@@ -164,6 +165,6 @@ class Collision_Avoidance(Node):
         #print(current_frame)
         current_frame = np.interp(current_frame, (0.0, 6.0), (0, 255))
         self.current_frame = cv2.applyColorMap(cv2.convertScaleAbs(current_frame,alpha=1),cv2.COLORMAP_JET)
-        cv2.imshow("depth_camera_rgb", self.current_frame)
+        # cv2.imshow("depth_camera_rgb", self.current_frame)
         # cv2.imshow("depth", current_frame)
-        cv2.waitKey(1)
+        # cv2.waitKey(1)

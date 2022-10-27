@@ -29,12 +29,14 @@ class PF_GUID_PARAM():
 
     def PF_GUID_PARAM_Module(self, PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, GPR_output, outNDO, Flag_Guid_Param):
         print("In function")
+        
+        outNDO_ = np.array(outNDO)
         #.. MPPI
         if Flag_Guid_Param == 0:
             LAD, SPDCMD     =   self.MPPI(PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, GPR_output)
         #.. DNN
         elif Flag_Guid_Param == 1:
-            LAD, SPDCMD     =   self.DNN(PlannedX, PlannedY, PlannedZ, PlannnedIndex, Vn, Pos, outNDO)
+            LAD, SPDCMD     =   self.DNN(PlannedX, PlannedY, PlannedZ, PlannnedIndex, Vn, Pos, outNDO_)
         else:
             LAD, SPDCMD     =   2., 2.
 

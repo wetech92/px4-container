@@ -52,7 +52,7 @@ class PF_GPR_Module(Node):
         self.InitFlag = True
         self.requestFlag = False    #   bool
         self.requestTimestamp = 0   #   uint
-        self.outNDO = []    #   double
+        self.outNDO = [0.0, 0.0, 0.0]    #   double
         ##  Output
         self.response_timestamp = 0 #   uint
         self.gpr_output_data = []
@@ -78,6 +78,8 @@ class PF_GPR_Module(Node):
             self.InitTime  =   self.EstimatorStatesTime * 10**(-6)
             self.InitFlag   =   False
         Time   =   self.EstimatorStatesTime * 10**(-6) - self.InitTime
+        print("Time = ", str(Time))
+        print("outNDO = ", str(self.outNDO))
         # function
         GPR_out = self.PF_GPR_.PF_GPR_Module(Time, self.outNDO)
         # output
@@ -85,6 +87,7 @@ class PF_GPR_Module(Node):
         ############# Algirithm  End  - PF_GPR  #############
         self.gpr_output_data = list(chain.from_iterable(self.gpr_output))
         self.gpr_output_index = 3
+        self.PF_Gpr2PF_Guid_Publisher()
     
     def PF_Gpr2PF_Guid_Publisher(self):
         msg = PFGpr2PFGuid()

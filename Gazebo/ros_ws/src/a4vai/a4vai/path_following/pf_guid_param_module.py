@@ -56,7 +56,7 @@ class PFGuidModule(Node):
         self.Pos = [self.x, self.y, self.z]
         self.Vn = [self.vx, self.vy, self.vz]
         self.AngEuler = [self.phi, self.theta, self.psi]
-        
+        self.waypoint_index = 0
         ##  Input
         self.requestFlag = False    #   bool
         self.requestTimestamp = 0   #   uint
@@ -71,7 +71,7 @@ class PFGuidModule(Node):
         self.GPR_output_index = 3
         self.GPR_output = []    #   double
         self.outNDO = []    #   double
-        self.Flag_Guid_Param = 0    #   int
+        self.Flag_Guid_Param = 1    #   int
         ##  Output
         self.response_timestamp = 0 #   uint
         self.LAD = 0.0    #   double
@@ -100,15 +100,15 @@ class PFGuidModule(Node):
 #################################################################################################################
 
     def waypoint_index_calculator(self):
-        if np.sqrt((self.x - self.waypoint_x[self.waypoint_index])**2 + (self.y - self.waypoint_y[self.waypoint_index]) ** 2) < 3.0:
-            self.waypoint_index += 1
+        if np.sqrt((self.x - self.PlannedX[self.PlannedIndex])**2 + (self.y - self.PlannedY[self.PlannedIndex]) ** 2) < 3.0:
+            self.PlannedIndex += 1
         else : 
             pass
         
     def Waypoint_indexPublisher(self):
         msg = WayPointIndex()
         msg.timestamp = self.response_timestamp
-        msg.waypoint_index = self.waypoint_index
+        msg.waypoint_index = self.PlannedIndex
         self.Waypoint_Indx_Publisher_.publish(msg)
         
     def PF_GUID_2_PF_ATT_Publisher(self):
@@ -130,7 +130,7 @@ class PFGuidModule(Node):
             self.waypoint_index_calculator()
             self.GPR_output = [self.GPR_output_data[i * self.GPR_output_index:(i + 1) * self.GPR_output_index] for i in range((len(self.GPR_output_data) - 1 + self.GPR_output_index) // self.GPR_output_index )]
             if self.InitFlag is True:
-                self.PF_GUID_PARAM_MOD   =   PF_GUID_PARAM(self.Flag_Guid_Param)
+                self.PF_GUID_PARAM_MOD  =  PF_GUID_PARAM(self.Flag_Guid_Param)
                 self.InitFlag = False
             else : 
                 pass
@@ -143,6 +143,8 @@ class PFGuidModule(Node):
             # output
             self.LAD    =   LAD
             self.SPDCMD =   SPDCMD
+            self.Waypoint_indexPublisher()
+            self.PF_GUID_2_PF_ATT_Publisher()
         else : 
             pass
         
