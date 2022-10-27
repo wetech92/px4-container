@@ -37,7 +37,8 @@ class JBNU_Collision():
         vx = Act[0][0][0]
         vy = 0.0
         vz = Act[0][0][1]
-        vyaw = -Act[0][0][2]
+        vyaw = Act[0][0][2]
+        
         return float(vx), float(vy), - float(vz), - float(vyaw)
 
         

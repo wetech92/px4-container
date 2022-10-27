@@ -37,7 +37,7 @@ class PF_ATTITUDE_CMD():
         pass
 
     def PF_ATTITUDE_CMD_Module(self, timestemp, PlannedX, PlannedY, PlannedZ, PlannnedIndex, Pos, Vn, AngEuler, Acc_disturb, LAD=2., SPDCMD=2.):
-        print("index = " , str(PlannnedIndex))
+        # print("index = " , str(PlannnedIndex))
         #print("X = ", str(PlannedX[PlannnedIndex]), "    Y = ", str(PlannedY[PlannnedIndex]), "  Z = ", str(PlannedZ[PlannnedIndex]))
         outNDO = self.NDO_main(self.GCUParams.dt_GCU, Vn, self.FbCmd, AngEuler, self.GCUParams.Mass, \
             self.GCUParams.rho, self.GCUParams.Sref, self.GCUParams.CD, self.GCUParams.g0)

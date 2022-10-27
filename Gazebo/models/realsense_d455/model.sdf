@@ -75,8 +75,8 @@
           <camera name="realsense_d455_depth">
             <horizontal_fov>1.57</horizontal_fov>
             <image>
-              <width>1280</width>
-              <height>720</height>
+              <width>640</width>
+              <height>480</height>
             </image>
             <distortion>
               <k1>0.0</k1>

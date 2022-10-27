@@ -111,14 +111,8 @@ class PFAttitudeCmdModule(Node):
                 AngEuler    =   [self.phi * math.pi /180., self.theta * math.pi /180., self.psi * math.pi /180.]
                 Acc_disturb =   [0., 0., 0.]
         ### Todo kdh
-                # self.PlannedIndex = 2
-                # print("plannedX = ",str(self.PlannedX))
-                # print("plannedY = ",str(self.PlannedY))
-                # print("plannedZ = ",str(self.PlannedZ))
-                # print("Time = ",str(Time))
-                # print("pos = ", str(Pos))
-                # print("Vn = ",str(Vn))                
-                # print("AngEuler = ",str(AngEuler))
+                self.LAD = 2.0
+                self.SPDCMD = 2.0
                 self.TargetThrust, self.TargetAttitude, self.TargetPosition, self.TargetYaw, self.outNDO = \
                     self.PF_ATTITUDE_CMD_.PF_ATTITUDE_CMD_Module(Time, self.PlannedX, self.PlannedY, self.PlannedZ, self.PlannedIndex, Pos, Vn, AngEuler, Acc_disturb, self.LAD, self.SPDCMD)
                     

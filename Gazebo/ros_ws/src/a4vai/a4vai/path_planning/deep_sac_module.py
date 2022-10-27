@@ -109,7 +109,6 @@ class SAC:
         MapSize = 5000
         ############### Map 회전 방향 확인 필요 ################
         # RawImage = Map
-        # todo kdh
         RawImage = (cv2.imread("/root/ros_ws/src/a4vai/a4vai/path_planning/Map/RawImage.png", cv2.IMREAD_GRAYSCALE))
         RawImage2 = cv2.flip(RawImage, 0)
         Image_New = np.uint8(np.uint8((255 - RawImage2) / 255))
@@ -441,10 +440,11 @@ class RRT:
         # todo kdh
         RawImage = (cv2.imread("/root/ros_ws/src/a4vai/a4vai/path_planning/Map/RawImage.png", cv2.IMREAD_GRAYSCALE))
         # RawImage = (cv2.imread("/root/ros_ws/src/a4vai/a4vai/path_planning/Map/RawImage.png", cv2.IMREAD_GRAYSCALE))
-        Image = np.uint8(np.uint8((255 - RawImage)/ 255))
-        Image = cv2.flip(Image, 0)
+        RawImage2 = cv2.flip(RawImage, 0)
+        Image_New = np.uint8(np.uint8((255 - RawImage2) / 255))
+        
 
-        N_grid = len(Image)
+        N_grid = len(Image_New)
         
         # print(Start)
         
@@ -499,7 +499,7 @@ class RRT:
             new_coord = q_near[0] + (q_rand - q_near[0]) / val * step_size
 
             # Collision Check
-            flag_collision = colli.collision_check(Image, q_near[0], new_coord)
+            flag_collision = colli.collision_check(Image_New, q_near[0], new_coord)
             #print(q_near[0], new_coord)
 
             # flag_collision = 0

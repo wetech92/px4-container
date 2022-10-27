@@ -224,7 +224,7 @@ class ControllerNode(Node):
             if self.map_generation_flag is True :
                 map_service = MapService()
                 map_service.RequestMapGeneration(self.map_generation_flag)
-                rclpy.spin_once(map_service)
+                rclpy.spin_until_future_complete(map_service, map_service.future)
                 if map_service.future.done():
                     try : 
                         map_service.result = map_service.future.result()
@@ -418,7 +418,8 @@ class ControllerNode(Node):
             if self.ObstacleFlag is False :
                 w, x, y, z = self.Euler2Quaternion(self.TargetAttitude[0],self.TargetAttitude[1],self.TargetAttitude[2])
                 self.TargetQuaternionCmd = [w, x, y, z]
-                self.SetAttitude(self.TargetQuaternionCmd, [0.0, 0.0, 0.0], self.TargetThrustCmd, 0.0)
+                self.TargetVelYawCmd = self.TargetYaw
+                self.SetAttitude(self.TargetQuaternionCmd, [0.0, 0.0, 0.0], self.TargetThrustCmd, self.TargetVelYawCmd)
                 self.get_logger().warn("===== Use Open Attitude Command =====")
                 # print("Attitude = ", str(np.array(self.TargetAttitude) * 57.3))
                 # print("Thrust = ", str(self.TargetThrustCmd))
@@ -443,6 +444,24 @@ class ControllerNode(Node):
             pass
             # self.get_logger().warn("===== Can't Open Velocity Command =====")
 
+
+    def OffboardControl_PosCmd(self):
+        if self.path_following_complete is True :
+            if self.ObstacleFlag is False :
+                self.TargetPositionCmd = self.TargetPosition
+                self.TargetVelYawCmd = self.TargetYaw
+                self.SetPosition(self.TargetPositionCmd, self.TargetVelYawCmd)
+                self.get_logger().warn("===== Use Open Attitude Command =====")
+                # print("Attitude = ", str(np.array(self.TargetAttitude) * 57.3))
+                # print("Thrust = ", str(self.TargetThrustCmd))
+                # self.SetAttitude(self.TargetQuaternionCmd, [0.0, 0.0, 0.0], 0.36, 0.0)
+                pass
+            else : 
+                pass
+        else : 
+            pass
+            # self.get_logger().info("===== Can't Open Attitude Command =====")
+    
     def CA2Control_callback(self, msg):
         self.vel_cmd_x = msg.vel_cmd_x
         self.vel_cmd_y = msg.vel_cmd_y
