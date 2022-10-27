@@ -109,6 +109,7 @@ class SAC:
         MapSize = 5000
         ############### Map 회전 방향 확인 필요 ################
         # RawImage = Map
+        # todo kdh
         RawImage = (cv2.imread("/root/ros_ws/src/a4vai/a4vai/path_planning/Map/RawImage.png", cv2.IMREAD_GRAYSCALE))
         RawImage2 = cv2.flip(RawImage, 0)
         Image_New = np.uint8(np.uint8((255 - RawImage2) / 255))
@@ -326,7 +327,7 @@ class SAC:
             wp_index_for = wp_index_pre
             
             if collision:
-                print("pruning is not availabe")
+                # print("pruning is not availabe")
                 break
 
         pruned_wp = list(reversed(pruned_wp))
@@ -340,6 +341,34 @@ class SAC:
             pruned_x_points.append(pruned_wp[i][0])
             pruned_y_points.append(pruned_wp[i][1])
             pruned_z_points.append(-5.0)
+
+        prunedNew_x_points = []
+        prunedNew_y_points = []
+        prunedNew_z_points = []
+        for i in range(len(pruned_wp) - 1):
+            First = np.array([pruned_x_points[i], pruned_y_points[i]])
+            Second = np.array([pruned_x_points[i + 1], pruned_y_points[i + 1]])
+
+            if (np.linalg.norm(Second - First) <= 50):
+                prunedNew_x_points.append(pruned_x_points[i])
+                prunedNew_y_points.append(pruned_y_points[i])
+                prunedNew_z_points.append(-5.0)
+            else:
+                Unit = (Second - First) / np.linalg.norm(Second - First)
+
+                State = First
+                prunedNew_x_points.append(First[0])
+                prunedNew_y_points.append(First[1])
+                prunedNew_z_points.append(-5.0)
+                for j in range(0, 5000):
+                    State = State + 50 * Unit
+
+                    prunedNew_x_points.append(State[0])
+                    prunedNew_y_points.append(State[1])
+                    prunedNew_z_points.append(-5.0)
+
+                    if (np.linalg.norm(Second - State) <= 50):
+                        break
 
         ## End Pruning Computation
         TimeEnd = time.time()
@@ -392,16 +421,16 @@ class SAC:
             Len_temp = np.linalg.norm(Second - First)
             Len = Len + Len_temp
             
-        Cost = (Len-LenRRT) / LenRRT
+        Cost = (Len-self.LenRRT) / self.LenRRT  #self. 변경
         
-        print("SAC-Pruning 시간", TimeEnd - TimeStart)
-        print("SAC-Pruning Cost", Cost)
+        # print("SAC-Pruning 시간", TimeEnd - TimeStart)
+        # print("SAC-Pruning Cost", Cost)
         
-        print("SAC-Pruning x-waypoints", pruned_x_points)
-        print("SAC-Pruning y-waypoints", pruned_y_points)
-        print("SAC-Pruning z-waypoints", pruned_z_points)
+        # print("SAC-Pruning x-waypoints", prunedNew_x_points)
+        # print("SAC-Pruning y-waypoints", prunedNew_y_points)
+        # print("SAC-Pruning z-waypoints", prunedNew_z_points)
 
-        return pruned_x_points, pruned_y_points, pruned_z_points
+        return prunedNew_x_points, prunedNew_y_points, prunedNew_z_points
     
     
 class RRT:
@@ -409,8 +438,9 @@ class RRT:
     def PathPlanning(self, Start, Goal) :
         
         TimeStart = time.time()
-        
+        # todo kdh
         RawImage = (cv2.imread("/root/ros_ws/src/a4vai/a4vai/path_planning/Map/RawImage.png", cv2.IMREAD_GRAYSCALE))
+        # RawImage = (cv2.imread("/root/ros_ws/src/a4vai/a4vai/path_planning/Map/RawImage.png", cv2.IMREAD_GRAYSCALE))
         Image = np.uint8(np.uint8((255 - RawImage)/ 255))
         Image = cv2.flip(Image, 0)
 
@@ -551,10 +581,10 @@ class RRT:
             Len_temp = np.linalg.norm(Second - First)
             LenRRT = LenRRT + Len_temp
 
-        print("RRT 시간", TimeEnd - TimeStart)
-        print("RRT 경로 길이", LenRRT)
+        # print("RRT 시간", TimeEnd - TimeStart)
+        # print("RRT 경로 길이", LenRRT)
         
-        print("RRT x-waypoints", path_x)
-        print("RRT y-waypoints", path_y)
+        # print("RRT x-waypoints", path_x)
+        # print("RRT y-waypoints", path_y)
 
         return LenRRT

@@ -170,7 +170,7 @@ class ControllerNode(Node):
         self.collision_avoidance_complete = False
         
         self.OffboardCount = 0
-        self.OffboardCounter = 70
+        self.OffboardCounter = 150
         
         self.waypoint_x = []
         self.waypoint_y = []
@@ -188,7 +188,7 @@ class ControllerNode(Node):
         self.gpr_output = []
         self.gpr_output_data = []
         self.gpr_output_index = 0
-        self.flag_guid_param = 1
+        self.flag_guid_param = 2
 
         self.request_path_plnning_flag = True
         
@@ -235,6 +235,8 @@ class ControllerNode(Node):
                         if map_service.result.map_sequence_init is True :
                             self.map_generation_flag = False
                             self.path_planning_flag = True
+                            # self.path_following_gpr_flag = True
+                            # self.collision_avoidance_flag = True
                         else :
                             pass    
                     finally : 
@@ -320,7 +322,7 @@ class ControllerNode(Node):
                             'Service call failed %r' % (e,))
                     else :
                         following_guid_service.get_logger().info( "Path Following Guid Module Complete!! ")
-                        print(following_guid_service.result.response_guid)
+                        # print(following_guid_service.result.response_guid)
                         if following_guid_service.result.response_guid is True :
                             self.PF_response_guid_timestamp = following_guid_service.result.response_timestamp
                             #########################################################################################
@@ -341,7 +343,7 @@ class ControllerNode(Node):
             if self.path_following_flag is True :
                 if self.initFlag_PF_Att_Cmd is True :
                     self.initTimeStamp_PF_Att_Cmd = self.timestamp_offboard
-                    print("test")
+                    # print("test")
                     self.initFlag_PF_Att_Cmd = False
                 following_service = PathFollowingService()
                 following_service.RequestPathFollowing(self.waypoint_x, self.waypoint_y, self.waypoint_z)
@@ -355,7 +357,7 @@ class ControllerNode(Node):
                             'Service call failed %r' % (e,))
                     else :
                         following_service.get_logger().info( "Path Following Setpoint Module Complete!! ")
-                        print(following_service.result.response_pathfollowing)
+                        # print(following_service.result.response_pathfollowing)
                         if following_service.result.response_pathfollowing is True :
                             self.PF_response_setpoint_timestamp = following_service.result.response_timestamp
                             #########################################################################################
@@ -366,7 +368,8 @@ class ControllerNode(Node):
                     finally : 
                         following_service.destroy_node()
                 else : 
-                    self.get_logger().warn("===== Path Following Setpoint Module Can't Response =====")
+                    pass
+                    # self.get_logger().warn("===== Path Following Setpoint Module Can't Response =====")
             else : 
                 pass
             
@@ -385,7 +388,7 @@ class ControllerNode(Node):
                             'Service call failed %r' % (e,))
                     else :
                         collision_avoidance_service.get_logger().info( "Collision Avoidance Module Complete!! ")
-                        print(collision_avoidance_service.result.response_collisionavoidance)
+                        # print(collision_avoidance_service.result.response_collisionavoidance)
                         if collision_avoidance_service.result.response_collisionavoidance is True :
                             self.response_timestamp = collision_avoidance_service.result.response_timestamp
                             #########################################################################################
@@ -396,7 +399,8 @@ class ControllerNode(Node):
                     finally : 
                         collision_avoidance_service.destroy_node()
                 else :
-                    self.get_logger().warn("===== Collision Avoidance Module Can't Response =====")
+                    pass
+                    # self.get_logger().warn("===== Collision Avoidance Module Can't Response =====")
             else : 
                 pass
         else:
@@ -406,7 +410,7 @@ class ControllerNode(Node):
             
         if self.OffboardCount < self.OffboardCounter:
             self.OffboardCount = self.OffboardCount + 1
-            print(self.OffboardCount)
+            # print(self.OffboardCount)
 
         
     def OffboardControl_AttCmd(self):
@@ -415,25 +419,29 @@ class ControllerNode(Node):
                 w, x, y, z = self.Euler2Quaternion(self.TargetAttitude[0],self.TargetAttitude[1],self.TargetAttitude[2])
                 self.TargetQuaternionCmd = [w, x, y, z]
                 self.SetAttitude(self.TargetQuaternionCmd, [0.0, 0.0, 0.0], self.TargetThrustCmd, 0.0)
-                print("Attitude = ", str(np.array(self.TargetAttitude) * 57.3))
-                print("Thrust = ", str(self.TargetThrustCmd))
+                self.get_logger().warn("===== Use Open Attitude Command =====")
+                # print("Attitude = ", str(np.array(self.TargetAttitude) * 57.3))
+                # print("Thrust = ", str(self.TargetThrustCmd))
                 # self.SetAttitude(self.TargetQuaternionCmd, [0.0, 0.0, 0.0], 0.36, 0.0)
                 pass
             else : 
                 pass
         else : 
-            self.get_logger().info("===== Can't Open Attitude Command =====")
+            pass
+            # self.get_logger().info("===== Can't Open Attitude Command =====")
             
     def OffboardControl_VelCmd(self):
         if self.collision_avoidance_complete is True : 
             if self.ObstacleFlag is True :
                 self.TargetVelocityCmd = [self.vel_cmd_x, self.vel_cmd_y, self.vel_cmd_z]
                 self.TargetVelYawCmd = self.vel_cmd_yaw
+                self.get_logger().info("===== Use Open Velocity Command =====")
                 self.SetVelocity(self.TargetVelocityCmd, self.TargetVelYawCmd)
             else : 
                 pass
         else : 
-            self.get_logger().warn("===== Can't Open Velocity Command =====")
+            pass
+            # self.get_logger().warn("===== Can't Open Velocity Command =====")
 
     def CA2Control_callback(self, msg):
         self.vel_cmd_x = msg.vel_cmd_x

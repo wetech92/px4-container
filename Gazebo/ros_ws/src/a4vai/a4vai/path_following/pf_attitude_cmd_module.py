@@ -102,19 +102,23 @@ class PFAttitudeCmdModule(Node):
     def PFAttitudeCmdCallback(self):
         if self.requestFlag is True :
             if self.First_Flag is True :
-                self.InitTime  =   self.EstimatorStatesTime
+                self.InitTime  =   self.EstimatorStatesTime * 10**(-6)
                 self.First_Flag = False
             else : 
-                Time   =   self.EstimatorStatesTime * 10**(-6) - self.InitTime
+                Time   =   self.EstimatorStatesTime * 10**(-6) - self.InitTime 
                 Pos         =   [self.x, self.y, self.z]
                 Vn          =   [self.vx, self.vy, self.vz]
                 AngEuler    =   [self.phi * math.pi /180., self.theta * math.pi /180., self.psi * math.pi /180.]
                 Acc_disturb =   [0., 0., 0.]
-                # self.LAD = 1.5
-                # self.SPDCMD = 2.0
-                # self.PlannedIndex = 1
-                self.PlannedX[0] = 0.0
-                self.PlannedY[0] = 0.0
+        ### Todo kdh
+                # self.PlannedIndex = 2
+                # print("plannedX = ",str(self.PlannedX))
+                # print("plannedY = ",str(self.PlannedY))
+                # print("plannedZ = ",str(self.PlannedZ))
+                # print("Time = ",str(Time))
+                # print("pos = ", str(Pos))
+                # print("Vn = ",str(Vn))                
+                # print("AngEuler = ",str(AngEuler))
                 self.TargetThrust, self.TargetAttitude, self.TargetPosition, self.TargetYaw, self.outNDO = \
                     self.PF_ATTITUDE_CMD_.PF_ATTITUDE_CMD_Module(Time, self.PlannedX, self.PlannedY, self.PlannedZ, self.PlannedIndex, Pos, Vn, AngEuler, Acc_disturb, self.LAD, self.SPDCMD)
                     

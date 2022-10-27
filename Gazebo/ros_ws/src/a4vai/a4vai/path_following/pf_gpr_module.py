@@ -78,8 +78,8 @@ class PF_GPR_Module(Node):
             self.InitTime  =   self.EstimatorStatesTime * 10**(-6)
             self.InitFlag   =   False
         Time   =   self.EstimatorStatesTime * 10**(-6) - self.InitTime
-        print("Time = ", str(Time))
-        print("outNDO = ", str(self.outNDO))
+        # print("Time = ", str(Time))
+        # print("outNDO = ", str(self.outNDO))
         # function
         GPR_out = self.PF_GPR_.PF_GPR_Module(Time, self.outNDO)
         # output
@@ -111,7 +111,7 @@ class PF_GPR_Module(Node):
         self.requestTimestamp = request.request_timestamp
         if self.requestFlag is True : 
             self.PF_GPR_TIMER = self.create_timer(self.PF_GPR_Period, self.PFGPRCallback)
-            print("Create Timer")
+            # print("Create Timer")
             '''
             #####   SRV
             uint64 response_timestamp	# time since system start (microseconds)

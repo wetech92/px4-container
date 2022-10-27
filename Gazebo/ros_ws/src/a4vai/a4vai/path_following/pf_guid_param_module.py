@@ -71,7 +71,7 @@ class PFGuidModule(Node):
         self.GPR_output_index = 3
         self.GPR_output = []    #   double
         self.outNDO = []    #   double
-        self.Flag_Guid_Param = 1    #   int
+        self.Flag_Guid_Param = 2    #   int
         ##  Output
         self.response_timestamp = 0 #   uint
         self.LAD = 0.0    #   double
@@ -102,6 +102,7 @@ class PFGuidModule(Node):
     def waypoint_index_calculator(self):
         if np.sqrt((self.x - self.PlannedX[self.PlannedIndex])**2 + (self.y - self.PlannedY[self.PlannedIndex]) ** 2) < 3.0:
             self.PlannedIndex += 1
+            # print("Waypoint index ++")
         else : 
             pass
         
@@ -128,6 +129,8 @@ class PFGuidModule(Node):
     def PFGuidCallback(self):
         if self.requestFlag is True :
             self.waypoint_index_calculator()
+            # print("flag = ",str(self.Flag_Guid_Param))
+            
             self.GPR_output = [self.GPR_output_data[i * self.GPR_output_index:(i + 1) * self.GPR_output_index] for i in range((len(self.GPR_output_data) - 1 + self.GPR_output_index) // self.GPR_output_index )]
             if self.InitFlag is True:
                 self.PF_GUID_PARAM_MOD  =  PF_GUID_PARAM(self.Flag_Guid_Param)
@@ -169,6 +172,9 @@ class PFGuidModule(Node):
         self.PlannedX = request.waypoint_x
         self.PlannedY = request.waypoint_y
         self.PlannedZ = request.waypoint_z
+        # #### TODO
+        # self.PlannedX[0] = 2.0
+        # self.PlannedY[0] = 2.0
         self.Flag_Guid_Param = request.flag_guid_param
         if self.requestFlag is True : 
             self.PF_GUID_TIMER = self.create_timer(self.PF_GUID_Period, self.PFGuidCallback)

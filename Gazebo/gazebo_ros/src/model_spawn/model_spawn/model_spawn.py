@@ -117,7 +117,6 @@ class ModelSpawnClass(Node):
         #self.GoalSpawn()
         self.UnknownObsSpawn()
         self.KnownObsSpawn()
-        time.sleep(10)
         # self.RequestMakeWorldDone()
         self.mapGeneration = True
 
@@ -168,14 +167,22 @@ class ModelSpawnClass(Node):
             #Radius = int(Temp / 2)
             Radius = int(Temp / 2 * 20)
             
-            cv2.circle(self.GridMap, Center, Radius, Color, -1)
+        cv2.circle(self.GridMap, Center, Radius, Color, -1)
 
         cv2.rotate(self.GridMap, cv2.ROTATE_180)
         cv2.flip(self.GridMap,1)
 
-        cv2.cvtColor(self.GridMap, cv2.COLOR_BGR2GRAY)
+        cv2.cvtColor(self.GridMap, cv2.COLOR_RGB2GRAY)
         cv2.threshold(self.GridMap, 150, 255, cv2.THRESH_BINARY)
         cv2.imwrite("/root/ros_ws/src/a4vai/a4vai/path_planning/Map/RawImage.png",self.GridMap)
+        
+        RawImage = (cv2.imread("/root/ros_ws/src/a4vai/a4vai/path_planning/Map/RawImage.png", cv2.IMREAD_GRAYSCALE))
+        Image = np.uint8(np.uint8((255 - RawImage)/ 255))
+        Image = cv2.flip(Image, 0)
+        Image = cv2.rotate(Image, cv2.ROTATE_90_CLOCKWISE)
+        cv2.imwrite("/root/ros_ws/src/a4vai/a4vai/path_planning/Map/PathImage.png", Image)
+        RawImage = cv2.flip(RawImage, 0)
+        cv2.imwrite('RawImage.png',RawImage)
 
         self.get_logger().info("===== Map Save!! =====")
 
