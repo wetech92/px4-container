@@ -1,0 +1,5 @@
+uint64 request_timestamp	# time since system start (microseconds)
+bool request_gpr
+---
+uint64 response_timestamp	# time since system start (microseconds)
+bool response_gpr

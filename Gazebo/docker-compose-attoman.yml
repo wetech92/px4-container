@@ -1,0 +1,99 @@
+version: "3"
+services:
+  gazebo-px4-attoman-2:
+    privileged: true
+    environment:
+      # -----------DEFAULT VALUE DO NOT MODIFY-----------
+      - DISPLAY=$DISPLAY
+      - WAYLAND_DISPLAY=$WAYLAND_DISPLAY
+      - QT_NO_MITSHM=1
+      - XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
+      #- LD_LIBRARY_PATH=/usr/lib/wsl/lib
+      # ----------SET ITE SIMULTAION PARAMETERS----------
+      #  ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ 
+      - PX4_SIM_HOST_ADDR=172.50.0.5
+      - PX4_SIM_MODEL=typhoon_inha
+      - PX4_SIM_WOLRLD=grass
+      - NO_PXH=1
+      # - sitl_gazebo_path=/root/PX4-Autopilot/Tools/sitl_gazebo
+      # --------SET FOR DEVELOPMENT OR DEBUGGING---------
+      # ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ 
+      # - HEADLESS=1
+      # - DEBUG_ENTRYPOINT=1
+      # - PX4_SITL_DEBUGGER=ide
+      # - REBUILD_RPKG_INTEGRATION=1
+      # - REBUILD_RPKG_GAZEBO=1
+      # ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ 
+    volumes:
+      # -----------DEFAULT VALUE DO NOT MODIFY-----------
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /usr/share/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json
+      - /usr/share/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json
+      - /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json
+      # --------SET FOR DEVELOPMENT OR DEBUGGING---------
+      # ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ ﹀ 
+      # - ${HOME}/workspace/git/px4-container/Gazebo/entrypoint.sh:/usr/local/bin/entrypoint.sh
+      # - ${HOME}/workspace/git/px4-container/Gazebo/ros_ws/src:/root/ros_ws/src
+      # - ${HOME}/workspace/git/px4-container/Gazebo/gazebo_ros/src:/root/gazebo_ros/src
+      # - ${HOME}/workspace/git/px4-container/Gazebo/models:/root/PX4-Autopilot/Tools/sitl_gazebo/models
+      # - ${HOME}/workspace/git/px4-container/Gazebo/worlds:/root/PX4-Autopilot/Tools/sitl_gazebo/worlds
+      # ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ ︿ 
+      # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
+      # - /mnt/wslg:/mnt/wslg
+      # - /usr/lib/wsl:/usr/lib/wsl
+    devices:
+      # -----COMMENT OUT IF YOU EXPERIENCE OCI ERROR-----
+      - /dev/dri:/dev/dri
+      # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
+      #- /dev/dxg:/dev/dxg
+    networks:
+      px4-sitl-gazebo-attoman-2:
+        ipv4_address: 172.50.0.5
+    container_name: sitl-gazebo-attoman-2
+    image: kestr3l/px4:gazebo-gpu-0.0.3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  qgc-attoman-2:
+    privileged: true
+    environment:
+      - DISPLAY=$DISPLAY
+      - WAYLAND_DISPLAY=$WAYLAND_DISPLAY
+      - QT_NO_MITSHM=1 
+      - XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
+      # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
+      # - LD_LIBRARY_PATH=/usr/lib/wsl/lib
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
+      # - /mnt/wslg:/mnt/wslg
+      # - /usr/lib/wsl:/usr/lib/wsl
+    devices:
+      # -----COMMENT OUT IF YOU EXPERIENCE OCI ERROR-----
+      - /dev/dri:/dev/dri
+      # ---------ENABLE FOR WSL2 GPU ACCELERATION--------
+      # - /dev/dxg:/dev/dxg
+    networks:
+      px4-sitl-gazebo-attoman-2:
+        ipv4_address: 172.50.0.7
+    container_name: sitl-qgc-attoman-2
+    image: kestr3l/qgc-app:nobg-4.0.0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+networks:
+    px4-sitl-gazebo-attoman-2:
+      external: true
+
+# NETWORK CONFIG: gazebo-px4 -> 172.50.0.5 / qgc -> 172.50.0.6
+# RUN FOLLOWING DOCKER NETWORK GENERATION COMMAND BEFORE RUN
+# docker network create --gateway 172.50.0.1 --subnet 172.50.0.0/16 px4-sitl-gazebo-attoman-2

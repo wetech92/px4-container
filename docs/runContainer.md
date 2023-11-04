@@ -1,8 +1,8 @@
 # Running Integrated Training Environment Containers
 
-## Basics of docker container
+## 1 Basics of docker container
 
-### Concept of container and its characteristics
+### 1.1 Concept of container and its characteristics
 
 ![Docker Lifecycle](images/Docker_Lifecycle.png)
 
@@ -11,7 +11,7 @@
 - Docker containers are created from docker images. If you have an image, you can create unlimited numbers of containers from it.
   - Think of Linux `.iso` image. If you have it, you can install windows on any conputer you want.
 
-### Creating Container
+### 1.2 Creating Container
 
 - There are two major ways to create desired docker container form an image:
   - Docker Command-Line Interface (CLI, a.k.a. `docker run`)
@@ -24,7 +24,9 @@
   - However, we don't need that kind of bleeding-edge tool for running a simulation environment
 - Therefore, we will use *docker-compose* as a mean of running multiple containers in designated relations
 
-## Docker CLI
+## 2 Docker CLI
+
+### 2.1 Introduction & Example
 
 - Docker CLI is based on `docker run <target_image>` and many optional pararmeters:
 
@@ -42,6 +44,7 @@ $ docker run [OPTIONS] IMAGE[:TAG|@DIGEST] [COMMAND] [ARG...]
 
 - Docker run statements are complex but example argument will help better undertanding docker CLI statements:
 - Following is an example of `docker run` command for running AirSim container and their explanations:
+  - *This is just an long and boring 'textbook-like' example. Do not use this to run ITE container*
 
 ```shell
 docker run -it --rm \
@@ -79,62 +82,63 @@ docker run -it --rm \
 - All of A4-VAI ITE containers are `ENTRYPOINT`-free. That is, all default initialization scerips can be overriden by `CMD` statement
 - This is important for debugging purpose. If not, run container without overrriding `CMD`.
 
-### Gazebo
+### 2.2 Gazebo
 
-- CPU only
-
-```shell
-docker run -it --rm \
-   -e DISPLAY=$DISPLAY \
-   -e QT_NO_MITSHM=1 \
-   -e XDG_RUNTIME_DIR=/tmp \
-   -v /tmp/.X11-unix:/tmp/.X11-unix \
-   --net host \
-   --device=/dev/dri:/dev/dri \
-   --privileged \
-   <IMAGE_NAME>:<TAG>
-```
-
-- With GPU support (Linux)
+#### 2.2.1 Generic Linux System
 
 ```shell
 docker run -it --rm \
-   -e DISPLAY=$DISPLAY \
-   -e QT_NO_MITSHM=1 \
-   -e XDG_RUNTIME_DIR=/tmp \
-   -v /tmp/.X11-unix:/tmp/.X11-unix \
-   --net host \
-   --device=/dev/dri:/dev/dri \
-   --gpus all \
-   --privileged \
-   <IMAGE_NAME>:<TAG>
+  -e DISPLAY=$DISPLAY \
+  -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY
+  -e QT_NO_MITSHM=1 \
+  -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+  -e NVIDIA_DRIVER_CAPABILITIES=all \
+  -e PX4_SIM_MODEL=typhoon_inha \
+  -e PX4_SIM_WOLRLD=grass \
+  -e NO_PXH=1 \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v /usr/share/vulkan/icd.d/nvidia_icd.json:/etc/vulkan/icd.d/nvidia_icd.json \
+  -v /usr/share/vulkan/implicit_layer.d/nvidia_layers.json:/etc/vulkan/implicit_layer.d/nvidia_layers.json \
+  -v /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json \
+  --net host \
+  --device=/dev/dri:/dev/dri \
+  --gpus all \
+  --privileged \
+  kestr3l/px4:gazebo-gpu-0.0.3 zsh
 ```
 
-- With GPU support (WSL2)
+> - If you experience OCI runtime issue, you can consider removing `-e /dev/dri:/dev/dri`
+
+#### 2.2.2 Windows Subsystems for Linux 2 (WSL2 / Windows 11)
 
 ```shell
 docker run -it --rm \
-   -e DISPLAY=$DISPLAY \
-   -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
-   -e QT_NO_MITSHM=1 \
-   -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
-   -e LD_LIBRARY_PATH=/usr/lib/wsl/lib \
-   -v /tmp/.X11-unix:/tmp/.X11-unix \
-   -v /mnt/wslg:/mnt/wslg \
-   -v /usr/lib/wsl:/usr/lib/wsl \
-   --device=/dev/dxg \
-   --net host \
-   --gpus all \
-   --privileged \
-   <IMAGE_NAME>:<TAG>
+  -e DISPLAY=$DISPLAY \
+  -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+  -e QT_NO_MITSHM=1 \
+  -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+  -e LD_LIBRARY_PATH=/usr/lib/wsl/lib \
+  -e NVIDIA_DRIVER_CAPABILITIES=all \
+  -e PX4_SIM_MODEL=typhoon_inha \
+  -e PX4_SIM_WOLRLD=grass \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v /mnt/wslg:/mnt/wslg \
+  -v /usr/lib/wsl:/usr/lib/wsl \
+  --device=/dev/dri:/dev/dri \
+  --device=/dev/dxg \
+  --net host \
+  --gpus all \
+  --privileged \
+  kestr3l/px4:gazebo-gpu-0.0.3 zsh
 ```
 
-> GPU H/W acceleration support on WSL (WSLg) is available starting from Windows 11
-> If your WSL2 environment is based on Windows 10, upgrade it to Windows 11 or use native Linux instead
+> - GPU H/W acceleration support on WSL (WSLg) is available starting from Windows 11
+> - If your WSL2 environment is based on Windows 10, upgrade it to Windows 11 or use native Linux instead
+> - If you experience OCI runtime or driver issue, you can consider removing `-e /dev/dri:/dev/dri`
 
-### Airsim
+### 2.3 Airsim
 
-- With GPU Support (Linux)
+#### 2.3.1 Generic Linux System
 
 ```shell
 docker run -it --rm \
@@ -152,16 +156,18 @@ docker run -it --rm \
    --net host \
    --gpus all \
    --privileged \
-   kestr3l/px4:airsim-gpu-0.0.2
-   <IMAGE_NAME>:<TAG>
+   kestr3l/px4:airsim-gpu-0.0.2 zsh
 ```
 
-> For now, it is strongly recommended to run AirSim environment on native Linux with Nvidia GPU
-> This is becuse there is a vulkan compatibility issue on WSL and integrated graphics in CPU.
+> - User must run AirSim environment on native Linux with Nvidia GPU
+> - This is becuse there is a vulkan compatibility issue on GPU driver and WSL2 environment.
+> - If you experience OCI runtime or driver issue, you can consider removing `-e /dev/dri:/dev/dri`
 
-## Docker-Compose
+## 3 Docker-Compose
 
-### Intalling docker-compose
+### 3.1 Intalling docker-compose
+
+> If you already installed docker-compsoe, you can skip this part
 
 - Basically, `docker-compose` is a way of running container with predescribed 'script' in `.yml` format
 - It is a very strong tool since we can run and configure a network of containers at once
@@ -172,7 +178,7 @@ docker run -it --rm \
 - Make it executable and create a symbolic link for binary execution
 
 ```shell
-sudo curl -L "https://github.com/docker/compose/releases/download/2.9.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.11.2/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 ```
@@ -181,13 +187,15 @@ sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 
 ```shell
 docker-compose -v
-# Docker Compose version v2.9.0 expected
+# Docker Compose version v2.11.2 expected
 ```
 
-### Inspecting `docker-compose.yml`
+### 3.2 Inspecting `docker-compose.yml`
 
 - `docker-compose.yml` includes all settings required to create a set of containers
 - For example, `docker-compose.yml` for AirSim instance is written as below:
+  - Again, this is just an example. Just understanding it's structure is enough
+  - For SITL purpose, please refer to the github repo
 
 ```yaml
 version: "3"
@@ -282,8 +290,10 @@ networks:
 - However, it is much more intuitive in structure since each types of settings are grouped together
 - Moreover, `docker-compose` can run and manage multiple containers at once
   - Example above runs 3 containers at once: AirSim, PX4-Autopilot and QGroundControl.
+- As you can see, docker-compose is a very powerful tool for debugging purpose
+  - You just simply need to mount your workspace into the container and run it. The virtual environment.
 
-### Starting and Killing docker-compose instance
+### 3.3 Starting and Killing docker-compose instance
 
 - Basic docker-compose command is as following:
 
@@ -307,8 +317,10 @@ docker-compsoe up -f <docker-compose-file> -d
 
 - Use `docker-compose ps` to check running instance based on given `docker-compose.yml`
 - `docker-compose down` will kill and clear up running docker-compose instance
+  - **IT IS VERY RECOMMENDED TO DO SO AFTER THE RUN**
+  - If skipped, there might be leftover temporary files in docker volume or etc.
 
-## Reference
+## 4 Reference
 
 1. [Docker 기초 (4) - 컨테이너 라이프사이클, 명령어](https://velog.io/@ghdud0503/Docker-%EA%B8%B0%EC%B4%88-3-%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88-%EB%9D%BC%EC%9D%B4%ED%94%84%EC%82%AC%EC%9D%B4%ED%81%B4)
 2. [Docker docs: Docker run reference](https://docs.docker.com/engine/reference/run/)

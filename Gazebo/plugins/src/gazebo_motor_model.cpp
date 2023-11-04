@@ -300,7 +300,6 @@ void GazeboMotorModel::UpdateMotorFail() {
 }
 
 void GazeboMotorModel::WindVelocityCallback(WindPtr& msg) {
-  std::cout <<" motor " << msg->velocity().x() << " " << msg->velocity2().x()<< std::endl;
   wind_vel_ = ignition::math::Vector3d(msg->velocity().x(),
             msg->velocity().y(),
             msg->velocity().z()

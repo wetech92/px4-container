@@ -1,6 +1,7 @@
 from setuptools import setup
 
 package_name = 'model_spawn'
+# model_spawn_srvs = './model_spawn_srvs'
 
 setup(
     name=package_name,
